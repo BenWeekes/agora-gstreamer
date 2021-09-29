@@ -26,4 +26,9 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
 ## Run and test
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
+   
    gst-launch-1.0 -v videotestsrc ! x264enc ! agorasink   
+   gst-launch-1.0 -v videotestsrc is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=20 ! agorasink   
+   gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=20 ! agorasink   
+
+   
