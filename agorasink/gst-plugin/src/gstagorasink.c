@@ -191,6 +191,9 @@ gst_agorasink_init (Gstagorasink * filter)
   //set FEC
   opus_encoder_ctl(filter-> opus_encoder, OPUS_SET_INBAND_FEC(true));
 
+  filter->current_buffer_size=0;
+  filter->buffer=(u_int8_t*)malloc(MAX_BUFFER_SIZE);
+
   filter->silent = FALSE;
 }
 
@@ -282,8 +285,6 @@ int check_key_frame(u_int8_t* in, int size){
 
    int bytes=0;
 
-   int latestNalPos=0;
-
    while(bytes<size-5){
       
       if(currentBytes[bytes] == 0
@@ -315,49 +316,89 @@ int check_key_frame(u_int8_t* in, int size){
 
 long ts=0;
 
+void print_packet(u_int8_t* data, int size){
+  
+  int i=0;
+
+  for(i=0;i<size;i++){
+    printf(" %d ", data[i]);
+  }
+
+  printf("\n================================\n");
+    
+}
+
 /* chain function
  * this function does the actual processing
  */
 static GstFlowReturn
-gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
+gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
 {
   Gstagorasink *filter;
-
   filter = GST_AGORASINK (parent);
   
   if (filter->silent == FALSE){
 
-       /*g_print ("received %" G_GSIZE_FORMAT" bytes!\n",
-        gst_buffer_get_size (buf));*/
+      size_t data_size=gst_buffer_get_size (in_buffer);
+      g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
 
-      size_t buffer_size=gst_buffer_get_size (buf);
-      gpointer data=malloc(buffer_size);
-      gst_buffer_extract(buf,0, data, buffer_size);
+      gpointer data=malloc(data_size);
+      gst_buffer_extract(in_buffer,0, data, data_size);
 
-      int is_key_frame=check_key_frame(data, buffer_size);
-      //printf("is key frame: %d\n", is_key_frame);
+      //print_packet(data, data_size);
 
-      H264Frame frame;
-      get_frame(data, buffer_size, &frame);
-
-      printf("type: %d, start: %d, end: %d, data size: %ld\n",
-              frame.is_key_frame, frame.start_position, 
-              frame.end_position,  buffer_size);
-
-      agora_send_video(filter->agora_ctx, data,buffer_size,frame.is_key_frame, ts);
-      
-      free(data);
-
-      /*int length=960;
-      for(int i=0;i<length;i++){
-        filter->audio_buffer[i]=i;
+      if(filter->current_buffer_size+data_size<MAX_BUFFER_SIZE){
+        memcpy(&filter->buffer[filter->current_buffer_size], data, data_size);
+        filter->current_buffer_size +=data_size;
       }
-      int bytes=opus_encode(filter->opus_encoder,filter->audio_buffer,length, filter->out, length);
-      //g_print ("encoded bytes: %d\n", bytes);
+      else{
+          printf("buffer is full, current packet is skipped!\n");
+          exit(0);
+      }
 
-      agora_send_audio(filter->agora_ctx, filter->out, bytes, ts);*/
+      free(data); 
+     
+      while(filter->current_buffer_size>0){
 
-      ts+=30;
+        print_packet(filter->buffer, 10);
+        //parse of the current data and see if we can extract a frame from it
+        H264Frame frame;
+        if(get_frame(filter->buffer, filter->current_buffer_size, &frame)==0){
+            return GST_FLOW_OK;
+        }
+
+        //copy this frame
+        size_t frame_size=frame.end_position - frame.start_position+1;
+        gpointer frame_data=malloc(frame_size);
+
+        memcpy(frame_data, &filter->buffer[frame.start_position], frame_size);
+
+        //shift the buffer
+        filter->current_buffer_size -=frame_size;
+
+        //TODO: check 
+        memcpy(&filter->buffer[0], &filter->buffer[frame.end_position], filter->current_buffer_size);
+        //memcpy(&filter->buffer[0], &filter->temp_buffer[0], filter->current_buffer_size);
+
+        printf("type: %d, start: %d, end: %d, frame size: %ld\n",
+                frame.is_key_frame, frame.start_position, 
+                frame.end_position,  frame_size);
+
+        agora_send_video(filter->agora_ctx, frame_data, frame_size,frame.is_key_frame, ts);
+        
+        free(frame_data);
+        
+        /*int length=960;
+        for(int i=0;i<length;i++){
+          filter->audio_buffer[i]=i;
+        }
+        int bytes=opus_encode(filter->opus_encoder,filter->audio_buffer,length, filter->out, length);
+        //g_print ("encoded bytes: %d\n", bytes);
+
+        agora_send_audio(filter->agora_ctx, filter->out, bytes, ts);*/
+
+        ts+=30;
+      }
    
   }
 

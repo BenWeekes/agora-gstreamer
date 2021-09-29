@@ -68,6 +68,8 @@ G_BEGIN_DECLS
 typedef struct _Gstagorasink      Gstagorasink;
 typedef struct _GstagorasinkClass GstagorasinkClass;
 
+#define MAX_BUFFER_SIZE  10*1024*1024
+
 struct _Gstagorasink
 {
   GstElement element;
@@ -85,6 +87,10 @@ struct _Gstagorasink
   opus_int16 audio_buffer[960];
 
   u_int8_t out[960];
+
+  u_int8_t*  buffer;
+
+  u_int64_t current_buffer_size;
 };
 
 struct _GstagorasinkClass 
