@@ -9,18 +9,18 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
 
    sudo apt-get install -y meson libswscale-dev x264    
 
-## build and install libagorac library
+## Build and install libagorac library
 
    cd agora-gstreamer/agorasink/libagorac   
    sudo ./install.sh ~/agora_rtc_sdk   
 
-## build the plugin
+## Build this plugin
 
    cd agora-gstreamer/agorasink   
    meson build   
    ./c   
 
-## run and test
+## Run and test
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    gst-launch-1.0 -v videotestsrc ! x264enc ! agorasink   
