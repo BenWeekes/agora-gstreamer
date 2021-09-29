@@ -12,7 +12,7 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
  
 ## Build and install libagorac library
-
+This assumes you have cloned this repo to your home folder ~
    wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
    tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
 
