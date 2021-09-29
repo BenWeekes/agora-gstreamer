@@ -11,12 +11,15 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
 
 ## Build and install libagorac library
 
-   cd agora-gstreamer/agorasink/libagorac   
+   wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
+   tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
+
+   cd ~/agora-gstreamer/agorasink/libagorac   
    sudo ./install.sh ~/agora_rtc_sdk   
 
 ## Build this plugin
 
-   cd agora-gstreamer/agorasink   
+   cd ~/agora-gstreamer/agorasink   
    meson build   
    ./c   
 
