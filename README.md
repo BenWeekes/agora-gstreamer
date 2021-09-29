@@ -11,8 +11,8 @@ sudo apt-get install -y meson libswscale-dev x264
 
 ## build and install libagorac library
 
-$ cd agora-gstreamer/agorasink/libagorac
-$ sudo ./install.sh ~/agora_rtc_sdk
+   cd agora-gstreamer/agorasink/libagorac
+   sudo ./install.sh ~/agora_rtc_sdk
 
 ## build the plugin
 
