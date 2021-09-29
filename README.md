@@ -7,7 +7,7 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
 
 ## Install additional libraries:
 
-   sudo apt-get install -y meson libswscale-dev x264    
+   sudo apt-get install -y meson libswscale-dev x264 libx264-dev 
 
 ## Build and install libagorac library
 
