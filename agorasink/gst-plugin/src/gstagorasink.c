@@ -78,6 +78,8 @@ enum
 enum
 {
   PROP_0,
+  APP_ID,
+  CHANNEL_ID,
   PROP_SILENT
 };
 
@@ -127,6 +129,16 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
       g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
+  /*app id*/
+  g_object_class_install_property (gobject_class, APP_ID,
+      g_param_spec_string ("appid", "appid", "agora app id",
+          FALSE, G_PARAM_READWRITE));
+
+  /*channel_id*/
+  g_object_class_install_property (gobject_class, CHANNEL_ID,
+      g_param_spec_string ("chid", "chid", "agora channel id",
+          FALSE, G_PARAM_READWRITE));
+
   gst_element_class_set_details_simple(gstelement_class,
     "agorasink",
     "agorasink",
@@ -137,6 +149,7 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
       gst_static_pad_template_get (&src_factory));
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&sink_factory));
+
 }
 
 /* initialize the new element
@@ -147,6 +160,8 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 static void
 gst_agorasink_init (Gstagorasink * filter)
 {
+  int err=0;
+
   filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
   gst_pad_set_event_function (filter->sinkpad,
                               GST_DEBUG_FUNCPTR(gst_agorasink_sink_event));
@@ -158,23 +173,6 @@ gst_agorasink_init (Gstagorasink * filter)
   filter->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
   GST_PAD_SET_PROXY_CAPS (filter->srcpad);
   gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
-
-   //initialize agora
-   filter->agora_ctx=agora_init("20b7c51ff4c644ab80cf5a4e646b0537", "test","123", 0, 
-                        0, 500000,
-                         320,180,
-                         12, 30);
-
-   if(filter->agora_ctx==NULL){
-
-      g_print("agora COULD NOT  be initialized\n");
-      return;
-       
-   }
-
-   g_print("agora has been successfuly initialized\n");
-  
-  int err=0;
 
   //init opus
   filter-> opus_encoder= opus_encoder_create(48000,1, OPUS_APPLICATION_VOIP, &err);
@@ -194,7 +192,44 @@ gst_agorasink_init (Gstagorasink * filter)
   filter->current_buffer_size=0;
   filter->buffer=(u_int8_t*)malloc(MAX_BUFFER_SIZE);
 
+  //set it initially to null
+  filter->agora_ctx=NULL;
+   
+  //set app_id and channel_id to zero
+  memset(filter->app_id, 0, MAX_STRING_LEN);
+  memset(filter->channel_id, 0, MAX_STRING_LEN);
+
   filter->silent = FALSE;
+}
+
+int init_agora(Gstagorasink * filter){
+
+   if (strlen(filter->app_id)==0){
+       g_print("app id cannot be empty!\n");
+       return -1;
+   }
+
+   if (strlen(filter->channel_id)==0){
+       g_print("channel id cannot be empty!\n");
+       return -1;
+   }
+
+    //initialize agora
+   filter->agora_ctx=agora_init(filter->app_id,filter->channel_id,"123", 0, 
+                        0, 500000,
+                         320,180,
+                         12, 30);
+
+   if(filter->agora_ctx==NULL){
+
+      g_print("agora COULD NOT  be initialized\n");
+      return -1;   
+   }
+
+   g_print("agora has been successfuly initialized\n");
+  
+
+   return 0;
 }
 
 static void
@@ -202,11 +237,23 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
   Gstagorasink *filter = GST_AGORASINK (object);
+   
+    const gchar* str;
 
   switch (prop_id) {
     case PROP_SILENT:
       filter->silent = g_value_get_boolean (value);
       break;
+    case APP_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->app_id, str, MAX_STRING_LEN);
+        printf("set app id: %s\n", filter->app_id);
+        break;
+    case CHANNEL_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->channel_id, str, MAX_STRING_LEN);
+        printf("set channel id: %s\n", filter->channel_id);
+        break; 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -223,6 +270,8 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
     case PROP_SILENT:
       g_value_set_boolean (value, filter->silent);
       break;
+     case APP_ID:
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -336,11 +385,18 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
 {
   Gstagorasink *filter;
   filter = GST_AGORASINK (parent);
+
+  //TODO: we need a better position to initialize agora. 
+  //gst_agorasink_init() is good, however, it is called before reading app and channels ids
+  if(filter->agora_ctx==NULL && init_agora(filter)!=0){
+     g_print("cannot initialize agora\n");
+     return GST_FLOW_ERROR;
+  }
   
   if (filter->silent == FALSE){
 
       size_t data_size=gst_buffer_get_size (in_buffer);
-      g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
+      //g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
 
       gpointer data=malloc(data_size);
       gst_buffer_extract(in_buffer,0, data, data_size);
@@ -360,7 +416,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
      
       while(filter->current_buffer_size>0){
 
-        print_packet(filter->buffer, 10);
+        //print_packet(filter->buffer, 10);
         //parse of the current data and see if we can extract a frame from it
         H264Frame frame;
         if(get_frame(filter->buffer, filter->current_buffer_size, &frame)==0){
@@ -380,9 +436,9 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
         memcpy(&filter->buffer[0], &filter->buffer[frame.end_position], filter->current_buffer_size);
         //memcpy(&filter->buffer[0], &filter->temp_buffer[0], filter->current_buffer_size);
 
-        printf("type: %d, start: %d, end: %d, frame size: %ld\n",
+        /*printf("type: %d, start: %d, end: %d, frame size: %ld\n",
                 frame.is_key_frame, frame.start_position, 
-                frame.end_position,  frame_size);
+                frame.end_position,  frame_size);*/
 
         agora_send_video(filter->agora_ctx, frame_data, frame_size,frame.is_key_frame, ts);
         
@@ -422,6 +478,7 @@ agorasink_init (GstPlugin * agorasink)
 
   return gst_element_register (agorasink, "agorasink", GST_RANK_NONE,
       GST_TYPE_AGORASINK);
+
 }
 
 /* PACKAGE: this is usually set by autotools depending on some _INIT macro

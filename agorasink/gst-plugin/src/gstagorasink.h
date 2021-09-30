@@ -69,12 +69,16 @@ typedef struct _Gstagorasink      Gstagorasink;
 typedef struct _GstagorasinkClass GstagorasinkClass;
 
 #define MAX_BUFFER_SIZE  10*1024*1024
+#define MAX_STRING_LEN   1000
 
 struct _Gstagorasink
 {
   GstElement element;
 
   GstPad *sinkpad, *srcpad;
+
+  gchar app_id[MAX_STRING_LEN];
+  gchar channel_id[MAX_STRING_LEN];
 
   gboolean silent;
 
