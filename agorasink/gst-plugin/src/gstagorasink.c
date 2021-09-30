@@ -345,6 +345,10 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   data_size=gst_buffer_get_size (in_buffer);
    
   gpointer data=malloc(data_size);
+  if(data==NULL){
+     g_print("cannot allocate memory!\n");
+     return GST_FLOW_ERROR;
+  }
   gst_buffer_extract(in_buffer,0, data, data_size);
 
   if(GST_BUFFER_FLAG_IS_SET(in_buffer, GST_BUFFER_FLAG_DELTA_UNIT) == FALSE){

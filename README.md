@@ -25,6 +25,14 @@ This assumes you have cloned this repo to your home folder ~
    meson build   
    ./c   
 
+## Properties
+
+ appid -- sets agora app id
+ 
+ chid  -- sets agora channel id
+
+ silent -- a flag to show/hide debug info
+
 ## Run and test
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
@@ -33,4 +41,6 @@ This assumes you have cloned this repo to your home folder ~
    gst-launch-1.0 -v videotestsrc is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=20 ! agorasink   
    gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=20 ! agorasink   
 
+
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx chid=test silent=1
    
