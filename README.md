@@ -1,28 +1,36 @@
 A gstreamer wrapper for Agora Linux SDK (sink and src)
 
 
-## install gstreamer
+## Install gstreamer and dependencies
+   sudo apt-get update     
+   sudo apt-get --fix-broken --fix-missing install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio   
 
-sudo apt-get --fix-broken --fix-missing install  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+## Install additional libraries:
 
-## requireed libraries:
+   sudo apt-get install -y meson libswscale-dev x264 libx264-dev   
+   sudo apt install -y build-essential git libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip     
+   sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
+ 
+## Build and install libagorac library
+This assumes you have cloned this repo to your home folder ~
+   wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
+   tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
 
-sudo apt install meson
-sudo apt-get install -y libswscale-dev
-sudo apt-get install -y x264
+   cd ~/agora-gstreamer/agorasink/libagorac   
+   sudo ./install.sh ~/agora_rtc_sdk   
 
-## build and install libagorac library
+## Build this plugin
 
-$ cd agora-gstreamer/agorasink/libagorac
-$ sudo ./install.sh ~/agora_rtc_sdk
+   cd ~/agora-gstreamer/agorasink   
+   meson build   
+   ./c   
 
-## build the plugin
+## Run and test
 
-$ cd agora-gstreamer/agorasink
-$ meson build
-$ ./c
+   export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
+   
+   gst-launch-1.0 -v videotestsrc ! x264enc ! agorasink   
+   gst-launch-1.0 -v videotestsrc is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=20 ! agorasink   
+   gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=20 ! agorasink   
 
-## run and test
-
-$ export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0
-$ gst-launch-1.0 -v videotestsrc ! x264enc ! agorasink
+   
