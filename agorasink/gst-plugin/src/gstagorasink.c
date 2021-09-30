@@ -51,7 +51,7 @@
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v -m fakesrc ! agorasink ! fakesink silent=TRUE
+ * gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=id chid=ch
  * ]|
  * </refsect2>
  */
@@ -160,7 +160,6 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 static void
 gst_agorasink_init (Gstagorasink * filter)
 {
-  int err=0;
 
   filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
   gst_pad_set_event_function (filter->sinkpad,
@@ -174,24 +173,6 @@ gst_agorasink_init (Gstagorasink * filter)
   GST_PAD_SET_PROXY_CAPS (filter->srcpad);
   gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
 
-  //init opus
-  filter-> opus_encoder= opus_encoder_create(48000,1, OPUS_APPLICATION_VOIP, &err);
-  if(err<0){
-     g_print("cannot init opus\n");
-     return ;
-  }
-  err = opus_encoder_ctl(filter-> opus_encoder, OPUS_SET_BITRATE(50000));
-  if(err<0){
-    g_print("cannot set opus bitrate\n");
-     return ;
-  }
-
-  //set FEC
-  opus_encoder_ctl(filter-> opus_encoder, OPUS_SET_INBAND_FEC(true));
-
-  filter->current_buffer_size=0;
-  filter->buffer=(u_int8_t*)malloc(MAX_BUFFER_SIZE);
-
   //set it initially to null
   filter->agora_ctx=NULL;
    
@@ -200,6 +181,8 @@ gst_agorasink_init (Gstagorasink * filter)
   memset(filter->channel_id, 0, MAX_STRING_LEN);
 
   filter->silent = FALSE;
+
+  filter->ts=0;
 }
 
 int init_agora(Gstagorasink * filter){
@@ -328,43 +311,6 @@ int is_key_frame(u_int8_t* data){
     return 0;
 }
 
-int check_key_frame(u_int8_t* in, int size){
-
-   u_int8_t* currentBytes=in;
-
-   int bytes=0;
-
-   while(bytes<size-5){
-      
-      if(currentBytes[bytes] == 0
-        && currentBytes[bytes+1] == 0
-        && currentBytes[bytes+2] == 1){
-             
-            if(is_key_frame(&currentBytes[bytes+3])){
-               printf("key frame\n");
-
-               return 1;
-             }
-        }
-
-        if(currentBytes[bytes] == 0
-           && currentBytes[bytes+1] == 0
-           && currentBytes[bytes+2] == 0
-           && currentBytes[bytes+3] == 1){
-          
-          if(is_key_frame(&currentBytes[bytes+4])){
-              return 1;
-          }
-        }
-
-        bytes ++;
-   }
-   
-   return 0;
-}
-
-long ts=0;
-
 void print_packet(u_int8_t* data, int size){
   
   int i=0;
@@ -386,77 +332,35 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   Gstagorasink *filter;
   filter = GST_AGORASINK (parent);
 
+  size_t data_size=0;
+  int    is_key_frame=0;
+
   //TODO: we need a better position to initialize agora. 
   //gst_agorasink_init() is good, however, it is called before reading app and channels ids
   if(filter->agora_ctx==NULL && init_agora(filter)!=0){
      g_print("cannot initialize agora\n");
      return GST_FLOW_ERROR;
   }
-  
-  if (filter->silent == FALSE){
 
-      size_t data_size=gst_buffer_get_size (in_buffer);
-      //g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
-
-      gpointer data=malloc(data_size);
-      gst_buffer_extract(in_buffer,0, data, data_size);
-
-      //print_packet(data, data_size);
-
-      if(filter->current_buffer_size+data_size<MAX_BUFFER_SIZE){
-        memcpy(&filter->buffer[filter->current_buffer_size], data, data_size);
-        filter->current_buffer_size +=data_size;
-      }
-      else{
-          printf("buffer is full, current packet is skipped!\n");
-          exit(0);
-      }
-
-      free(data); 
-     
-      while(filter->current_buffer_size>0){
-
-        //print_packet(filter->buffer, 10);
-        //parse of the current data and see if we can extract a frame from it
-        H264Frame frame;
-        if(get_frame(filter->buffer, filter->current_buffer_size, &frame)==0){
-            return GST_FLOW_OK;
-        }
-
-        //copy this frame
-        size_t frame_size=frame.end_position - frame.start_position+1;
-        gpointer frame_data=malloc(frame_size);
-
-        memcpy(frame_data, &filter->buffer[frame.start_position], frame_size);
-
-        //shift the buffer
-        filter->current_buffer_size -=frame_size;
-
-        //TODO: check 
-        memcpy(&filter->buffer[0], &filter->buffer[frame.end_position], filter->current_buffer_size);
-        //memcpy(&filter->buffer[0], &filter->temp_buffer[0], filter->current_buffer_size);
-
-        /*printf("type: %d, start: %d, end: %d, frame size: %ld\n",
-                frame.is_key_frame, frame.start_position, 
-                frame.end_position,  frame_size);*/
-
-        agora_send_video(filter->agora_ctx, frame_data, frame_size,frame.is_key_frame, ts);
-        
-        free(frame_data);
-        
-        /*int length=960;
-        for(int i=0;i<length;i++){
-          filter->audio_buffer[i]=i;
-        }
-        int bytes=opus_encode(filter->opus_encoder,filter->audio_buffer,length, filter->out, length);
-        //g_print ("encoded bytes: %d\n", bytes);
-
-        agora_send_audio(filter->agora_ctx, filter->out, bytes, ts);*/
-
-        ts+=30;
-      }
+  data_size=gst_buffer_get_size (in_buffer);
    
+  gpointer data=malloc(data_size);
+  gst_buffer_extract(in_buffer,0, data, data_size);
+
+  if(GST_BUFFER_FLAG_IS_SET(in_buffer, GST_BUFFER_FLAG_DELTA_UNIT) == FALSE){
+      is_key_frame=1;
   }
+
+  agora_send_video(filter->agora_ctx, data, data_size,is_key_frame, filter->ts);
+    
+  if (filter->silent == FALSE){
+      g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
+      print_packet(data, 10);
+      g_print("is key frame: %d\n", is_key_frame);
+  }
+
+  free(data); 
+  filter->ts+=30;
 
   return GST_FLOW_OK;
 }

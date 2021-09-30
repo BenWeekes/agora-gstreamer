@@ -85,16 +85,7 @@ struct _Gstagorasink
   /*agora context for sending audio and video */
   agora_context_t        *agora_ctx;
 
-  /*just for testing*/
-  OpusEncoder        *opus_encoder;
-
-  opus_int16 audio_buffer[960];
-
-  u_int8_t out[960];
-
-  u_int8_t*  buffer;
-
-  u_int64_t current_buffer_size;
+  size_t                 ts;
 };
 
 struct _GstagorasinkClass 
