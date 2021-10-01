@@ -29,7 +29,7 @@ This assumes you have cloned this repo to your home folder ~
 
  appid -- sets agora app id
  
- chid  -- sets agora channel id
+ channel  -- sets agora channel id
 
  silent -- a flag to show/hide debug info
 
@@ -39,9 +39,9 @@ This assumes you have cloned this repo to your home folder ~
    
 Using a test source:
 
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx chid=test silent=1
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
    
 
 Using a webcam source:
 
- gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx chid=test silent=1
+ gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1

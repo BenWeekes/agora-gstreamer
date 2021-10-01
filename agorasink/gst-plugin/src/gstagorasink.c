@@ -136,7 +136,7 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 
   /*channel_id*/
   g_object_class_install_property (gobject_class, CHANNEL_ID,
-      g_param_spec_string ("chid", "chid", "agora channel id",
+      g_param_spec_string ("channel", "channel", "agora channel id",
           FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
