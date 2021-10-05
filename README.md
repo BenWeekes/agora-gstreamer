@@ -25,7 +25,7 @@ This assumes you have cloned this repo to your home folder ~
    meson build   
    ./c   
 
-## Properties
+## Pipeline Configuration Properties
 
  appid -- sets agora app id
  
@@ -45,3 +45,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 Using a webcam source:
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
+ 
+ ## Developer Notes
+ gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
+ meson.build specifies the files to be built    
+ agorac.cpp is related to RTMPG project which we use here as a .so library  
+ 
