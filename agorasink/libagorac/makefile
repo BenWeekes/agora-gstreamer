@@ -8,12 +8,18 @@ LDFLAGS      = -shared
 TARGET_LIB = libagorac.so
 DESTDIR?=/usr/local/lib
 
-HELPER_FILES=helpers/agoradecoder.cpp  helpers/agoraencoder.cpp  helpers/agoralog.cpp  helpers/localconfig.cpp helpers/utilities.cpp
+HELPER_FILES=helpers/agoradecoder.cpp \
+              helpers/agoraencoder.cpp \
+			  helpers/agoralog.cpp \
+			  helpers/localconfig.cpp \
+			  helpers/utilities.cpp\
+
+AGORA_RECEIVER =agorareceiver.cpp userobserver.cpp
 
 all: ${TARGET_LIB}
 
 $(TARGET_LIB): $(OBJS) agorac.cpp 
-	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp ${HELPER_FILES}  $(CFLAGS)
+	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp ${HELPER_FILES} ${AGORA_RECEIVER} $(CFLAGS)
 
 clean:
 	rm $(TARGET_LIB)
