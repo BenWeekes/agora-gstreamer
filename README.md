@@ -39,6 +39,8 @@ This assumes you have cloned this repo to your home folder ~
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    
+ ## agorasink
+   
 Using a test source:
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
@@ -54,7 +56,7 @@ Using a webcam source:
 
    gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
 
-   where appid and channel is same as agorasink. The value of userid represents which channel user agorasrc should read his/her video. 
+   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
