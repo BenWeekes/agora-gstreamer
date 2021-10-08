@@ -3,45 +3,48 @@
 
 #include "helpers/agoralog.h"
 
-//UserObserver
-
-MyUserObserver::MyUserObserver(agora::rtc::ILocalUser* _local_user) :
+UserObserver::UserObserver(agora::rtc::ILocalUser* _local_user) :
     local_user(_local_user)
 {
     local_user->registerLocalUserObserver(this);
 }
 
-MyUserObserver::~MyUserObserver()
+UserObserver::~UserObserver()
 {
-    local_user->unregisterLocalUserObserver(this);
+     //local_user->unregisterLocalUserObserver(this);
+    _iFrame_request_fn=nullptr;
 }
 
-agora::rtc::ILocalUser* MyUserObserver::GetLocalUser()
+agora::rtc::ILocalUser* UserObserver::GetLocalUser()
 {
     return local_user;
 }
 
-void MyUserObserver::setVideoEncodedImageReceiver(agora::rtc::IVideoEncodedImageReceiver* receiver)
+void UserObserver::setVideoEncodedImageReceiver(agora::rtc::IVideoEncodedImageReceiver* receiver)
 {
     video_encoded_receiver = receiver;
 }
 
-void MyUserObserver::setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer)
+void UserObserver::setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer)
 {
     video_frame_observer = observer;
 }
 
-void MyUserObserver::unsetVideoFrameObserver()
+void UserObserver::unsetVideoFrameObserver()
 {
 }
 
-void MyUserObserver::onUserVideoTrackSubscribed(agora::user_id_t userId, agora::rtc::VideoTrackInfo trackInfo,
+void UserObserver::setOnIframeRequestReceivedFn(const IFrameRequest_fn& fn){
+    _iFrame_request_fn=fn;
+  }
+
+void UserObserver::onUserVideoTrackSubscribed(agora::user_id_t userId, agora::rtc::VideoTrackInfo trackInfo,
     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack)
 {
-   // logger->Info("video track subscribed: userId {}, codecType {}, encodedFrameOnly {}", userId,
-     //   trackInfo.codecType, trackInfo.encodedFrameOnly);
-     //
-   logMessage("AGORA: video track subscribed");
+    /*g_logger->Info("video track subscribed: userId {}, codecType {}, encodedFrameOnly {}", userId,
+        trackInfo.codecType, trackInfo.encodedFrameOnly);*/
+
+    
     
     std::lock_guard<std::mutex> lock(observer_lock);
     remote_video_track = videoTrack;
@@ -51,28 +54,58 @@ void MyUserObserver::onUserVideoTrackSubscribed(agora::user_id_t userId, agora::
         remote_video_track->addRenderer(video_frame_observer);
 }
 
-void MyUserObserver::onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info)
+void UserObserver::onUserVideoTrackStateChanged(agora::user_id_t userId, 
+    agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
+    agora::rtc::REMOTE_VIDEO_STATE state, agora::rtc::REMOTE_VIDEO_STATE_REASON reason, int elapsed)
 {
-   // logger->Info("remote video stream info updated: uid {}, streamType {}", info.uid, info.stream_type);
-   logMessage("AGORA: remote video stream info updated");
+   /* g_logger->Info("user video track state changed: userId {}, state {}, reason {}, elapsed {}", userId,
+        state, reason, elapsed);*/
+
+    if (reason == agora::rtc::REMOTE_VIDEO_STATE_REASON_REMOTE_OFFLINE){
+        
+    }
+        
 }
 
-void MyUserObserver::onVideoSubscribeStateChanged(const char* channel, agora::rtc::uid_t uid,
+void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
+    const agora::rtc::RemoteVideoTrackStats& stats)
+{
+    //g_logger->Info("remote video track statistics: userId {}, delay {}, width {}, height {}", stats.uid,
+    //    stats.delay, stats.width, stats.height);
+}
+
+void UserObserver::onLocalVideoTrackStateChanged(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
+    agora::rtc::LOCAL_VIDEO_STREAM_STATE state, agora::rtc::LOCAL_VIDEO_STREAM_ERROR errorCode)
+{
+   // g_logger->Info("local video track state changed: state {}, errorCode {}", state, errorCode);
+}
+
+void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
+    const agora::rtc::LocalVideoTrackStats& stats)
+{
+    //g_logger->Info("local video track statistics: width {}, height {}", stats.width, stats.height);
+}
+
+void UserObserver::onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info)
+{
+    //g_logger->Info("remote video stream info updated: uid {}, streamType {}", info.uid, info.stream_type);
+}
+
+void UserObserver::onVideoSubscribeStateChanged(const char* channel, agora::rtc::uid_t uid,
     agora::rtc::STREAM_SUBSCRIBE_STATE oldState, agora::rtc::STREAM_SUBSCRIBE_STATE newState,
     int elapseSinceLastState)
 {
-   // logger->Info("video state changed: channel {}, uid {}, oldState {}, newState", channel, uid, oldState, newState);
-   logMessage("AGORA: video state changed");
+    //g_logger->Info("video state changed: channel {}, uid {}, oldState {}, newState", channel, uid, oldState, newState);
 }
 
-void MyUserObserver::onUserInfoUpdated(agora::user_id_t userId, USER_MEDIA_INFO msg, bool val)
+void UserObserver::onUserInfoUpdated(agora::user_id_t userId, USER_MEDIA_INFO msg, bool val)
 {
-   // logger->Info("user info updated: userId {}, msg {}, val {}", userId, msg, val);
-   logMessage("AGORA: user info updated");
-
+   // g_logger->Info("user info updated: userId {}, msg {}, val {}", userId, msg, val);
 }
 
-void MyUserObserver::onIntraRequestReceived()
+void UserObserver::onIntraRequestReceived()
 {
-  logMessage("AGORA: ********iFrame request received*******");
+  if(_iFrame_request_fn!=nullptr){
+     _iFrame_request_fn();
+  }
 }

@@ -2,7 +2,8 @@
  * GStreamer
  * Copyright (C) 2005 Thomas Vander Stichele <thomas@apestaart.org>
  * Copyright (C) 2005 Ronald S. Bultje <rbultje@ronald.bitfreak.net>
- * Copyright (C) 2021 mostafa <<user@hostname.org>>
+ * Copyright (C) 2020 Niels De Graef <niels.degraef@gmail.com>
+ * Copyright (C) 2021 Ubuntu <<user@hostname.org>>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,61 +41,53 @@
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
- * Boston, MA 02111-1307, USA.
- */
+ * */
 
-#ifndef __GST_AGORASINK_H__
-#define __GST_AGORASINK_H__
+#ifndef __GST_AGORASRC_H__
+#define __GST_AGORASRC_H__
 
 #include <gst/gst.h>
+#include <gst/base/gstpushsrc.h>
 
 #include "agorac.h"
-#include <opus/opus.h>
 
 G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
-#define GST_TYPE_AGORASINK \
-  (gst_agorasink_get_type())
-#define GST_AGORASINK(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_AGORASINK,Gstagorasink))
+#define GST_TYPE_AGORASRC \
+  (gst_agorasrc_get_type())
+#define GST_AGORASRC(obj) \
+  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_AGORASRC,Gstagorasrc))
 #define GST_AGORASINK_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_AGORASINK,GstagorasinkClass))
-#define GST_IS_AGORASINK(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_AGORASINK))
-#define GST_IS_AGORASINK_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_AGORASINK))
+  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_AGORASRC,GstagorasrcClass))
+#define GST_IS_AGORASRC(obj) \
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_AGORASRC))
+#define GST_IS_AGORASRC_CLASS(klass) \
+  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_AGORASRC))
 
-typedef struct _Gstagorasink      Gstagorasink;
-typedef struct _GstagorasinkClass GstagorasinkClass;
+#define GST_TYPE_AGORASRC (gst_agorasrc_get_type())
+
+G_DECLARE_FINAL_TYPE (Gstagorasrc, gst_agorasrc,
+    GST, PLUGIN_TEMPLATE, GstPushSrc)
 
 #define MAX_STRING_LEN  1024
 
-struct _Gstagorasink
+struct _Gstagorasrc
 {
-  GstElement element;
+  GstPushSrc element;
 
   GstPad *sinkpad, *srcpad;
+
+  gboolean silent;
+
+  agora_receive_context_t* agora_ctx;
 
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
 
-  gboolean silent;
-
-  /*agora context for sending audio and video */
-  agora_context_t        *agora_ctx;
-
-  size_t                 ts;
 };
-
-struct _GstagorasinkClass 
-{
-  GstElementClass parent_class;
-};
-
-GType gst_agorasink_get_type (void);
 
 G_END_DECLS
 
-#endif /* __GST_AGORASINK_H__ */
+#endif /* __GST_AGORASRC_H__ */

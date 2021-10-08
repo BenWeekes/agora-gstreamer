@@ -25,6 +25,7 @@
 #include "agoratype.h"
 #include "helpers/agoraconstants.h"
 
+#include "agorareceiver.h"
 
 //threads
 static void VideoThreadHandlerHigh(agora_context_t* ctx);
@@ -259,6 +260,19 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id, 
   ctx->audioDumpFileName="/tmp/rtmp_agora_audio_"+std::to_string((long)(ctx))+".raw";
 
   return ctx;
+}
+
+agora_receive_context_t* agora_receive_init(char* app_id, char* ch_id, char* user_id){
+    
+    auto receiver=create_receive_user(app_id, ch_id, user_id);
+    if(receiver==nullptr){
+       return NULL;
+    }
+
+    agora_receive_context_t* context=new agora_receive_context_t;
+    context->_receiver=receiver;
+
+    return context;
 }
 
 bool doSendLowVideo(agora_context_t* ctx, const unsigned char* buffer,  unsigned long len,int is_key_frame){
@@ -648,3 +662,14 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
    meidaFile.write(reinterpret_cast<const char*>(data), sampleCount*sizeof(float)); 
    meidaFile.close();
 }
+
+ size_t get_next_video_frame(agora_receive_context_t* context, unsigned char* data, size_t max_buffer_size)
+ {
+    if(context==NULL)  return 0;
+
+    if(context->_receiver==nullptr) return 0;
+
+    return get_next_video_frame(context->_receiver, data, max_buffer_size);
+
+ }
+

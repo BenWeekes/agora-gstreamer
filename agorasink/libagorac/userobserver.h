@@ -5,11 +5,15 @@
 #include <NGIAgoraRtcConnection.h>
 #include <mutex>
 
-class MyUserObserver : public agora::rtc::ILocalUserObserver
+#include <functional>
+
+using IFrameRequest_fn =std::function<void()>;
+
+class UserObserver : public agora::rtc::ILocalUserObserver
 {
 public:
-    MyUserObserver(agora::rtc::ILocalUser* _local_user);
-    virtual ~MyUserObserver();
+    UserObserver(agora::rtc::ILocalUser* _local_user);
+    virtual ~UserObserver();
 
     agora::rtc::ILocalUser* GetLocalUser();
 
@@ -18,6 +22,7 @@ public:
     void setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer);
     void unsetVideoFrameObserver();
 
+    void setOnIframeRequestReceivedFn(const IFrameRequest_fn& fn);
 
 public:
     // inherit from agora::rtc::ILocalUserObserver
@@ -53,17 +58,17 @@ public:
                                     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
                                     agora::rtc::REMOTE_VIDEO_STATE state,
                                     agora::rtc::REMOTE_VIDEO_STATE_REASON reason,
-                                    int elapsed) override {}
+                                    int elapsed) override;
 
   void onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
-                                    const agora::rtc::RemoteVideoTrackStats& stats) override {}
+                                    const agora::rtc::RemoteVideoTrackStats& stats) override;
 
   void onLocalVideoTrackStateChanged(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                      agora::rtc::LOCAL_VIDEO_STREAM_STATE state,
-                                     agora::rtc::LOCAL_VIDEO_STREAM_ERROR errorCode) override {}
+                                     agora::rtc::LOCAL_VIDEO_STREAM_ERROR errorCode) override;
 
   void onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
-                                   const agora::rtc::LocalVideoTrackStats& stats) override {}
+                                   const agora::rtc::LocalVideoTrackStats& stats) override;
 
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
                                unsigned int speakerNumber, int totalVolume) override {}
@@ -105,6 +110,7 @@ private:
     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> remote_video_track;
 
     std::mutex observer_lock;
+    IFrameRequest_fn    _iFrame_request_fn;
 };
 
 #endif

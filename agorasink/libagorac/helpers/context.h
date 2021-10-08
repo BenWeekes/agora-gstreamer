@@ -79,6 +79,12 @@ struct agora_context_t{
    std::string                                     audioDumpFileName;         
 };
 
+class AgoraReceiverUser;
+struct agora_receive_context_t{
+
+   std::shared_ptr<AgoraReceiverUser> _receiver;
+};
+
 class Work{
 
 public:

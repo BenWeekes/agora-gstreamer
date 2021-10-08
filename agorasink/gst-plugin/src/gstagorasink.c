@@ -80,6 +80,7 @@ enum
   PROP_0,
   APP_ID,
   CHANNEL_ID,
+  USER_ID,
   PROP_SILENT
 };
 
@@ -139,6 +140,11 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
       g_param_spec_string ("channel", "channel", "agora channel id",
           FALSE, G_PARAM_READWRITE));
 
+  /*user_id*/
+  g_object_class_install_property (gobject_class, USER_ID,
+      g_param_spec_string ("userid", "userid", "agora user id (optional)",
+          FALSE, G_PARAM_READWRITE));
+
   gst_element_class_set_details_simple(gstelement_class,
     "agorasink",
     "agorasink",
@@ -179,6 +185,7 @@ gst_agorasink_init (Gstagorasink * filter)
   //set app_id and channel_id to zero
   memset(filter->app_id, 0, MAX_STRING_LEN);
   memset(filter->channel_id, 0, MAX_STRING_LEN);
+  memset(filter->user_id, 0, MAX_STRING_LEN);
 
   filter->silent = FALSE;
 
@@ -197,11 +204,17 @@ int init_agora(Gstagorasink * filter){
        return -1;
    }
 
-    //initialize agora
-   filter->agora_ctx=agora_init(filter->app_id,filter->channel_id,"123", 0, 
-                        0, 500000,
-                         320,180,
-                         12, 30);
+    /*initialize agora*/
+   filter->agora_ctx=agora_init(filter->app_id,  /*appid*/
+                                filter->channel_id, /*channel*/
+                                filter->user_id,    /*user id*/
+                                 0,                 /*enable encryption */
+                                 0,                 /*enable dual */
+                                 500000,            /*dual video bitrate*/
+                                 320,               /*dual video width*/
+                                 180,               /*dual video height*/
+                                 12,                /*initial size of video buffer*/
+                                 30);               /*dual fps*/
 
    if(filter->agora_ctx==NULL){
 
@@ -221,7 +234,7 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
 {
   Gstagorasink *filter = GST_AGORASINK (object);
    
-    const gchar* str;
+  const gchar* str;
 
   switch (prop_id) {
     case PROP_SILENT:
@@ -236,6 +249,11 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
         str=g_value_get_string (value);
         g_strlcpy(filter->channel_id, str, MAX_STRING_LEN);
         printf("set channel id: %s\n", filter->channel_id);
+        break; 
+     case USER_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->user_id, str, MAX_STRING_LEN);
+        printf("set user id: %s\n", filter->user_id);
         break; 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
