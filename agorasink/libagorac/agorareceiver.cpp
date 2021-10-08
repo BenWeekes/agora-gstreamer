@@ -16,8 +16,9 @@
 #include "helpers/context.h"
 
 using OnNewFrame_fn=std::function<void(const uint userId, 
-                                                 const uint8_t* buffer,
-                                                 const size_t& size)>;
+                                        const uint8_t* buffer,
+                                        const size_t& size,
+                                        const int isKeyFrame)>;
 
 class H264FrameReceiver : public agora::rtc::IVideoEncodedImageReceiver
 {
@@ -72,7 +73,7 @@ public:
     void setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
-    size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size);
+    size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
 
 protected:
 
@@ -119,7 +120,7 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
       std::cout<<(int)(imageBuffer[i])<<" ";
     std::cout<<std::endl;
 
-    _onVideoFrameReceived(videoEncodedFrameInfo.uid, imageBuffer, length);
+    _onVideoFrameReceived(videoEncodedFrameInfo.uid, imageBuffer, length,isKeyFrame);
 
     std::cout<<"Res:"<<videoEncodedFrameInfo.width<<"x"<<videoEncodedFrameInfo.height<<std::endl;
 
@@ -243,12 +244,13 @@ bool AgoraReceiverUser::connect()
      _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
-                                                    const size_t& length){
+                                                    const size_t& length,
+                                                    const int& isKeyFrame){
 
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
 
-             auto frame=std::make_shared<Work>(buffer, length,0);
+             auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
              _receivedVideoFrames->add(frame);
          }
          else{
@@ -312,18 +314,21 @@ std::shared_ptr<AgoraReceiverUser> create_receive_user(const std::string& _appId
     return receiver;                                                                                                
 }
 
-size_t AgoraReceiverUser::getNextVideoFrame(unsigned char* data, size_t max_buffer_size){
+size_t AgoraReceiverUser::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame){
    
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
 
     memcpy(data, work->buffer, work->len);
 
+    *is_key_frame=work->is_key_frame;
+
     return work->len;
 }
 
-size_t get_next_video_frame(std::shared_ptr<AgoraReceiverUser> receiver, unsigned char* data, size_t max_buffer_size){
+size_t get_next_video_frame(std::shared_ptr<AgoraReceiverUser> receiver, 
+              unsigned char* data, size_t max_buffer_size, int* is_key_frame){
 
-   return receiver->getNextVideoFrame(data, max_buffer_size);
+   return receiver->getNextVideoFrame(data, max_buffer_size, is_key_frame);
 
 }

@@ -136,6 +136,7 @@ static GstFlowReturn
 gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
    
   const size_t  max_size=1024*1024;
+  int is_key_frame=0;
 
    Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
 
@@ -146,13 +147,19 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      return GST_FLOW_ERROR;
   }
 
+  int buffer_size=gst_buffer_get_size (buffer);
+  g_print("buffer size: %d", buffer_size);
+
   unsigned char* data=malloc(max_size);
 
-  size_t data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size);
+  size_t data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
   g_print("data size =%ld\n", data_size);
 
+  buffer=gst_buffer_new_and_alloc(data_size);
+  gst_buffer_resize(buffer,0, data_size);
   gst_buffer_fill(buffer, 0, data, data_size);
   gst_buffer_set_size(buffer, data_size);
+
 
   free(data);
 

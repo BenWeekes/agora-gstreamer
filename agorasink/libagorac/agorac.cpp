@@ -663,13 +663,14 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
    meidaFile.close();
 }
 
- size_t get_next_video_frame(agora_receive_context_t* context, unsigned char* data, size_t max_buffer_size)
+ size_t get_next_video_frame(agora_receive_context_t* context, 
+                           unsigned char* data, size_t max_buffer_size,
+                           int* is_key_frame)
  {
-    if(context==NULL)  return 0;
+    if(context==NULL || context->_receiver==nullptr)  return 0;
 
-    if(context->_receiver==nullptr) return 0;
 
-    return get_next_video_frame(context->_receiver, data, max_buffer_size);
+    return get_next_video_frame(context->_receiver, data, max_buffer_size, is_key_frame);
 
  }
 

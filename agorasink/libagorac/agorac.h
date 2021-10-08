@@ -38,7 +38,9 @@
 
  EXTERNC void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short sampleCount);
 
- EXTERNC size_t get_next_video_frame(agora_receive_context_t* context, unsigned char* data, size_t max_buffer_size);
+ EXTERNC size_t get_next_video_frame(agora_receive_context_t* context, 
+                                     unsigned char* data, size_t max_buffer_size,
+									 int* is_key_frame);
  #undef EXTERNC
 
 
