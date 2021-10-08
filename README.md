@@ -12,7 +12,7 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
  
 ## Build and install libagorac library
-This assumes you have cloned this repo to your home folder ~
+This assumes you have cloned this repo to your home folder ~   
    wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
    tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
 
@@ -25,7 +25,7 @@ This assumes you have cloned this repo to your home folder ~
    meson build   
    ./c   
 
-## Properties
+## Pipeline Configuration Properties
 
  appid -- sets agora app id
  
@@ -45,3 +45,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 Using a webcam source:
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
+ 
+ ## Developer Notes
+ gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
+ meson.build specifies the files to be built    
+ agorac.cpp is related to RTMPG project which we use here as a .so library  
+ 
