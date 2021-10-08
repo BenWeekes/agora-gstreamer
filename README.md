@@ -31,6 +31,8 @@ This assumes you have cloned this repo to your home folder ~
  
  channel  -- sets agora channel id
 
+ userid   -- sets agora user id (optional)
+
  silent -- a flag to show/hide debug info
 
 ## Run and test
@@ -45,6 +47,14 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 Using a webcam source:
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
+
+ ## agorasrc
+
+   agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:
+
+   gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
+
+   where appid and channel is same as agorasink. The value of userid represents which channel user agorasrc should read his/her video. 
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
