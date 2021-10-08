@@ -144,13 +144,6 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
 
   Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
 
-  //TODO: we need a better position to initialize agora. 
-  //gst_agorasink_init() is good, however, it is called before reading app and channels ids
-  if(agoraSrc->agora_ctx==NULL && init_agora(agoraSrc)!=0){
-     g_print("cannot initialize agora\n");
-     return GST_FLOW_ERROR;
-  }
-
   unsigned char* data=malloc(max_size);
 
   data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
@@ -178,49 +171,20 @@ gst_video_test_src_start (GstBaseSrc * basesrc)
 
   GST_OBJECT_LOCK (src);
  
-  //g_print("here: started\n");
+  if(src->agora_ctx==NULL && init_agora(src)!=0){
+     g_print("cannot initialize agora\n");
+     return GST_FLOW_ERROR;
+  }
 
-  //gst_agorasrc_init(&src->info);
-  //gst_video_info_init (&src->info);
   GST_OBJECT_UNLOCK (src);
 
   return TRUE;
-}
-
-static gboolean
-gst_video_test_src_decide_allocation (GstBaseSrc * bsrc, GstQuery * query){
-
-    g_print("gst_video_test_src_query\n");
-
-    return TRUE;
-}
-static gboolean
-gst_video_test_src_do_seek (GstBaseSrc * bsrc, GstSegment * segment)
-{
-   g_print("gst_video_test_src_do_seek\n");
-   return TRUE;
-}
-
-static gboolean
-gst_video_test_src_setcaps (GstBaseSrc * bsrc, GstCaps * caps){
-
-   g_print("gst_video_test_src_do_seek\n");
-
-    return TRUE;
-}
-
-static gboolean gst_zedsrc_unlock( GstBaseSrc * bsrc )
-{
-    g_print("gst_zedsrc_unlock\n");
-
-    return TRUE;
 }
 
 /* initialize the agorasrc's class */
 static void
 gst_agorasrc_class_init (GstagorasrcClass * klass)
 {
-   g_print("gst_agorasrc_class_init\n");
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
 
@@ -233,13 +197,9 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
   gstbasesrc_class = (GstBaseSrcClass *) klass;
   gstpushsrc_class = (GstPushSrcClass *) klass;
 
-  gstbasesrc_class->set_caps = gst_video_test_src_setcaps;
-  gstbasesrc_class->do_seek = gst_video_test_src_do_seek;
   gstpushsrc_class->fill = gst_video_test_src_fill;
   gstbasesrc_class->start = gst_video_test_src_start;
-  gstbasesrc_class->decide_allocation = gst_video_test_src_decide_allocation;
-  gstbasesrc_class->unlock = GST_DEBUG_FUNCPTR (gst_zedsrc_unlock);
-
+  
 
   gobject_class->set_property = gst_agorasrc_set_property;
   gobject_class->get_property = gst_agorasrc_get_property;
@@ -283,8 +243,7 @@ static void
 gst_agorasrc_init (Gstagorasrc * filter)
 {
 
-   gst_base_src_set_live (GST_BASE_SRC (filter), TRUE);
-
+  gst_base_src_set_live (GST_BASE_SRC (filter), TRUE);
 
   filter->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
   GST_PAD_SET_PROXY_CAPS (filter->srcpad);
@@ -379,7 +338,7 @@ agorasrc_init (GstPlugin * agorasrc)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstagorasrc"
+#define PACKAGE "agorasrc"
 #endif
 
 /* gstreamer looks for this structure to register agorasrcs
