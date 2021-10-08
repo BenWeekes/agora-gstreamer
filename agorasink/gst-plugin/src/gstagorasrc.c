@@ -135,10 +135,14 @@ int init_agora(Gstagorasrc * src){
 static GstFlowReturn
 gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
    
-  const size_t  max_size=1024*1024;
+  const size_t  max_size=4*1024*1024;
   int is_key_frame=0;
+  size_t data_size=0;
+  size_t in_buffer_size=0;
 
-   Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
+  GstMemory *memory=NULL;
+
+  Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
 
   //TODO: we need a better position to initialize agora. 
   //gst_agorasink_init() is good, however, it is called before reading app and channels ids
@@ -147,19 +151,20 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      return GST_FLOW_ERROR;
   }
 
-  int buffer_size=gst_buffer_get_size (buffer);
-  g_print("buffer size: %d", buffer_size);
-
   unsigned char* data=malloc(max_size);
 
-  size_t data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
-  g_print("data size =%ld\n", data_size);
+  data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
 
-  buffer=gst_buffer_new_and_alloc(data_size);
-  gst_buffer_resize(buffer,0, data_size);
+  in_buffer_size=gst_buffer_get_size (buffer);
+
+  /*increase the buffer if it is less than the frame data size*/
+  if(data_size>in_buffer_size){
+    memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
+    gst_buffer_insert_memory (buffer, -1, memory);
+  }
+
   gst_buffer_fill(buffer, 0, data, data_size);
   gst_buffer_set_size(buffer, data_size);
-
 
   free(data);
 
