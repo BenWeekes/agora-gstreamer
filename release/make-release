@@ -1,0 +1,5 @@
+cp /usr/local/lib/x86_64-linux-gnu/gstreamer-1.0/libgstagorasink.so .
+cp /usr/local/lib/x86_64-linux-gnu/gstreamer-1.0/libgstagorasrc.so .
+cp /usr/local/lib/libagorac.so .
+cp /usr/local/lib/libagora-ffmpeg.so .
+cp /usr/local/lib/libagora_rtc_sdk.so .
