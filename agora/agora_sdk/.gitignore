@@ -1,0 +1,6 @@
+!.gitignore
+build/
+
+agora_sdk/*.so
+agora_sdk/include/*.h
+agora_sdk/include/*.md
