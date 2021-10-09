@@ -16,14 +16,14 @@ This assumes you have cloned this repo to your home folder ~
    wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
    tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
 
-   cd ~/agora-gstreamer/agorasink/libagorac   
+   cd ~/agora-gstreamer/agora/libagorac  
    sudo ./install.sh ~/agora_rtc_sdk   
 
 ## Build this plugin
 
-   cd ~/agora-gstreamer/agorasink   
+   cd ~/agora-gstreamer/gst-agora   
    meson build   
-   ./c   
+   ./install   
 
 ## Pipeline Configuration Properties
 
