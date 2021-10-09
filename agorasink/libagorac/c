@@ -1,4 +1,0 @@
-#sudo ./install.sh /home/ubuntu/custom-ngnix/agora_rtc_sdk
-sudo ./install.sh /home/ubuntu
-sudo /home/ubuntu/custom-ngnix/nginx/objs/nginx -s stop; sudo rm /tmp/rec/*; sudo /home/ubuntu/custom-ngnix/nginx/objs/nginx
-tail -f /tmp/agora.log

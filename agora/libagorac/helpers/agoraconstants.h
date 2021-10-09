@@ -1,0 +1,6 @@
+#ifndef AGORA_CONSTANTS_H
+#define AGORA_CONSTANTS_H
+
+const int INITIAL_ALLOWED_BUFFERING_COUNT=3;
+
+#endif

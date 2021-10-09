@@ -1,2 +1,0 @@
-crash_general_ctx|{"serviceId":"BDFC29A5249043DE8150FD47CFA8D550","sessionId":"5C3D39A2FE514CC9AB1FFC74F35F7C5B","channelName":"test","sdkVersion":"3.4.217","deviceId":"Linux version 5.11.0-36-generic (buildd@lcy01-amd64-004) (gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0, GNU ld (GNU Binutils for Ubuntu) 2.34) #40~20.04.1-Ubuntu SMP Sat Sep 18 02:14:19 UTC 2021
-","appId":"","networkType":1,"channelMode":0,"clientType":0,"clientRole":1,"buildNo":103927,"vid":218887,"cid":1763542333,"uid":123}|sdk_crash_count|0|
