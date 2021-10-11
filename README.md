@@ -12,10 +12,12 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
  
 ## Build and install 
-   After installing the libraries above on your Ubuntu system     
-   Clone this repo
-   cd agora-gstreamer   
+   After installing the libraries above on your Ubuntu system         
+   Clone this repo then      
+   cd agora-gstreamer     
   ./build_all.sh
+  
+  If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
 
 ## creating and installing a binary release:
