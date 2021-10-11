@@ -41,6 +41,9 @@
  EXTERNC size_t get_next_video_frame(agora_receive_context_t* context, 
                                      unsigned char* data, size_t max_buffer_size,
 									 int* is_key_frame);
+
+ EXTERNC size_t get_next_audio_frame(agora_receive_context_t* context, 
+                                     unsigned char* data, size_t max_buffer_size);
  #undef EXTERNC
 
 

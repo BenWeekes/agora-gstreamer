@@ -80,7 +80,8 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
-  PROP_SILENT
+  PROP_SILENT,
+  AUDIO
 };
 
 /* the capabilities of the inputs and outputs.
@@ -127,6 +128,10 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 
   g_object_class_install_property (gobject_class, PROP_SILENT,
       g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
+          FALSE, G_PARAM_READWRITE));
+
+   g_object_class_install_property (gobject_class, AUDIO,
+      g_param_spec_boolean ("audio", "audio", "when true, it sends audio to agora than video",
           FALSE, G_PARAM_READWRITE));
 
   /*app id*/
@@ -187,6 +192,7 @@ gst_agorasink_init (Gstagorasink * filter)
   memset(filter->user_id, 0, MAX_STRING_LEN);
 
   filter->silent = FALSE;
+  filter->audio = FALSE;
 
   filter->ts=0;
 }
@@ -251,6 +257,9 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
         str=g_value_get_string (value);
         g_strlcpy(filter->user_id, str, MAX_STRING_LEN);
         break; 
+     case AUDIO: 
+        filter->audio = g_value_get_boolean (value);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -276,6 +285,9 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
     case USER_ID:
         g_value_set_string (value, filter->user_id);
        break;
+    case AUDIO:
+        g_value_set_boolean (value, filter->audio);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -376,7 +388,14 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
       is_key_frame=1;
   }
 
-  agora_send_video(filter->agora_ctx, data, data_size,is_key_frame, filter->ts);
+
+  if(filter->audio==FALSE){
+      agora_send_video(filter->agora_ctx, data, data_size,is_key_frame, filter->ts);
+  }
+  else{
+      agora_send_audio(filter->agora_ctx, data, data_size, filter->ts);
+  }
+ 
     
   if (filter->silent == FALSE){
       g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);

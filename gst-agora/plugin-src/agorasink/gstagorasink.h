@@ -81,6 +81,8 @@ struct _Gstagorasink
   gchar user_id[MAX_STRING_LEN];
 
   gboolean silent;
+  
+  gboolean audio;
 
   /*agora context for sending audio and video */
   agora_context_t        *agora_ctx;

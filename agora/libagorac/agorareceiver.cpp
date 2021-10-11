@@ -75,6 +75,8 @@ public:
 
     size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
 
+    size_t getNextAudioFrame(unsigned char* data, size_t max_buffer_size);
+
 protected:
 
     bool doConnect();
@@ -100,6 +102,7 @@ private:
     bool                                           _connected = false;
 
      WorkQueue_ptr                                 _receivedVideoFrames;
+     WorkQueue_ptr                                 _receivedAudioFrames;
 };
 
 //H264FrameReceiver
@@ -127,6 +130,16 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
     return true;
 }
 
+bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) {
+   
+   if(_onAudioFrameReceived!=nullptr){
+
+        _onAudioFrameReceived(uid, (const unsigned char*)audioFrame.buffer, audioFrame.samplesPerChannel*2,0);        
+   }
+  
+  return true;
+}
+
 void H264FrameReceiver::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
    _onVideoFrameReceived=fn;
 }
@@ -135,17 +148,6 @@ void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn){
    _onAudioFrameReceived=fn;
 }
 
-bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) {
-   
-   if(_onAudioFrameReceived!=nullptr){
-
-
-      //TODO: is user id is all the time int?
-      //_onAudioFrameReceived(uid, frame);
-   }
-  
-  return true;
-}
 
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, const std::string& channel, const std::string& userId) :
@@ -241,6 +243,7 @@ bool AgoraReceiverUser::connect()
     h264FrameReceiver = std::make_shared<H264FrameReceiver>();
     localUserObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
 
+    //video
      _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
@@ -252,6 +255,25 @@ bool AgoraReceiverUser::connect()
 
              auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
              _receivedVideoFrames->add(frame);
+         }
+         else{
+             std::cout<<"buffer reached max size"<<std::endl;
+         }
+
+    });
+
+   //audio
+     _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
+    _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
+                                                    const uint8_t* buffer,
+                                                    const size_t& length,
+                                                    const int& isKeyFrame){
+
+         const size_t MAX_BUFFER_SIZE=200;
+         if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
+
+             auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+             _receivedAudioFrames->add(frame);
          }
          else{
              std::cout<<"buffer reached max size"<<std::endl;
@@ -326,9 +348,25 @@ size_t AgoraReceiverUser::getNextVideoFrame(unsigned char* data, size_t max_buff
     return work->len;
 }
 
+size_t AgoraReceiverUser::getNextAudioFrame(unsigned char* data, size_t max_buffer_size){
+   
+    _receivedAudioFrames->waitForWork();
+    Work_ptr work=_receivedAudioFrames->get();
+
+    memcpy(data, work->buffer, work->len);
+
+    return work->len;
+}
+
 size_t get_next_video_frame(std::shared_ptr<AgoraReceiverUser> receiver, 
               unsigned char* data, size_t max_buffer_size, int* is_key_frame){
 
    return receiver->getNextVideoFrame(data, max_buffer_size, is_key_frame);
 
+}
+
+size_t get_next_audio_frame(std::shared_ptr<AgoraReceiverUser> receiver, 
+                             unsigned char* data, size_t max_buffer_size){
+
+    return receiver->getNextAudioFrame(data, max_buffer_size);
 }

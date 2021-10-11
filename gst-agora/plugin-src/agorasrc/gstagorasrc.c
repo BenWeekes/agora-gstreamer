@@ -83,6 +83,7 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
+  AUDIO
 };
 
 /* the capabilities of the inputs and outputs.
@@ -150,7 +151,12 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      return GST_FLOW_ERROR;
   }
 
-  data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
+  if(agoraSrc->audio==FALSE){
+     data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
+  }
+  else{
+    data_size=get_next_audio_frame(agoraSrc->agora_ctx, data, max_size);
+  }
 
   in_buffer_size=gst_buffer_get_size (buffer);
 
@@ -212,6 +218,10 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
       g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
+  g_object_class_install_property (gobject_class, AUDIO,
+      g_param_spec_boolean ("audio", "audio", "when true, it reads audio from agora than video",
+          FALSE, G_PARAM_READWRITE));
+
   /*app id*/
   g_object_class_install_property (gobject_class, APP_ID,
       g_param_spec_string ("appid", "appid", "agora app id",
@@ -259,6 +269,7 @@ gst_agorasrc_init (Gstagorasrc * agoraSrc)
   memset(agoraSrc->user_id, 0, MAX_STRING_LEN);
   
   agoraSrc->silent = FALSE;
+  agoraSrc->audio=FALSE;
 }
 static void
 gst_agorasrc_set_property (GObject * object, guint prop_id,
@@ -284,9 +295,12 @@ gst_agorasrc_set_property (GObject * object, guint prop_id,
         str=g_value_get_string (value);
         g_strlcpy(agoraSrc->user_id, str, MAX_STRING_LEN);
         break; 
+     case AUDIO: 
+        agoraSrc->audio = g_value_get_boolean (value);
+        break;
     default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;
   }
 }
 
@@ -308,7 +322,10 @@ gst_agorasrc_get_property (GObject * object, guint prop_id,
        break;
     case USER_ID:
         g_value_set_string (value, agoraSrc->user_id);
-       break;
+        break;
+    case AUDIO:
+        g_value_set_boolean (value, agoraSrc->audio);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
