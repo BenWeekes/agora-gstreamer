@@ -25,6 +25,26 @@ This assumes you have cloned this repo to your home folder ~
    meson build   
    ./install   
 
+## Build all
+
+ You can also build libagorac and plugin in one step by:
+
+  .\build_all.sh
+
+
+## creating and installing a binary release:
+
+To create a binary release:
+
+cd release
+./make-release
+
+To install the release on the target machine:
+
+cd release
+./install
+
+
 ## Pipeline Configuration Properties
 
  appid -- sets agora app id
