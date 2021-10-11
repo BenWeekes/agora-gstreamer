@@ -47,22 +47,33 @@ cd release
    
  ## agorasink
    
-Using a test source:
+Video into Agora from test source:    
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
-   
 
-Using a webcam source:
+Video into Agora from webcam source:     
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
+ 
+Audio into Agora from test source:    
+
+gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test silent=1
+
 
  ## agorasrc
 
+Video out of Agora:    
    agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:
 
    gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
 
-   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to
+   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
+   
+ 
+ Audio out of Agora
+ 
+   gst-launch-1.0 -v agorasrc audio=true appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw   
+   
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
