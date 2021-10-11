@@ -27,9 +27,9 @@ This assumes you have cloned this repo to your home folder ~
 
 ## Build all
 
- You can also build libagorac and plugin in one step by:
+ You can also build libagorac and the plugins in one step with:
 
-  .\build_all.sh
+  ./build_all.sh
 
 
 ## creating and installing a binary release:
