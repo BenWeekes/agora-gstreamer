@@ -7,29 +7,17 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
 
 ## Install additional libraries:
 
-   sudo apt-get install -y meson libswscale-dev x264 libx264-dev   
+   sudo apt-get install -y meson libswscale-dev x264 libx264-dev libopus-dev   
    sudo apt install -y build-essential git libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip     
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
  
-## Build and install libagorac library
-This assumes you have cloned this repo to your home folder ~   
-   wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
-   tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
-
-   cd ~/agora-gstreamer/agora/libagorac  
-   sudo ./install.sh ~/agora_rtc_sdk   
-
-## Build this plugin
-
-   cd ~/agora-gstreamer/gst-agora   
-   meson build   
-   ./install   
-
-## Build all
-
- You can also build libagorac and the plugins in one step with:
-
+## Build and install 
+   After installing the libraries above on your Ubuntu system         
+   Clone this repo then      
+   cd agora-gstreamer     
   ./build_all.sh
+  
+  If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
 
 ## creating and installing a binary release:
@@ -61,22 +49,33 @@ cd release
    
  ## agorasink
    
-Using a test source:
+Video into Agora from test source:    
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
-   
 
-Using a webcam source:
+Video into Agora from webcam source:     
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
+ 
+Audio into Agora from test source:    
+
+gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test silent=1
+
 
  ## agorasrc
 
+Video out of Agora:    
    agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:
 
    gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
 
-   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to
+   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
+   
+ 
+ Audio out of Agora
+ 
+   gst-launch-1.0 -v agorasrc audio=true appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw   
+   
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
