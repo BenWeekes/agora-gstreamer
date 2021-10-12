@@ -65,16 +65,22 @@ gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink au
  ## agorasrc
 
 Video out of Agora:    
-   agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:
+   agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:     
+   
+   gst-launch-1.0 agorasrc appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=benlinuxsdk verbose=true userid=1759621151 ! decodebin ! glimagesink     
 
-   gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
+   gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink      
 
    where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
    
  
  Audio out of Agora
  
-   gst-launch-1.0 -v agorasrc audio=true appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw   
+   gst-launch-1.0 -v agorasrc audio=true appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw     
+   
+   gst-launch-1.0 agorasrc audio=true appid=xxx channel=xxx verbose=true userid=xxx  !  audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
+
+
    
  
  ## Developer Notes
