@@ -252,6 +252,7 @@ bool AgoraReceiverUser::connect()
                                                     const size_t& length,
                                                     const int& isKeyFrame){
 
+         std::cout<<"current video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
 
