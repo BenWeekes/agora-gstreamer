@@ -69,14 +69,14 @@ Video out of Agora:
    
    gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx userid=xxx ! decodebin ! glimagesink     
 
-   gst-launch-1.0 -v agorasrc  verbose=false  appid=xxx channel=xxx userid=xxx ! decodebin ! autovideosink      
+   gst-launch-1.0 agorasrc verbose=false  appid=xxx channel=xxx userid=xxx ! decodebin ! autovideosink      
 
    where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
    
  
  Audio out of Agora
  
-   gst-launch-1.0 -v agorasrc audio=true verbose=false  appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw     
+   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw     
    
    gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx userid=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
