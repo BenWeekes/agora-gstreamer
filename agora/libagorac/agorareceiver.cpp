@@ -196,7 +196,9 @@ bool AgoraReceiverUser::connect()
         return false;
     }
     
-    _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_AUDIENCE;
+    //_rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_AUDIENCE;
+    _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
+
     _rtcConfig.autoSubscribeAudio = true;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false;  // Subscribe audio but without playback
