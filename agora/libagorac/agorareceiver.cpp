@@ -269,6 +269,12 @@ bool AgoraReceiverUser::connect()
                                                     const size_t& length,
                                                     const int& isKeyFrame){
 
+
+         //we read audio only from this user id
+         if(_userId!=std::to_string(userId)){
+             return;
+         }
+
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
 
