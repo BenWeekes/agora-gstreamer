@@ -79,7 +79,7 @@ enum
 enum
 {
   PROP_0,
-  PROP_SILENT,
+  PROP_VERBOSE,
   APP_ID,
   CHANNEL_ID,
   USER_ID,
@@ -120,7 +120,15 @@ int init_agora(Gstagorasrc * src){
    }
 
     /*initialize agora*/
-   src->agora_ctx=agora_receive_init(src->app_id,src->channel_id, src->user_id);
+   if(src->audio==TRUE){
+       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
+                                        src->user_id, TRUE, FALSE, src->verbose);
+   }
+   else{
+       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
+                                           src->user_id, FALSE, TRUE, src->verbose);
+   }
+  
    if(src->agora_ctx==NULL){
 
       g_print("agora COULD NOT  be initialized\n");
@@ -214,8 +222,8 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
   gobject_class->set_property = gst_agorasrc_set_property;
   gobject_class->get_property = gst_agorasrc_get_property;
 
- g_object_class_install_property (gobject_class, PROP_SILENT,
-      g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
+ g_object_class_install_property (gobject_class, PROP_VERBOSE,
+      g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class, AUDIO,
@@ -268,7 +276,7 @@ gst_agorasrc_init (Gstagorasrc * agoraSrc)
   memset(agoraSrc->channel_id, 0, MAX_STRING_LEN);
   memset(agoraSrc->user_id, 0, MAX_STRING_LEN);
   
-  agoraSrc->silent = FALSE;
+  agoraSrc->verbose = FALSE;
   agoraSrc->audio=FALSE;
 }
 static void
@@ -280,8 +288,8 @@ gst_agorasrc_set_property (GObject * object, guint prop_id,
   const gchar* str;
 
   switch (prop_id) {
-    case PROP_SILENT:
-      agoraSrc->silent = g_value_get_boolean (value);
+    case PROP_VERBOSE:
+      agoraSrc->verbose = g_value_get_boolean (value);
       break;
     case APP_ID:
         str=g_value_get_string (value);
@@ -311,8 +319,8 @@ gst_agorasrc_get_property (GObject * object, guint prop_id,
   Gstagorasrc *agoraSrc = GST_AGORASRC (object);
 
   switch (prop_id) {
-    case PROP_SILENT:
-      g_value_set_boolean (value, agoraSrc->silent);
+    case PROP_VERBOSE:
+      g_value_set_boolean (value, agoraSrc->verbose);
       break;
     case APP_ID:
        g_value_set_string (value, agoraSrc->app_id);

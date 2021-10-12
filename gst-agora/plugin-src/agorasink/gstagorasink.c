@@ -80,7 +80,7 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
-  PROP_SILENT,
+  PROP_VERBOSE,
   AUDIO
 };
 
@@ -126,8 +126,8 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
   gobject_class->set_property = gst_agorasink_set_property;
   gobject_class->get_property = gst_agorasink_get_property;
 
-  g_object_class_install_property (gobject_class, PROP_SILENT,
-      g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
+  g_object_class_install_property (gobject_class, PROP_VERBOSE,
+      g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
    g_object_class_install_property (gobject_class, AUDIO,
@@ -191,7 +191,7 @@ gst_agorasink_init (Gstagorasink * filter)
   memset(filter->channel_id, 0, MAX_STRING_LEN);
   memset(filter->user_id, 0, MAX_STRING_LEN);
 
-  filter->silent = FALSE;
+  filter->verbose = FALSE;
   filter->audio = FALSE;
 
   filter->ts=0;
@@ -242,8 +242,8 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
   const gchar* str;
 
   switch (prop_id) {
-    case PROP_SILENT:
-      filter->silent = g_value_get_boolean (value);
+    case PROP_VERBOSE:
+      filter->verbose = g_value_get_boolean (value);
       break;
     case APP_ID:
         str=g_value_get_string (value);
@@ -273,8 +273,8 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
   Gstagorasink *filter = GST_AGORASINK (object);
 
   switch (prop_id) {
-    case PROP_SILENT:
-      g_value_set_boolean (value, filter->silent);
+    case PROP_VERBOSE:
+      g_value_set_boolean (value, filter->verbose);
       break;
      case APP_ID:
        g_value_set_string (value, filter->app_id);
@@ -397,7 +397,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   }
  
     
-  if (filter->silent == FALSE){
+  if (filter->verbose == true){
       g_print ("received %" G_GSIZE_FORMAT" bytes!\n",data_size);
       print_packet(data, 10);
       g_print("is key frame: %d\n", is_key_frame);

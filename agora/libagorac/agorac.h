@@ -17,7 +17,12 @@
 				                    unsigned short  dual_width,  unsigned short  dual_height,
 									unsigned short min_video_jb, unsigned short dfps);
 
- EXTERNC agora_receive_context_t* agora_receive_init(char* app_id, char* ch_id, char* user_id);
+ EXTERNC agora_receive_context_t* agora_receive_init(char* app_id,
+                                                     char* ch_id, 
+													 char* user_id,
+													 int receiveAudio,
+													 int receiveVideo,
+													 int verbose);
 
  EXTERNC int  agora_send_video(agora_context_t* ctx,  
                                const unsigned char* buffer,  

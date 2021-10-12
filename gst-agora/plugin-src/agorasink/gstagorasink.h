@@ -80,7 +80,7 @@ struct _Gstagorasink
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
 
-  gboolean silent;
+  gboolean verbose;
   
   gboolean audio;
 

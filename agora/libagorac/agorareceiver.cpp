@@ -14,6 +14,7 @@
 
 #include "userobserver.h"
 #include "helpers/context.h"
+#include "helpers/utilities.h"
 
 using OnNewFrame_fn=std::function<void(const uint userId, 
                                         const uint8_t* buffer,
@@ -63,7 +64,10 @@ class AgoraReceiverUser
 public:
     AgoraReceiverUser(const std::string& _appId,
                       const std::string& _channel,
-                      const std::string& _userId);
+                      const std::string& _userId,
+                      bool receiveAudio=false,
+                      bool receiveVideo=false,
+                      bool verbose=false);
 
     virtual ~AgoraReceiverUser();
 
@@ -103,6 +107,12 @@ private:
 
      WorkQueue_ptr                                 _receivedVideoFrames;
      WorkQueue_ptr                                 _receivedAudioFrames;
+
+     bool                                          _receiveAudio;
+     bool                                          _receiveVideo;
+     bool                                          _verbose;
+
+     TimePoint                                     _lastReceivedFrameTime;
 };
 
 //H264FrameReceiver
@@ -119,13 +129,7 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
 
     bool isKeyFrame=videoEncodedFrameInfo.frameType == agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
     
-    for(int i=0;i<10;i++)
-      std::cout<<(int)(imageBuffer[i])<<" ";
-    std::cout<<std::endl;
-
     _onVideoFrameReceived(videoEncodedFrameInfo.uid, imageBuffer, length,isKeyFrame);
-
-    std::cout<<"Res:"<<videoEncodedFrameInfo.width<<"x"<<videoEncodedFrameInfo.height<<std::endl;
 
     return true;
 }
@@ -150,10 +154,20 @@ void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn){
 
 
 //AgoraReceiverUser
-AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, const std::string& channel, const std::string& userId) :
+AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
+                                     const std::string& channel,
+                                     const std::string& userId,
+                                     bool receiveAudio,
+                                     bool receiveVideo,
+                                     bool verbose) :
 _appId(appId),
 _channel(channel),
-_userId(userId)
+_userId(userId),
+_receiveAudio(receiveAudio),
+_receiveVideo(receiveVideo),
+_verbose(verbose),
+_lastReceivedFrameTime(Now())
+
 {
 }
 
@@ -252,7 +266,18 @@ bool AgoraReceiverUser::connect()
                                                     const size_t& length,
                                                     const int& isKeyFrame){
 
-         std::cout<<"current video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
+         if(_receiveVideo==false){
+            return ;
+         }
+
+         if(_verbose==true){
+             auto  timeDiff=GetTimeDiff(_lastReceivedFrameTime,Now());
+             std::cout<<"Time since last frame (ms): "<<timeDiff<<std::endl;
+             logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
+         }
+
+         _lastReceivedFrameTime=Now();
+
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
 
@@ -274,7 +299,7 @@ bool AgoraReceiverUser::connect()
 
 
          //we read audio only from this user id
-         if(_userId!=std::to_string(userId)){
+         if(_receiveAudio==false || _userId!=std::to_string(userId)){
              return;
          }
 
@@ -334,9 +359,15 @@ void AgoraReceiverUser::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
 
 std::shared_ptr<AgoraReceiverUser> create_receive_user(const std::string& _appId,
                                                        const std::string& _channel,
-                                                       const std::string& _userId){
+                                                       const std::string& _userId,
+                                                       int receiveAudio,
+													   int receiveVideo,
+                                                       int verbose){
   
-    std::shared_ptr<AgoraReceiverUser> receiver=std::make_shared<AgoraReceiverUser>(_appId, _channel, _userId); 
+    std::shared_ptr<AgoraReceiverUser> receiver=
+      std::make_shared<AgoraReceiverUser>(_appId, _channel, _userId,
+                                          receiveAudio, receiveVideo,
+                                          verbose); 
 
     if(!receiver->connect()){
        return nullptr;

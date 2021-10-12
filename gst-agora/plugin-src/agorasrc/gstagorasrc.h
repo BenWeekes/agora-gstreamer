@@ -78,7 +78,7 @@ struct _Gstagorasrc
 
   GstPad  *srcpad;
 
-  gboolean silent;
+  gboolean verbose;
   gboolean audio;
 
   agora_receive_context_t* agora_ctx;

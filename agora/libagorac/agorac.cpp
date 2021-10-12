@@ -262,9 +262,14 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id, 
   return ctx;
 }
 
-agora_receive_context_t* agora_receive_init(char* app_id, char* ch_id, char* user_id){
+agora_receive_context_t* agora_receive_init(char* app_id, 
+                                            char* ch_id,
+                                            char* user_id,
+                                            int receiveAudio,
+													     int receiveVideo,
+                                            int verbose){
     
-    auto receiver=create_receive_user(app_id, ch_id, user_id);
+    auto receiver=create_receive_user(app_id, ch_id, user_id, receiveAudio, receiveVideo, verbose);
     if(receiver==nullptr){
        return NULL;
     }
