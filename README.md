@@ -84,7 +84,7 @@ Video out of Agora:
    gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx userid=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
  
- ## Developer Notes
+ ## SDK Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
  meson.build specifies the files to be built    
  agorac.cpp is related to RTMPG project which we use here as a .so library  
@@ -92,3 +92,5 @@ Video out of Agora:
 tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
  LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk
 export LD_LIBRARY_PATH
+test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing
+./sample_send_h264_dual_stream --token 20b7c51ff4c644ab80cf5a4e646b0537 --channelId forme --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264
