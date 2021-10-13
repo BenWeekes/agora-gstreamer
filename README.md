@@ -85,4 +85,6 @@ Video out of Agora:
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
  meson.build specifies the files to be built    
  agorac.cpp is related to RTMPG project which we use here as a .so library  
+ Uses this SDK wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz     
+tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
  
