@@ -95,3 +95,5 @@ Video out of Agora:
  ./build-x86_64.sh    
  LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk    
  export LD_LIBRARY_PATH     
+ test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing     
+ ./sample_send_h264_dual_stream --token xxxx --channelId xxxx --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264   
