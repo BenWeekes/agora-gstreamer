@@ -41,7 +41,10 @@ cd release
 
  userid   -- sets agora user id (optional)
 
- silent -- a flag to show/hide debug info
+ audio -- boolean (true/false) to specify if pipeline is audio     
+ 
+ verbose -- boolean (true/false) to include logging output 
+ 
 
 ## Run and test
 
