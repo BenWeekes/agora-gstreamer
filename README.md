@@ -87,4 +87,5 @@ Video out of Agora:
  agorac.cpp is related to RTMPG project which we use here as a .so library  
  Uses this SDK wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz     
 tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
- 
+ LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk
+export LD_LIBRARY_PATH
