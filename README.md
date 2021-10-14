@@ -41,7 +41,10 @@ cd release
 
  userid   -- sets agora user id (optional)
 
- silent -- a flag to show/hide debug info
+ audio -- boolean (true/false) to specify if pipeline is audio     
+ 
+ verbose -- boolean (true/false) to include logging output 
+ 
 
 ## Run and test
 
@@ -49,36 +52,50 @@ cd release
    
  ## agorasink
    
-Video into Agora from test source:    
+<ins>Video into Agora from test source:</ins>    
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1   ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
 
-Video into Agora from webcam source:     
+<ins>Video into Agora from webcam source:</ins>     
 
  gst-launch-1.0 v4l2src ! jpegdec ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=xxx channel=test silent=1
  
-Audio into Agora from test source:    
+<ins>Audio into Agora from test source:</ins>    
 
 gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test silent=1
 
+<ins>Audio into Agora from microphone</ins>    
+gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=xxx
 
  ## agorasrc
 
-Video out of Agora:    
-   agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:
+<ins>Video out of Agora:</ins>    
+   agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:     
+   
+   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx userid=xxx ! decodebin ! glimagesink     
 
-   gst-launch-1.0 -v agorasrc appid=xxx channel=gstreamer userid=xxx ! decodebin ! autovideosink
+   gst-launch-1.0 agorasrc verbose=false  appid=xxx channel=xxx userid=xxx ! decodebin ! autovideosink      
 
    where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
    
  
- Audio out of Agora
+ <ins>Audio out of Agora</ins>
  
-   gst-launch-1.0 -v agorasrc audio=true appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw   
+   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw     
    
+   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx userid=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
+
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
  meson.build specifies the files to be built    
  agorac.cpp is related to RTMPG project which we use here as a .so library  
- 
+ Uses this SDK wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz     
+ tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
+ sudo apt install cmake    
+ cd  agora_rtc_sdk/example    
+ ./build-x86_64.sh    
+ LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk    
+ export LD_LIBRARY_PATH     
+ test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing     
+ ./sample_send_h264_dual_stream --token xxxx --channelId xxxx --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264   
