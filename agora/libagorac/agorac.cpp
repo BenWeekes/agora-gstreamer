@@ -564,13 +564,13 @@ static void AudioThreadHandler(agora_context_t* ctx){
         return;
      }
 
-     TimePoint  nextSample =
-          GetNextSamplingPoint("Audio: ", ctx,ctx->audioJB,work->timestamp, ctx->lastAudioTimestamp);
+     /*TimePoint  nextSample =
+          GetNextSamplingPoint("Audio: ", ctx,ctx->audioJB,work->timestamp, ctx->lastAudioTimestamp);*/
 
      //when video JB is buffering, audio should buffer too
-     while(ctx->isJbBuffering && ctx->isRunning){
+    /* while(ctx->isJbBuffering && ctx->isRunning){
         std::this_thread::sleep_for(std::chrono::milliseconds(waitTimeForBufferToBeFull));
-     }
+     }*/
 
      doSendAudio(ctx,work->buffer, work->len);
 
@@ -578,7 +578,7 @@ static void AudioThreadHandler(agora_context_t* ctx){
 
      //logMessage("AUDIO timestamp: "+std::to_string(work->timestamp));
 
-     std::this_thread::sleep_until(nextSample);
+    // std::this_thread::sleep_until(nextSample);
   }
 }
 void agora_disconnect(agora_context_t** ctx){
