@@ -205,7 +205,8 @@ static void SampleSendVideoH264Task(
         videoH264FrameSender,
     bool& exitFlag, agora::rtc::VIDEO_STREAM_TYPE streamtype)
 {
-  const char* filename="/home/ubuntu/test_multi_slice.h264";
+  //demo.h264 should be in GST_PLUGIN_PATH
+  const char* filename="demo.h264";
   
   std::unique_ptr<HelperH264FileParser> h264FileParser(
       new HelperH264FileParser(filename));
