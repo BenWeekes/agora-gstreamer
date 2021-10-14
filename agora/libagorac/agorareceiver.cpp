@@ -69,7 +69,8 @@ public:
                       const std::string& _userId,
                       bool receiveAudio=false,
                       bool receiveVideo=false,
-                      bool verbose=false);
+                      bool verbose=false,
+                      const std::string& filePath="");
 
     virtual ~AgoraReceiverUser();
 
@@ -119,6 +120,7 @@ private:
      agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
 
      std::shared_ptr<std::thread>      _senderThread;
+     std::string                       _filePath;
 };
 
 //H264FrameReceiver
@@ -191,25 +193,20 @@ static void sendOneH264Frame(
            ? agora::rtc::VIDEO_FRAME_TYPE::VIDEO_FRAME_TYPE_KEY_FRAME
            : agora::rtc::VIDEO_FRAME_TYPE::VIDEO_FRAME_TYPE_DELTA_FRAME);
 
-  /*   AG_LOG(DEBUG, "sendEncodedVideoImage, buffer %p, len %d, frameType %d",
-           reinterpret_cast<uint8_t*>(h264Frame.get()->buffer.get()),
-     h264Frame.get()->bufferLen, videoEncodedFrameInfo.frameType); */
 
   videoH264FrameSender->sendEncodedVideoImage(
       reinterpret_cast<uint8_t*>(h264Frame.get()->buffer.get()),
       h264Frame.get()->bufferLen, videoEncodedFrameInfo);
 }
 
-static void SampleSendVideoH264Task(
+static void SampleSendVideoH264Task(const std::string & fileName,
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>
         videoH264FrameSender,
     bool& exitFlag, agora::rtc::VIDEO_STREAM_TYPE streamtype)
 {
-  //demo.h264 should be in GST_PLUGIN_PATH
-  const char* filename="demo.h264";
   
   std::unique_ptr<HelperH264FileParser> h264FileParser(
-      new HelperH264FileParser(filename));
+      new HelperH264FileParser(fileName.c_str()));
   h264FileParser->initialize();
 
   // Calculate send interval based on frame rate. H264 frames are sent at this
@@ -233,14 +230,16 @@ AgoraReceiverUser::AgoraReceiverUser(const std::string& appId,
                                      const std::string& userId,
                                      bool receiveAudio,
                                      bool receiveVideo,
-                                     bool verbose) :
+                                     bool verbose,
+                                     const std::string& filePath) :
 _appId(appId),
 _channel(channel),
 _userId(userId),
 _receiveAudio(receiveAudio),
 _receiveVideo(receiveVideo),
 _verbose(verbose),
-_lastReceivedFrameTime(Now())
+_lastReceivedFrameTime(Now()),
+_filePath(filePath)
 
 {
 }
@@ -354,6 +353,7 @@ bool AgoraReceiverUser::connect()
 
 
     _senderThread=std::make_shared<std::thread>(SampleSendVideoH264Task,
+                              _filePath, 
                               _videoFrameSender, std::ref(exitFlag),
                               agora::rtc::VIDEO_STREAM_HIGH);
 
@@ -466,12 +466,14 @@ std::shared_ptr<AgoraReceiverUser> create_receive_user(const std::string& _appId
                                                        const std::string& _userId,
                                                        int receiveAudio,
 													   int receiveVideo,
-                                                       int verbose){
+                                                       int verbose,
+                                                       const std::string& filePath){
   
     std::shared_ptr<AgoraReceiverUser> receiver=
       std::make_shared<AgoraReceiverUser>(_appId, _channel, _userId,
                                           receiveAudio, receiveVideo,
-                                          verbose); 
+                                          verbose,
+                                          filePath); 
 
     if(!receiver->connect()){
        return nullptr;

@@ -87,6 +87,7 @@ struct _Gstagorasrc
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
 
+  gchar publish_file_path[MAX_STRING_LEN];
 };
 
 G_END_DECLS

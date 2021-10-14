@@ -22,7 +22,8 @@
 													 char* user_id,
 													 int receiveAudio,
 													 int receiveVideo,
-													 int verbose);
+													 int verbose,
+													 char* filePath);
 
  EXTERNC int  agora_send_video(agora_context_t* ctx,  
                                const unsigned char* buffer,  

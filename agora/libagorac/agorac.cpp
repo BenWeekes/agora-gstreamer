@@ -267,9 +267,10 @@ agora_receive_context_t* agora_receive_init(char* app_id,
                                             char* user_id,
                                             int receiveAudio,
 													     int receiveVideo,
-                                            int verbose){
+                                            int verbose, 
+                                            char* filePath){
     
-    auto receiver=create_receive_user(app_id, ch_id, user_id, receiveAudio, receiveVideo, verbose);
+    auto receiver=create_receive_user(app_id, ch_id, user_id, receiveAudio, receiveVideo, verbose, filePath);
     if(receiver==nullptr){
        return NULL;
     }

@@ -83,7 +83,8 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
-  AUDIO
+  AUDIO,
+  FILE_PATH
 };
 
 /* the capabilities of the inputs and outputs.
@@ -122,11 +123,15 @@ int init_agora(Gstagorasrc * src){
     /*initialize agora*/
    if(src->audio==TRUE){
        src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                        src->user_id, TRUE, FALSE, src->verbose);
+                                        src->user_id, TRUE, FALSE,
+                                        src->verbose,
+                                        src->publish_file_path);
    }
    else{
        src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                           src->user_id, FALSE, TRUE, src->verbose);
+                                           src->user_id, FALSE, TRUE, 
+                                           src->verbose,
+                                           src->publish_file_path);
    }
   
    if(src->agora_ctx==NULL){
@@ -245,6 +250,12 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
       g_param_spec_string ("userid", "userid", "agora user id (optional)",
           FALSE, G_PARAM_READWRITE));
 
+  /*file path*/
+  g_object_class_install_property (gobject_class, FILE_PATH,
+      g_param_spec_string ("filepath", "filepath", "file path that will publish h264 from it (optional)",
+          FALSE, G_PARAM_READWRITE));
+
+
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
     "agorasrc",
@@ -275,6 +286,7 @@ gst_agorasrc_init (Gstagorasrc * agoraSrc)
   memset(agoraSrc->app_id, 0, MAX_STRING_LEN);
   memset(agoraSrc->channel_id, 0, MAX_STRING_LEN);
   memset(agoraSrc->user_id, 0, MAX_STRING_LEN);
+  memset(agoraSrc->publish_file_path, 0, MAX_STRING_LEN);
   
   agoraSrc->verbose = FALSE;
   agoraSrc->audio=FALSE;
@@ -306,6 +318,10 @@ gst_agorasrc_set_property (GObject * object, guint prop_id,
      case AUDIO: 
         agoraSrc->audio = g_value_get_boolean (value);
         break;
+    case FILE_PATH:
+        str=g_value_get_string (value);
+        g_strlcpy(agoraSrc->publish_file_path, str, MAX_STRING_LEN);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -333,6 +349,9 @@ gst_agorasrc_get_property (GObject * object, guint prop_id,
         break;
     case AUDIO:
         g_value_set_boolean (value, agoraSrc->audio);
+        break;
+    case  FILE_PATH:
+        g_value_set_string (value, agoraSrc->publish_file_path);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
