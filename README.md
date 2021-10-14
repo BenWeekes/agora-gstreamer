@@ -64,6 +64,8 @@ Audio into Agora from test source:
 
 gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test silent=1
 
+Audio into Agora from microphone
+gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=xxx
 
  ## agorasrc
 
