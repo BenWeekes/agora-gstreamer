@@ -15,11 +15,12 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 			  helpers/utilities.cpp\
 
 AGORA_RECEIVER =agorareceiver.cpp userobserver.cpp
+AGORA_HELPERS =  file_parser/helper_h264_parser.cpp
 
 all: ${TARGET_LIB}
 
 $(TARGET_LIB): $(OBJS) agorac.cpp 
-	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp ${HELPER_FILES} ${AGORA_RECEIVER} $(CFLAGS)
+	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp ${HELPER_FILES} ${AGORA_RECEIVER} ${AGORA_HELPERS} $(CFLAGS)
 
 clean:
 	rm $(TARGET_LIB)
