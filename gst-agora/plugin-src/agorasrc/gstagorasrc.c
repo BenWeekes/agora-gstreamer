@@ -95,7 +95,11 @@ enum
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("ANY")
+    GST_STATIC_CAPS ("audio/x-raw,  "
+        "format = S16LE, "
+        "layout = interleaved, "
+        "rate = 48000, "
+        "channels = 1; video/h264" )
     );
 
 
@@ -153,16 +157,20 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
   int is_key_frame=0;
   size_t data_size=0;
   size_t in_buffer_size=0;
-
-  GstMemory *memory=NULL;
+   GstMemory *memory=NULL;
 
   Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
+  if(agoraSrc->agora_ctx==NULL && init_agora(agoraSrc)!=0){
+     g_print("cannot initialize agora\n");
+     return GST_FLOW_ERROR;
+   }
 
   unsigned char* data=malloc(max_size);
   if(data==NULL){
      g_print("cannot allocate memory\n");
      return GST_FLOW_ERROR;
   }
+
 
   if(agoraSrc->audio==FALSE){
      data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
@@ -193,16 +201,113 @@ gst_video_test_src_start (GstBaseSrc * basesrc)
   Gstagorasrc *src = GST_AGORASRC (basesrc);
 
   GST_OBJECT_LOCK (src);
- 
-  if(src->agora_ctx==NULL && init_agora(src)!=0){
-     g_print("cannot initialize agora\n");
-     return GST_FLOW_ERROR;
-  }
+
 
   GST_OBJECT_UNLOCK (src);
 
   return TRUE;
 }
+
+static GstCaps *
+gst_base_src_fixate (GstBaseSrc * bsrc, GstCaps * caps)
+{
+  GstBaseSrcClass *bclass;
+
+  bclass = GST_BASE_SRC_GET_CLASS (bsrc);
+
+  if (bclass->fixate)
+    caps = bclass->fixate (bsrc, caps);
+
+  return caps;
+}
+
+static gboolean
+gst_base_src_default_negotiate (GstBaseSrc * basesrc)
+{
+  GstCaps *thiscaps;
+  GstCaps *caps = NULL;
+  GstCaps *peercaps = NULL;
+  gboolean result = FALSE;
+
+  /* first see what is possible on our source pad */
+  thiscaps = gst_pad_query_caps (GST_BASE_SRC_PAD (basesrc), NULL);
+  GST_DEBUG_OBJECT (basesrc, "caps of src: %" GST_PTR_FORMAT, thiscaps);
+  /* nothing or anything is allowed, we're done */
+  if (thiscaps == NULL || gst_caps_is_any (thiscaps)){
+    goto no_nego_needed;
+  }
+
+  if (G_UNLIKELY (gst_caps_is_empty (thiscaps)))
+    goto no_caps;
+
+  /* get the peer caps */
+  peercaps = gst_pad_peer_query_caps (GST_BASE_SRC_PAD (basesrc), thiscaps);
+  if (peercaps) {
+    /* The result is already a subset of our caps */
+    caps = peercaps;
+    gst_caps_unref (thiscaps);
+  } else {
+    /* no peer, work with our own caps then */
+    caps = thiscaps;
+  }
+  if (caps && !gst_caps_is_empty (caps)) {
+    /* now fixate */
+    GST_DEBUG_OBJECT (basesrc, "have caps: %" GST_PTR_FORMAT, caps);
+    if (gst_caps_is_any (caps)) {
+      GST_DEBUG_OBJECT (basesrc, "any caps, we stop");
+      /* hmm, still anything, so element can do anything and
+       * nego is not needed */
+      result = TRUE;
+    } else {
+      caps = gst_base_src_fixate (basesrc, caps);
+      GST_DEBUG_OBJECT (basesrc, "fixated to: %" GST_PTR_FORMAT, caps);
+      if (gst_caps_is_fixed (caps)) {
+        /* yay, fixed caps, use those then, it's possible that the subclass does
+         * not accept this caps after all and we have to fail. */
+        result = gst_base_src_set_caps (basesrc, caps);
+      }
+    }
+    gst_caps_unref (caps);
+  } else {
+    if (caps)
+      gst_caps_unref (caps);
+    GST_DEBUG_OBJECT (basesrc, "no common caps");
+  }
+
+  GstStructure *structure = gst_caps_get_structure (caps, 0);
+  const gchar * format=gst_structure_get_name (structure);
+  g_print ("negotiation format: %s\n", format);
+
+  if(g_strcmp0(format, "audio/x-raw")==0){
+    Gstagorasrc *src = GST_AGORASRC (basesrc);
+    g_print("agorasrc will send audio\n");
+     src->audio=TRUE;
+  }
+  else{
+     g_print("agorasrc will send video\n");
+  }
+   
+
+  return result;
+
+no_nego_needed:
+  {
+    GST_DEBUG_OBJECT (basesrc, "no negotiation needed");
+    if (thiscaps)
+      gst_caps_unref (thiscaps);
+    return TRUE;
+  }
+no_caps:
+  {
+    GST_ELEMENT_ERROR (basesrc, STREAM, FORMAT,
+        ("No supported formats found"),
+        ("This element did not produce valid caps"));
+    if (thiscaps)
+      gst_caps_unref (thiscaps);
+    return TRUE;
+  }
+}
+
 
 /* initialize the agorasrc's class */
 static void
@@ -222,6 +327,7 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
 
   gstpushsrc_class->fill = gst_video_test_src_fill;
   gstbasesrc_class->start = gst_video_test_src_start;
+  gstbasesrc_class->negotiate = gst_base_src_default_negotiate;
   
 
   gobject_class->set_property = gst_agorasrc_set_property;
@@ -231,9 +337,9 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
       g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
-  g_object_class_install_property (gobject_class, AUDIO,
+  /*g_object_class_install_property (gobject_class, AUDIO,
       g_param_spec_boolean ("audio", "audio", "when true, it reads audio from agora than video",
-          FALSE, G_PARAM_READWRITE));
+          FALSE, G_PARAM_READWRITE));*/
 
   /*app id*/
   g_object_class_install_property (gobject_class, APP_ID,
