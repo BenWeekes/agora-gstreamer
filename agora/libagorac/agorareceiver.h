@@ -47,7 +47,19 @@ protected:
 
     bool doConnect();
 
-    void subscribeUser(const std::string& userId);
+    void subscribeToVideoUser(const std::string& userId);
+
+    void receiveVideoFrame(const uint userId, 
+                           const uint8_t* buffer,
+                           const size_t& length,
+                           const int& isKeyFrame);
+
+    void receiveAudioFrame(const uint userId, 
+                           const uint8_t* buffer,
+                           const size_t& length);
+
+    void handleUserStateChange(const std::string& userId, 
+                               const UserState& newState);
 
 private:
     std::shared_ptr<H264FrameReceiver>  h264FrameReceiver;
