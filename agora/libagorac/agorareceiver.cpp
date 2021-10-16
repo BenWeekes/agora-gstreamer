@@ -324,11 +324,11 @@ bool AgoraReceiverUser::connect()
     _connection->getLocalUser()->publishVideo(_customVideoTrack);
 
 
-    _senderThread=std::make_shared<std::thread>(SampleSendVideoH264Task,
+    /*_senderThread=std::make_shared<std::thread>(SampleSendVideoH264Task,
                               _filePath, 
                               _videoFrameSender, std::ref(exitFlag),
                               agora::rtc::VIDEO_STREAM_HIGH);
-    _senderThread->detach();
+    _senderThread->detach();*/
 
 
     localUserObserver = std::make_shared<UserObserver>(_connection->getLocalUser());
