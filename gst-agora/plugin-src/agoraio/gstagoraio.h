@@ -48,6 +48,9 @@
 
 #include <gst/gst.h>
 
+
+#include "agorac.h"
+
 G_BEGIN_DECLS
 
 #define GST_TYPE_AGORAIO \
@@ -66,13 +69,22 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (Gstagoraio, gst_agoraio,
     GST, PLUGIN_TEMPLATE, GstElement)
 
+#define MAX_STRING_LEN  1024
+
 struct _Gstagoraio
 {
   GstElement element;
 
   GstPad *sinkpad, *srcpad;
 
-  gboolean silent;
+  gboolean verbose;
+  gboolean audio;
+
+  agora_receive_context_t* agora_ctx;
+
+  gchar app_id[MAX_STRING_LEN];
+  gchar channel_id[MAX_STRING_LEN];
+  gchar user_id[MAX_STRING_LEN];
 };
 
 G_END_DECLS

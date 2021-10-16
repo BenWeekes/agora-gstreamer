@@ -78,7 +78,11 @@ enum
 enum
 {
   PROP_0,
-  PROP_SILENT
+  PROP_VERBOSE,
+  APP_ID,
+  CHANNEL_ID,
+  USER_ID,
+  AUDIO
 };
 
 /* the capabilities of the inputs and outputs.
@@ -123,15 +127,34 @@ gst_agoraio_class_init (GstagoraioClass * klass)
   gobject_class->set_property = gst_agoraio_set_property;
   gobject_class->get_property = gst_agoraio_get_property;
 
-g_object_class_install_property (gobject_class, PROP_SILENT,
-      g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
+g_object_class_install_property (gobject_class, PROP_VERBOSE,
+      g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
+          FALSE, G_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class, AUDIO,
+      g_param_spec_boolean ("audio", "audio", "when true, it reads audio from agora than video",
+          FALSE, G_PARAM_READWRITE));
+
+  /*app id*/
+  g_object_class_install_property (gobject_class, APP_ID,
+      g_param_spec_string ("appid", "appid", "agora app id",
+          FALSE, G_PARAM_READWRITE));
+
+  /*channel_id*/
+  g_object_class_install_property (gobject_class, CHANNEL_ID,
+      g_param_spec_string ("channel", "channel", "agora channel id",
+          FALSE, G_PARAM_READWRITE));
+
+  /*user_id*/
+  g_object_class_install_property (gobject_class, USER_ID,
+      g_param_spec_string ("userid", "userid", "agora user id (optional)",
           FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "agoraio",
     "FIXME:Generic",
-    "FIXME:Generic Template Element",
-    "Ubuntu <<user@hostname.org>>");
+    "read h264 from agora and send it to the child",
+    "Ben <<benweekes73@gmail.com>>");
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&src_factory));
@@ -159,7 +182,6 @@ gst_agoraio_init (Gstagoraio * filter)
   GST_PAD_SET_PROXY_CAPS (filter->srcpad);
   gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
 
-  filter->silent = FALSE;
 }
 static void
 gst_agoraio_set_property (GObject * object, guint prop_id,
@@ -167,13 +189,30 @@ gst_agoraio_set_property (GObject * object, guint prop_id,
 {
   Gstagoraio *filter = GST_AGORAIO (object);
 
+  const gchar* str;
+
   switch (prop_id) {
-    case PROP_SILENT:
-      filter->silent = g_value_get_boolean (value);
+    case PROP_VERBOSE:
+      filter->verbose = g_value_get_boolean (value);
       break;
+    case APP_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->app_id, str, MAX_STRING_LEN);
+        break;
+    case CHANNEL_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->channel_id, str, MAX_STRING_LEN);
+        break; 
+     case USER_ID:
+        str=g_value_get_string (value);
+        g_strlcpy(filter->user_id, str, MAX_STRING_LEN);
+        break; 
+     case AUDIO: 
+        filter->audio = g_value_get_boolean (value);
+        break;
     default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;
   }
 }
 
@@ -184,9 +223,21 @@ gst_agoraio_get_property (GObject * object, guint prop_id,
   Gstagoraio *filter = GST_AGORAIO (object);
 
   switch (prop_id) {
-    case PROP_SILENT:
-      g_value_set_boolean (value, filter->silent);
-      break;
+    case PROP_VERBOSE:
+       g_value_set_boolean (value, filter->verbose);
+       break;
+    case APP_ID:
+       g_value_set_string (value, filter->app_id);
+       break;
+    case CHANNEL_ID:
+        g_value_set_string (value, filter->channel_id);
+       break;
+    case USER_ID:
+        g_value_set_string (value, filter->user_id);
+        break;
+    case AUDIO:
+        g_value_set_boolean (value, filter->audio);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -235,9 +286,6 @@ gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 
   filter = GST_AGORAIO (parent);
 
-  if (filter->silent == FALSE)
-    g_print ("I'm plugged, therefore I'm in.\n");
-
   /* just push out the incoming buffer without touching it */
   return gst_pad_push (filter->srcpad, buf);
 }
@@ -267,7 +315,7 @@ agoraio_init (GstPlugin * agoraio)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstagoraio"
+#define PACKAGE "agoraio"
 #endif
 
 /* gstreamer looks for this structure to register agoraios
@@ -278,7 +326,7 @@ GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     agoraio,
-    "Template agoraio",
+    "agoraio",
     agoraio_init,
     PACKAGE_VERSION,
     GST_LICENSE,

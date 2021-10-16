@@ -72,6 +72,8 @@ void ConnectionObserver::onUplinkNetworkInfoUpdated(const agora::rtc::UplinkNetw
     //TODO:
 	/*AG_LOG(INFO, "onBandwidthEstimationUpdated: video_encoder_target_bitrate_bps %d\n",
 		   info.video_encoder_target_bitrate_bps);*/
+
+    std::cout<<"onUplinkNetworkInfoUpdated\n";
 }
 
 void ConnectionObserver::onUserJoined(agora::user_id_t userId)

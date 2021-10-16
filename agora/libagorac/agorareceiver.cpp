@@ -91,7 +91,7 @@ bool AgoraReceiverUser::connect()
     subscribeToVideoUser(_userId);
 
    //configure audio receive logic
-   if(_userId==""){
+   if(_userId!=""){
        _connection->getLocalUser()->subscribeAudio(_userId.c_str());
    }
    else{
