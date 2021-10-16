@@ -128,74 +128,6 @@ void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
    _onAudioFrameReceived=fn;
 }
 
-///===============testing ===================
-struct PacerInfo {
-  int sendTimes;
-  int sendIntervalInMs;
-  std::chrono::steady_clock::time_point startTime;
-};
-
-void waitBeforeNextSend(PacerInfo& pacer) {
-  auto sendFrameEndTime = std::chrono::steady_clock::now();
-  int nextDurationInMs = (++pacer.sendTimes * pacer.sendIntervalInMs);
-  int waitIntervalInMs = nextDurationInMs - std::chrono::duration_cast<std::chrono::milliseconds>(
-                                                sendFrameEndTime - pacer.startTime)
-                                                .count();
-  if (waitIntervalInMs > 0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(waitIntervalInMs));
-  }
-}
-
-static void sendOneH264Frame(
-    int frameRate, std::unique_ptr<HelperH264Frame> h264Frame,
-    agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>
-        videoH264FrameSender,
-    agora::rtc::VIDEO_STREAM_TYPE streamtype = agora::rtc::VIDEO_STREAM_HIGH) {
-  agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
-  videoEncodedFrameInfo.rotation = agora::rtc::VIDEO_ORIENTATION_0;
-  videoEncodedFrameInfo.codecType = agora::rtc::VIDEO_CODEC_H264;
-  videoEncodedFrameInfo.framesPerSecond = frameRate;
-  videoEncodedFrameInfo.streamType = streamtype;
-  videoEncodedFrameInfo.frameType =
-      (h264Frame.get()->isKeyFrame
-           ? agora::rtc::VIDEO_FRAME_TYPE::VIDEO_FRAME_TYPE_KEY_FRAME
-           : agora::rtc::VIDEO_FRAME_TYPE::VIDEO_FRAME_TYPE_DELTA_FRAME);
-
-
-  videoH264FrameSender->sendEncodedVideoImage(
-      reinterpret_cast<uint8_t*>(h264Frame.get()->buffer.get()),
-      h264Frame.get()->bufferLen, videoEncodedFrameInfo);
-}
-
-static void SampleSendVideoH264Task(const std::string & fileName,
-    agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>
-        videoH264FrameSender,
-    bool& exitFlag, agora::rtc::VIDEO_STREAM_TYPE streamtype)
-{
-  
-  std::unique_ptr<HelperH264FileParser> h264FileParser(
-      new HelperH264FileParser(fileName.c_str()));
-
-  if(h264FileParser->initialize()==false){
-      std::cout<<"Notice: cannot initialize the file parser! no video will be send to agora channel\n";
-      return;
-  }
-
-  // Calculate send interval based on frame rate. H264 frames are sent at this
-  // interval
-  PacerInfo pacer = {0, 1000 / 30,
-                     std::chrono::steady_clock::now()};
-
-  while (!exitFlag) {
-    if (auto h264Frame = h264FileParser->getH264Frame()) {
-      sendOneH264Frame(30, std::move(h264Frame),
-                       videoH264FrameSender, streamtype);
-      waitBeforeNextSend(pacer);  // sleep for a while before sending next frame
-    }
-  };
-}
-//========================end of testing ===========
-
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
                                      const std::string& channel,
@@ -238,10 +170,7 @@ bool AgoraReceiverUser::doConnect()
     scfg.enableAudioProcessor = true;
     scfg.enableAudioDevice = false;
     scfg.enableVideo = true;
-
-    //TODO:
-    //scfg.autoSubscribeAudio = false;
-    //scfg.enableAudioRecordingOrPlayout = false; 
+ 
 
     if (_service->initialize(scfg) != agora::ERR_OK)
     {
@@ -287,9 +216,7 @@ bool AgoraReceiverUser::connect()
     agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
     subscriptionOptions.encodedFrameOnly = true;
     subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
-    _connection->getLocalUser()->subscribeVideo(_userId.c_str(), subscriptionOptions);
-    // _connection->getLocalUser()->subscribeAllVideo(subscriptionOptions);
-  
+    _connection->getLocalUser()->subscribeVideo(_userId.c_str(), subscriptionOptions);  
 
    //configure audio receive logic
    if(_userId==""){
