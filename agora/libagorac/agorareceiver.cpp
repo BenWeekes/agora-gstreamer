@@ -87,8 +87,10 @@ bool AgoraReceiverUser::connect()
         return false;
     }
 
-    //video subscription option
-    subscribeToVideoUser(_userId);
+   if(_receiveVideo==true){
+      //video subscription option
+      subscribeToVideoUser(_userId);
+   }
 
    //configure audio receive logic
    if(_userId!=""){
@@ -220,7 +222,7 @@ void AgoraReceiverUser::receiveAudioFrame(const uint userId, const uint8_t* buff
 void AgoraReceiverUser::handleUserStateChange(const std::string& userId, 
                                               const UserState& newState){
     //is a user id is provided by the plugin, we do not need to subscribe to someone else
-    if(_userId!="")  return;
+    if(_userId!="" || _receiveVideo==false)  return;
 
     if(newState==USER_JOIN){
 
