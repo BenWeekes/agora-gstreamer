@@ -27,3 +27,7 @@ bool PcmFrameObserver::onMixedAudioFrame(AudioFrame& audioFrame){
   return true;
 
  }
+
+ void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
+   _onAudioFrameReceived=fn;
+}

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <functional>
 #include <fstream>
+#include <list>
 
 //agora header files
 #include "NGIAgoraRtcConnection.h"
@@ -17,27 +18,8 @@
 #include "helpers/utilities.h"
 
 #include "observer/pcmframeobserver.h"
-
-#include "file_parser/helper_h264_parser.h"
-
-using OnNewFrame_fn=std::function<void(const uint userId, 
-                                        const uint8_t* buffer,
-                                        const size_t& size,
-                                        const int isKeyFrame)>;
-
-class H264FrameReceiver : public agora::rtc::IVideoEncodedImageReceiver
-{
-public:
-    H264FrameReceiver();
-
-    bool OnEncodedVideoImageReceived(const uint8_t* imageBuffer, size_t length, 
-        const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo) override;
-
-    void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
-
-private:
-    OnNewFrame_fn                   _onVideoFrameReceived;
-};
+#include "observer/h264frameobserver.h"
+#include "observer/connectionobserver.h"
 
 class AgoraReceiverUser 
 {
@@ -66,11 +48,14 @@ protected:
 
     bool doConnect();
 
+    void subscribeUser(const std::string& userId);
+
 private:
     std::shared_ptr<H264FrameReceiver>  h264FrameReceiver;
     std::shared_ptr<UserObserver>       localUserObserver;
 
     PcmFrameObserver_ptr                 _pcmFrameObserver;
+    ConnectionObserver_ptr               _connectionObserver;
 
     std::string                          _appId;
     std::string                          _channel;
@@ -99,34 +84,10 @@ private:
 
      std::shared_ptr<std::thread>      _senderThread;
      std::string                       _filePath;
+
+     std::list<std::string>             _activeUsers;
+     std::string                        _currentVideoUser;
 };
-
-//H264FrameReceiver
-
-H264FrameReceiver::H264FrameReceiver()
-{
-}
-
-bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, size_t length, 
-    const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo)
-{
-    if (!_onVideoFrameReceived)
-        return false;
-
-    bool isKeyFrame=videoEncodedFrameInfo.frameType == agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
-    
-    _onVideoFrameReceived(videoEncodedFrameInfo.uid, imageBuffer, length,isKeyFrame);
-
-    return true;
-}
-
-void H264FrameReceiver::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
-   _onVideoFrameReceived=fn;
-}
-
-void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
-   _onAudioFrameReceived=fn;
-}
 
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
@@ -143,9 +104,11 @@ _receiveAudio(receiveAudio),
 _receiveVideo(receiveVideo),
 _verbose(verbose),
 _lastReceivedFrameTime(Now()),
-_filePath(filePath)
+_filePath(filePath),
+_currentVideoUser("")
 
 {
+     _activeUsers.clear();
 }
 
 AgoraReceiverUser::~AgoraReceiverUser()
@@ -232,6 +195,10 @@ bool AgoraReceiverUser::connect()
        logMessage("Agora: Failed to set audio frame parameters!");
        return false;
     }
+
+    // Register connection observer to monitor connection event
+    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connection->registerObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     auto res = _connection->connect(_appId.c_str(), _channel.c_str(), "");
@@ -323,10 +290,47 @@ bool AgoraReceiverUser::connect()
 
     });
 
+    //connection observer: handles user join and leave
+    _connectionObserver->setOnUserStateChanged([this](const std::string& userId, const UserState& newState){
+
+        //is a user id is provided by the plugin, we do not need to subscribe to someone else
+        if(_userId!="")  return;
+
+        if(newState==USER_JOIN){
+
+            //if there is not active user we are subscribing to, subscribe to this user
+            if(_activeUsers.empty()){
+                subscribeUser(userId);
+            }
+             _activeUsers.emplace_back(userId);
+             
+        }
+        else if(newState==USER_LEAVE){
+
+            _activeUsers.remove_if([userId](const std::string& id){ return (userId==id); });
+            if(_activeUsers.empty()==false && _currentVideoUser==userId){
+
+               auto newUserId=_activeUsers.front();
+               subscribeUser(newUserId);
+            }
+        }
+
+    });
+
     _connected = true;
 
     return _connected;
 }
+
+ void AgoraReceiverUser::subscribeUser(const std::string& userId){
+
+    agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
+    subscriptionOptions.encodedFrameOnly = true;
+    subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
+    _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
+
+    _currentVideoUser=userId;
+ }
 
 bool AgoraReceiverUser::disconnect(){
 
