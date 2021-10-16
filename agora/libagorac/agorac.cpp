@@ -270,8 +270,13 @@ agora_receive_context_t* agora_receive_init(char* app_id,
                                             int verbose, 
                                             char* filePath){
     
-    auto receiver=create_receive_user(app_id, ch_id, user_id, receiveAudio, receiveVideo, verbose, filePath);
-    if(receiver==nullptr){
+      std::shared_ptr<AgoraReceiverUser> receiver=std::make_shared<AgoraReceiverUser>(
+                                          app_id, ch_id, user_id,
+                                          receiveAudio, receiveVideo,
+                                          verbose,
+                                          filePath); 
+
+    if(!receiver->connect()){
        return NULL;
     }
 
@@ -671,12 +676,11 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
 
  size_t get_next_video_frame(agora_receive_context_t* context, 
                            unsigned char* data, size_t max_buffer_size,
-                           int* is_key_frame)
- {
+                           int* is_key_frame){
+                              
     if(context==NULL || context->_receiver==nullptr)  return 0;
 
-    return get_next_video_frame(context->_receiver, data, max_buffer_size, is_key_frame);
-
+    return context->_receiver->getNextVideoFrame(data, max_buffer_size, is_key_frame);;
  }
 
  size_t get_next_audio_frame(agora_receive_context_t* context, 
@@ -685,7 +689,7 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
       
    if(context==NULL || context->_receiver==nullptr)  return 0;
 
-    return get_next_audio_frame(context->_receiver, data, max_buffer_size);
+    return context->_receiver->getNextAudioFrame(data, max_buffer_size);
 
 }
 

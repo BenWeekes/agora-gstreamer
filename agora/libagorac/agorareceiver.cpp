@@ -1,93 +1,8 @@
 
 #include "agorareceiver.h"
 #include <iostream>
-#include <chrono>
-#include <functional>
-#include <fstream>
-#include <list>
-
-//agora header files
-#include "NGIAgoraRtcConnection.h"
-#include "IAgoraService.h"
-#include "AgoraBase.h"
-
 #include "helpers/agoralog.h"
 
-#include "userobserver.h"
-#include "helpers/context.h"
-#include "helpers/utilities.h"
-
-#include "observer/pcmframeobserver.h"
-#include "observer/h264frameobserver.h"
-#include "observer/connectionobserver.h"
-
-class AgoraReceiverUser 
-{
-public:
-    AgoraReceiverUser(const std::string& _appId,
-                      const std::string& _channel,
-                      const std::string& _userId,
-                      bool receiveAudio=false,
-                      bool receiveVideo=false,
-                      bool verbose=false,
-                      const std::string& filePath="");
-
-    virtual ~AgoraReceiverUser();
-
-    virtual bool connect();
-    virtual bool disconnect();
-
-    void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
-    void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
-
-    size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
-
-    size_t getNextAudioFrame(unsigned char* data, size_t max_buffer_size);
-
-protected:
-
-    bool doConnect();
-
-    void subscribeUser(const std::string& userId);
-
-private:
-    std::shared_ptr<H264FrameReceiver>  h264FrameReceiver;
-    std::shared_ptr<UserObserver>       localUserObserver;
-
-    PcmFrameObserver_ptr                 _pcmFrameObserver;
-    ConnectionObserver_ptr               _connectionObserver;
-
-    std::string                          _appId;
-    std::string                          _channel;
-    std::string                          _userId;
-
-    agora::base::IAgoraService*                     _service;
-    agora::agora_refptr<agora::rtc::IRtcConnection> _connection;
-    agora::rtc::RtcConnectionConfiguration          _rtcConfig;
-
-    agora::agora_refptr<agora::rtc::IMediaNodeFactory> _factory;
-    agora::agora_refptr<agora::rtc::ILocalAudioTrack> _customAudioTrack;
-    agora::agora_refptr<agora::rtc::ILocalVideoTrack> _customVideoTrack;
-
-    bool                                           _connected = false;
-
-     WorkQueue_ptr                                 _receivedVideoFrames;
-     WorkQueue_ptr                                 _receivedAudioFrames;
-
-     bool                                          _receiveAudio;
-     bool                                          _receiveVideo;
-     bool                                          _verbose;
-
-     TimePoint                                     _lastReceivedFrameTime;
-
-     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
-
-     std::shared_ptr<std::thread>      _senderThread;
-     std::string                       _filePath;
-
-     std::list<std::string>             _activeUsers;
-     std::string                        _currentVideoUser;
-};
 
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
@@ -330,6 +245,7 @@ bool AgoraReceiverUser::connect()
     _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
 
     _currentVideoUser=userId;
+    std::cout<<"subscribed to video user #"<<_currentVideoUser<<std::endl;
  }
 
 bool AgoraReceiverUser::disconnect(){
@@ -369,26 +285,6 @@ void AgoraReceiverUser::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
   h264FrameReceiver->setOnVideoFrameReceivedFn(fn);
 }
 
-std::shared_ptr<AgoraReceiverUser> create_receive_user(const std::string& _appId,
-                                                       const std::string& _channel,
-                                                       const std::string& _userId,
-                                                       int receiveAudio,
-													   int receiveVideo,
-                                                       int verbose,
-                                                       const std::string& filePath){
-  
-    std::shared_ptr<AgoraReceiverUser> receiver=
-      std::make_shared<AgoraReceiverUser>(_appId, _channel, _userId,
-                                          receiveAudio, receiveVideo,
-                                          verbose,
-                                          filePath); 
-
-    if(!receiver->connect()){
-       return nullptr;
-    }
-
-    return receiver;                                                                                                
-}
 
 size_t AgoraReceiverUser::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame){
    
@@ -410,17 +306,4 @@ size_t AgoraReceiverUser::getNextAudioFrame(unsigned char* data, size_t max_buff
     memcpy(data, work->buffer, work->len);
 
     return work->len;
-}
-
-size_t get_next_video_frame(std::shared_ptr<AgoraReceiverUser> receiver, 
-              unsigned char* data, size_t max_buffer_size, int* is_key_frame){
-
-   return receiver->getNextVideoFrame(data, max_buffer_size, is_key_frame);
-
-}
-
-size_t get_next_audio_frame(std::shared_ptr<AgoraReceiverUser> receiver, 
-                             unsigned char* data, size_t max_buffer_size){
-
-    return receiver->getNextAudioFrame(data, max_buffer_size);
 }
