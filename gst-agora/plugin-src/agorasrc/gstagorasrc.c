@@ -99,7 +99,7 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
         "format = S16LE, "
         "layout = interleaved, "
         "rate = 48000, "
-        "channels = 1; video/h264" )
+        "channels = 1; video/x-h264" )
     );
 
 

@@ -56,3 +56,27 @@ gstagorasrc = library('gstagorasrc',
     ]
 )
 
+# agoraio
+agoraio_sources = [
+  'agoraio/gstagoraio.c',
+  ]
+
+x264 = dependency('x264')
+swscale = dependency('libswscale')
+opus = dependency('opus')
+
+gst_base_dep = dependency('gstreamer-base-1.0')
+
+gstagorio = library('gstagoraio',
+  agoraio_sources,
+  c_args: plugin_c_args,
+  dependencies : [gst_dep,x264, swscale, opus, gst_base_dep],
+  install : true,
+  install_dir : plugins_install_dir,
+  objects: [
+        '/usr/local/lib/libagorac.so',
+        '/usr/local/lib/libagora_rtc_sdk.so',
+        '/usr/local/lib/libagora-ffmpeg.so',
+    ]
+)
+
