@@ -14,7 +14,7 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 			  helpers/localconfig.cpp \
 			  helpers/utilities.cpp\
 
-AGORA_RECEIVER =agorareceiver.cpp userobserver.cpp
+AGORA_RECEIVER =agorareceiver.cpp userobserver.cpp observer/pcmframeobserver.cpp
 AGORA_HELPERS =  file_parser/helper_h264_parser.cpp
 
 all: ${TARGET_LIB}

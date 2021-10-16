@@ -16,6 +16,8 @@
 #include "helpers/context.h"
 #include "helpers/utilities.h"
 
+#include "observer/pcmframeobserver.h"
+
 #include "file_parser/helper_h264_parser.h"
 
 using OnNewFrame_fn=std::function<void(const uint userId, 
@@ -37,30 +39,6 @@ private:
     OnNewFrame_fn                   _onVideoFrameReceived;
 };
 
-//audio receiver
-class PcmFrameObserver : public agora::media::IAudioFrameObserver {
- public:
-  PcmFrameObserver(): _onAudioFrameReceived(nullptr){}
-
-  bool onPlaybackAudioFrame(AudioFrame& audioFrame) override { return true; };
-
-  bool onRecordAudioFrame(AudioFrame& audioFrame) override { return true; };
-
-  bool onMixedAudioFrame(AudioFrame& audioFrame) override { return true; };
-
-  bool onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) override;
-
-  int calcVol(const int16_t* newPacket, const uint16_t& packetLen);
-
-  void setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn);
-
-private:
-
-  OnNewFrame_fn                   _onAudioFrameReceived;
-};
-
-using PcmFrameObserver_ptr=std::shared_ptr<PcmFrameObserver>;
-
 class AgoraReceiverUser 
 {
 public:
@@ -77,7 +55,7 @@ public:
     virtual bool connect();
     virtual bool disconnect();
 
-    void setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn);
+    void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
     size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
@@ -142,21 +120,11 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
     return true;
 }
 
-bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) {
-   
-   if(_onAudioFrameReceived!=nullptr){
-
-        _onAudioFrameReceived(uid, (const unsigned char*)audioFrame.buffer, audioFrame.samplesPerChannel*2,0);        
-   }
-  
-  return true;
-}
-
 void H264FrameReceiver::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
    _onVideoFrameReceived=fn;
 }
 
-void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn){
+void PcmFrameObserver::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
    _onAudioFrameReceived=fn;
 }
 
@@ -207,7 +175,11 @@ static void SampleSendVideoH264Task(const std::string & fileName,
   
   std::unique_ptr<HelperH264FileParser> h264FileParser(
       new HelperH264FileParser(fileName.c_str()));
-  h264FileParser->initialize();
+
+  if(h264FileParser->initialize()==false){
+      std::cout<<"Notice: cannot initialize the file parser! no video will be send to agora channel\n";
+      return;
+  }
 
   // Calculate send interval based on frame rate. H264 frames are sent at this
   // interval
@@ -356,6 +328,7 @@ bool AgoraReceiverUser::connect()
                               _filePath, 
                               _videoFrameSender, std::ref(exitFlag),
                               agora::rtc::VIDEO_STREAM_HIGH);
+    _senderThread->detach();
 
 
     localUserObserver = std::make_shared<UserObserver>(_connection->getLocalUser());
@@ -398,8 +371,7 @@ bool AgoraReceiverUser::connect()
      _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
     _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
-                                                    const size_t& length,
-                                                    const int& isKeyFrame){
+                                                    const size_t& length){
 
 
          //we read audio only from this user id
@@ -410,7 +382,7 @@ bool AgoraReceiverUser::connect()
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
 
-             auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+             auto frame=std::make_shared<Work>(buffer, length,false);
              _receivedAudioFrames->add(frame);
          }
          else{
@@ -453,7 +425,7 @@ bool AgoraReceiverUser::disconnect(){
     return true;
 }
 
-void AgoraReceiverUser::setOnAudioFrameReceivedFn(const OnNewFrame_fn& fn){
+void AgoraReceiverUser::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
    _pcmFrameObserver->setOnAudioFrameReceivedFn(fn);
 }
 
