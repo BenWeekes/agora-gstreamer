@@ -239,6 +239,10 @@ bool AgoraReceiverUser::doConnect()
     scfg.enableAudioDevice = false;
     scfg.enableVideo = true;
 
+    //TODO:
+    //scfg.autoSubscribeAudio = false;
+    //scfg.enableAudioRecordingOrPlayout = false; 
+
     if (_service->initialize(scfg) != agora::ERR_OK)
     {
         logMessage("Error initialize Agora SDK");
@@ -261,7 +265,7 @@ bool AgoraReceiverUser::connect()
    // _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
     _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
 
-    _rtcConfig.autoSubscribeAudio = true;
+    _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false;  // Subscribe audio but without playback
 
@@ -279,17 +283,25 @@ bool AgoraReceiverUser::connect()
         return false;
     }
 
+    //video subscription option
     agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
     subscriptionOptions.encodedFrameOnly = true;
     subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
+    _connection->getLocalUser()->subscribeVideo(_userId.c_str(), subscriptionOptions);
+    // _connection->getLocalUser()->subscribeAllVideo(subscriptionOptions);
+  
 
-   // _connection->getLocalUser()->subscribeAllVideo(subscriptionOptions);
-   _connection->getLocalUser()->subscribeVideo(_userId.c_str(), subscriptionOptions);
-   std::cout<<"Receive video from user #"<<_userId<<std::endl;
+   //configure audio receive logic
+   if(_userId==""){
+       _connection->getLocalUser()->subscribeAudio(_userId.c_str());
+   }
+   else{
+      _connection->getLocalUser()->subscribeAllAudio();
+   }
 
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>(); 
-    if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+    if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
        logMessage("Agora: Failed to set audio frame parameters!");
        return false;
     }
@@ -324,13 +336,6 @@ bool AgoraReceiverUser::connect()
     _connection->getLocalUser()->publishVideo(_customVideoTrack);
 
 
-    /*_senderThread=std::make_shared<std::thread>(SampleSendVideoH264Task,
-                              _filePath, 
-                              _videoFrameSender, std::ref(exitFlag),
-                              agora::rtc::VIDEO_STREAM_HIGH);
-    _senderThread->detach();*/
-
-
     localUserObserver = std::make_shared<UserObserver>(_connection->getLocalUser());
 
     h264FrameReceiver = std::make_shared<H264FrameReceiver>();
@@ -362,7 +367,7 @@ bool AgoraReceiverUser::connect()
              _receivedVideoFrames->add(frame);
          }
          else{
-             std::cout<<"buffer reached max size"<<std::endl;
+             std::cout<<"video buffer reached max size"<<std::endl;
          }
 
     });
@@ -375,7 +380,7 @@ bool AgoraReceiverUser::connect()
 
 
          //we read audio only from this user id
-         if(_receiveAudio==false || _userId!=std::to_string(userId)){
+         if(_receiveAudio==false){
              return;
          }
 
@@ -386,7 +391,7 @@ bool AgoraReceiverUser::connect()
              _receivedAudioFrames->add(frame);
          }
          else{
-             std::cout<<"buffer reached max size"<<std::endl;
+             std::cout<<"audio buffer reached max size"<<std::endl;
          }
 
     });

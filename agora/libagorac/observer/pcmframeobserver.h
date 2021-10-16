@@ -13,11 +13,11 @@ class PcmFrameObserver : public agora::media::IAudioFrameObserver {
  public:
   PcmFrameObserver(): _onAudioFrameReceived(nullptr){}
 
-  bool onPlaybackAudioFrame(AudioFrame& audioFrame) override { return true; };
+  bool onPlaybackAudioFrame(AudioFrame& audioFrame) override;
 
   bool onRecordAudioFrame(AudioFrame& audioFrame) override { return true; };
 
-  bool onMixedAudioFrame(AudioFrame& audioFrame) override { return true; };
+  bool onMixedAudioFrame(AudioFrame& audioFrame) override ;
 
   bool onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) override;
 
