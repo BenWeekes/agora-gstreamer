@@ -213,6 +213,7 @@ int init_agora(Gstagorasink * filter){
    filter->agora_ctx=agora_init(filter->app_id,  /*appid*/
                                 filter->channel_id, /*channel*/
                                 filter->user_id,    /*user id*/
+                                filter->audio,      /*is audio user*/
                                  0,                 /*enable encryption */
                                  0,                 /*enable dual */
                                  500000,            /*dual video bitrate*/

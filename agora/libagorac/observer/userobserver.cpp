@@ -5,6 +5,7 @@
 //
 
 #include "userobserver.h"
+#include <iostream>
 
 UserObserver::UserObserver(agora::rtc::ILocalUser* local_user)
     : local_user_(local_user) {
@@ -70,6 +71,13 @@ void UserObserver::onUserVideoTrackSubscribed(
 void UserObserver::onUserInfoUpdated(agora::user_id_t userId,
                                                 ILocalUserObserver::USER_MEDIA_INFO msg, bool val) {
  // AG_LOG(INFO, "onUserInfoUpdated: userId %s, msg %d, val %d", userId, msg, val);
+
+  std::cout<<"UserObserver::onUserInfoUpdated: "
+           <<"userId "
+           <<userId
+           <<", msg "<<msg
+           <<", val "<<val 
+           <<std::endl;
 }
 
 void UserObserver::onUserAudioTrackStateChanged(
@@ -78,6 +86,8 @@ void UserObserver::onUserAudioTrackStateChanged(
     int elapsed) {
   /*AG_LOG(INFO, "onUserAudioTrackStateChanged: userId %s, state %d, reason %d", userId, state,
          reason);*/
+
+   std::cout<<"UserObserver::onUserAudioTrackStateChanged\n";
 }
 
 void UserObserver::onIntraRequestReceived() {

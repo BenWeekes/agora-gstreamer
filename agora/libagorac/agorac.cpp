@@ -63,7 +63,9 @@ agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
 
 
 #define ENC_KEY_LENGTH        128
-agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id, bool enable_enc,
+agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id,
+                              bool is_audiouser,
+                              bool enable_enc,
 		                         short enable_dual, unsigned int  dual_vbr, 
 			                       unsigned short  dual_width, unsigned short  dual_height,
                              unsigned short min_video_jb, unsigned short dfps){
@@ -155,10 +157,12 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id, 
    ctx->_connectionObserver = std::make_shared<ConnectionObserver>();
    ctx->connection->registerObserver(ctx->_connectionObserver.get());
 
-    ctx->_connectionObserver->setOnUserConnected([](const std::string& userId, const UserState& newState){
+    ctx->_connectionObserver->setOnUserConnected([is_audiouser](const std::string& userId, const UserState& newState){
 
-         UidToFile uidfile;
-         uidfile.writeUid(userId);
+         if(is_audiouser==true){
+            UidToFile uidfile;
+            uidfile.writeUid(userId);
+         }
     });
 
   // Connect to Agora channel

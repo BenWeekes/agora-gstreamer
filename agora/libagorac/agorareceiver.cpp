@@ -171,6 +171,7 @@ bool AgoraReceiverUser::connect()
           auto sinkUid=_sinkUidMonitor.checkAndReadUid();
           if(sinkUid!=""){
              _connection->getLocalUser()->unsubscribeAudio(sinkUid.c_str());
+             //std::cout<<"unsubscribed to audio user "<<sinkUid<<std::endl;
           }
           receiveAudioFrame(userId, buffer, length);
     });
@@ -234,8 +235,10 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
                                               const UserState& newState){
 
     if(newState==USER_JOIN && _receiveAudio==true){
+        _currentAgoraSink=ReadCurrentUid();
         if(userId!=_currentAgoraSink){
             _connection->getLocalUser()->subscribeAudio(userId.c_str());
+            std::cout<<"subscribed to audio user "<<userId<<std::endl;
         } 
     }                                              
     //is a user id is provided by the plugin, we do not need to subscribe to someone else

@@ -12,7 +12,9 @@
 
  typedef struct agora_receive_context_t agora_receive_context_t;
 
- EXTERNC agora_context_t*  agora_init(char* app_id, char* ch_id, char* user_id, bool enc_enable,
+ EXTERNC agora_context_t*  agora_init(char* app_id, char* ch_id, char* user_id,
+                                    bool is_audiouser,
+                                    bool enc_enable,
 		                            short enable_dual, unsigned int  dual_vbr, 
 				                    unsigned short  dual_width,  unsigned short  dual_height,
 									unsigned short min_video_jb, unsigned short dfps);
