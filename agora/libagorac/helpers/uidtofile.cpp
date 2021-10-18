@@ -1,13 +1,22 @@
 #include "uidtofile.h"
 #include <fstream>
 #include<stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "utilities.h"
 
+#include <iostream>
+
   UidToFile::UidToFile():
   _fileName("/tmp/uid.tmp"),
-  _lastCheckTime(Now()){
+  _lastCheckTime(Now()),
+  _lastUserId(""){
 
+     struct passwd *pw = getpwuid(getuid());
+     const char *homedir = pw->pw_dir;
+      _fileName=std::string(homedir)+"/uid.tmp";
   }
 
   void UidToFile::writeUid(const std::string& uid){
@@ -17,6 +26,8 @@
 
        file<<uid;
        file.close();
+
+       std::cout<<"user id:  "<<uid<<" is written to "<<_fileName<<std::endl;
   }
   std::string UidToFile::readUid(){
 
@@ -31,10 +42,10 @@
     return uid;
   }
 
-  void UidToFile::removeUid(){
+  /*void UidToFile::removeUid(){
 
       remove(_fileName.c_str());
-  }
+  }*/
 
 std::string  UidToFile::checkAndReadUid(){
 
@@ -44,10 +55,14 @@ std::string  UidToFile::checkAndReadUid(){
 
     auto uid=readUid();
 
-    removeUid();
-
      _lastCheckTime=Now();
-    return uid;
+
+     if(uid!=_lastUserId){
+       _lastUserId=uid;
+       return _lastUserId;
+     }
+     
+    return "";
 }
 
 std::string ReadCurrentUid(){
@@ -55,8 +70,6 @@ std::string ReadCurrentUid(){
    UidToFile uidfile;
 
    auto uid=uidfile.readUid();
-
-   uidfile.removeUid();
 
    return uid;
 }

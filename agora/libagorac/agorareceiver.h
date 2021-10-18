@@ -9,13 +9,13 @@
 
 #include "observer/pcmframeobserver.h"
 #include "observer/h264frameobserver.h"
+#include "observer/userobserver.h"
 
 //agora header files
 #include "NGIAgoraRtcConnection.h"
 #include "IAgoraService.h"
 #include "AgoraBase.h"
 
-#include "userobserver.h"
 #include "helpers/context.h"
 #include "helpers/utilities.h"
 #include "helpers/uidtofile.h"
@@ -67,6 +67,7 @@ private:
 
     PcmFrameObserver_ptr                 _pcmFrameObserver;
     ConnectionObserver_ptr               _connectionObserver;
+    UserObserver_ptr                     _userObserver;
 
     std::string                          _appId;
     std::string                          _channel;

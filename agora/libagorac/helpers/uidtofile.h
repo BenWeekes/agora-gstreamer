@@ -13,13 +13,13 @@ public:
   void writeUid(const std::string& uid);
   std::string readUid();
 
-  void removeUid();
-
   std::string  checkAndReadUid();
 
 private:
    std::string  _fileName;
    TimePoint   _lastCheckTime;
+
+   std::string  _lastUserId;
 };
 
 std::string ReadCurrentUid();

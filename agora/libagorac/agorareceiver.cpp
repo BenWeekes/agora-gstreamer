@@ -101,6 +101,8 @@ bool AgoraReceiverUser::connect()
    if(_userId!=""){
        _connection->getLocalUser()->subscribeAudio(_userId.c_str());
    }
+
+   _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser());
    
     // _connection->getLocalUser()->subscribeAllAudio();
 

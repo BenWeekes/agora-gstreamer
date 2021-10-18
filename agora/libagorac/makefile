@@ -16,10 +16,10 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 			  helpers/uidtofile.cpp
 
 AGORA_RECEIVER =agorareceiver.cpp \
-                userobserver.cpp \
                 observer/pcmframeobserver.cpp \
 				observer/h264frameobserver.cpp \
-				observer/connectionobserver.cpp
+				observer/connectionobserver.cpp \
+				observer/userobserver.cpp
 
 AGORA_HELPERS =  agoraevent.cpp
 
