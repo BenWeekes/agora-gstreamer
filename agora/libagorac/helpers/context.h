@@ -2,6 +2,7 @@
 #define _CONTEXT_H_
 
 #include "../agoratype.h"
+#include "../observer/connectionobserver.h"
 
 using AgoraVideoSender_ptr=agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>;
 using AgoraAudioSender_ptr=agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>;
@@ -76,7 +77,9 @@ struct agora_context_t{
    uint8_t                                         highVideoFrameCount;
    uint8_t                                         lowVideoFrameCount;  
 
-   std::string                                     audioDumpFileName;         
+   std::string                                     audioDumpFileName;   
+
+   ConnectionObserver_ptr                         _connectionObserver;      
 };
 
 class AgoraReceiverUser;

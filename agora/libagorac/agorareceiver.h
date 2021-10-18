@@ -9,7 +9,6 @@
 
 #include "observer/pcmframeobserver.h"
 #include "observer/h264frameobserver.h"
-#include "observer/connectionobserver.h"
 
 //agora header files
 #include "NGIAgoraRtcConnection.h"
@@ -19,6 +18,7 @@
 #include "userobserver.h"
 #include "helpers/context.h"
 #include "helpers/utilities.h"
+#include "helpers/uidtofile.h"
 
 class AgoraReceiverUser 
 {
@@ -98,6 +98,9 @@ private:
 
      std::list<std::string>             _activeUsers;
      std::string                        _currentVideoUser;
+
+     std::string                        _currentAgoraSink;
+     UidToFile                          _sinkUidMonitor;
 };
 
 

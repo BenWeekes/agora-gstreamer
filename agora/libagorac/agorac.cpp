@@ -19,6 +19,7 @@
 #include "helpers/localconfig.h"
 
 //#include "userobserver.h"
+#include "observer/connectionobserver.h"
 #include "helpers/context.h"
 
 #include "helpers/utilities.h"
@@ -26,6 +27,8 @@
 #include "helpers/agoraconstants.h"
 
 #include "agorareceiver.h"
+#include "helpers/uidtofile.h"
+
 
 //threads
 static void VideoThreadHandlerHigh(agora_context_t* ctx);
@@ -147,6 +150,16 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id, 
       logMessage("agora built-in encryption enabled!");
     }
   }
+
+   // Register connection observer to monitor connection event
+   ctx->_connectionObserver = std::make_shared<ConnectionObserver>();
+   ctx->connection->registerObserver(ctx->_connectionObserver.get());
+
+    ctx->_connectionObserver->setOnUserConnected([](const std::string& userId, const UserState& newState){
+
+         UidToFile uidfile;
+         uidfile.writeUid(userId);
+    });
 
   // Connect to Agora channel
   auto  connected =  ctx->connection->connect(app_id.c_str(), chanel_id.c_str(), user_id.c_str());

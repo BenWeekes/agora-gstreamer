@@ -16,6 +16,10 @@ void ConnectionObserver::onConnected(const agora::rtc::TConnectionInfo &connecti
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<", reason "<<reason<<std::endl;
 
+    if(_onUserConnected!=nullptr){
+        _onUserConnected(connectionInfo.localUserId.get()->c_str(), USER_CONNECTED);
+    }
+
 	// notify the thread which is waiting for the SDK to be connected
 	connect_ready_.Set();
 }

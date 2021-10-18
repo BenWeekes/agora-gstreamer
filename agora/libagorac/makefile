@@ -13,6 +13,7 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 			  helpers/agoralog.cpp \
 			  helpers/localconfig.cpp \
 			  helpers/utilities.cpp\
+			  helpers/uidtofile.cpp
 
 AGORA_RECEIVER =agorareceiver.cpp \
                 userobserver.cpp \

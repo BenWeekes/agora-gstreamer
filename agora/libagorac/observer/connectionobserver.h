@@ -1,21 +1,29 @@
+#ifndef _CONNECTION_OBSERVER_H_
+#define _CONNECTION_OBSERVER_H_
 
 #include <functional>
 #include "NGIAgoraRtcConnection.h"
 #include "../agoraevent.h"
 
 
-enum UserState{USER_JOIN, USER_LEAVE};
+enum UserState{USER_JOIN, USER_LEAVE, USER_CONNECTED};
 
 using OnUserStateChange_fn=std::function<void(const std::string& userId, const UserState& newState)>;
 
 class ConnectionObserver : public agora::rtc::IRtcConnectionObserver,
                                  public agora::rtc::INetworkObserver {
  public:
-  ConnectionObserver():_onUserStateChanged(nullptr) {}
+  ConnectionObserver():
+       _onUserStateChanged(nullptr),
+       _onUserConnected(nullptr) {}
   int waitUntilConnected(int waitMs) { return connect_ready_.Wait(waitMs); }
 
   void setOnUserStateChanged(const OnUserStateChange_fn& f){
       _onUserStateChanged=f;
+  }
+
+  void setOnUserConnected(const OnUserStateChange_fn& f){
+      _onUserConnected=f;
   }
 
  public:  // IRtcConnectionObserver
@@ -49,6 +57,9 @@ class ConnectionObserver : public agora::rtc::IRtcConnectionObserver,
   SampleEvent disconnect_ready_;
 
   OnUserStateChange_fn     _onUserStateChanged;
+  OnUserStateChange_fn     _onUserConnected;
 };
 
 using ConnectionObserver_ptr=std::shared_ptr<ConnectionObserver>;
+
+#endif

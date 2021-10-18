@@ -2,7 +2,7 @@
 #include "agorareceiver.h"
 #include <iostream>
 #include "helpers/agoralog.h"
-
+#include "helpers/uidtofile.h"
 
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
@@ -20,7 +20,8 @@ _receiveVideo(receiveVideo),
 _verbose(verbose),
 _lastReceivedFrameTime(Now()),
 _filePath(filePath),
-_currentVideoUser("")
+_currentVideoUser(""),
+_currentAgoraSink("")
 
 {
      _activeUsers.clear();
@@ -72,6 +73,10 @@ bool AgoraReceiverUser::connect()
     _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false; 
+    
+    _currentAgoraSink=ReadCurrentUid();
+    
+    std::cout<<"agorasink user id: "<<_currentAgoraSink<<std::endl;
 
     _connection = _service->createRtcConnection(_rtcConfig);
     if (!_connection)
@@ -96,9 +101,8 @@ bool AgoraReceiverUser::connect()
    if(_userId!=""){
        _connection->getLocalUser()->subscribeAudio(_userId.c_str());
    }
-   else{
-      _connection->getLocalUser()->subscribeAllAudio();
-   }
+   
+    // _connection->getLocalUser()->subscribeAllAudio();
 
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>(); 
@@ -161,7 +165,12 @@ bool AgoraReceiverUser::connect()
                                                     const uint8_t* buffer,
                                                     const size_t& length){
 
-             receiveAudioFrame(userId, buffer, length);
+          //this check will be every second
+          auto sinkUid=_sinkUidMonitor.checkAndReadUid();
+          if(sinkUid!=""){
+             _connection->getLocalUser()->unsubscribeAudio(sinkUid.c_str());
+          }
+          receiveAudioFrame(userId, buffer, length);
     });
 
     //connection observer: handles user join and leave
@@ -230,8 +239,12 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
         if(_activeUsers.empty()){
             subscribeToVideoUser(userId);
         }
-            _activeUsers.emplace_back(userId);
-            
+
+        _activeUsers.emplace_back(userId);
+     
+        if(userId!=_currentAgoraSink){
+            _connection->getLocalUser()->subscribeAudio(userId.c_str());
+        }   
     }
     else if(newState==USER_LEAVE){
 
