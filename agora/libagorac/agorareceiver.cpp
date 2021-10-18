@@ -182,6 +182,12 @@ bool AgoraReceiverUser::connect()
         handleUserStateChange(userId, newState);
     });
 
+    _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
+        if(messsage==1 && value==1){
+           handleUserStateChange(userId, USER_LEAVE);
+        }
+    });
+
     _connected = true;
 
     return _connected;

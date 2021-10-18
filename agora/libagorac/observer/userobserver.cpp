@@ -8,7 +8,8 @@
 #include <iostream>
 
 UserObserver::UserObserver(agora::rtc::ILocalUser* local_user)
-    : local_user_(local_user) {
+    : local_user_(local_user),
+    _onUserInfoChanged(nullptr){
   local_user_->registerLocalUserObserver(this);
 }
 
@@ -72,6 +73,9 @@ void UserObserver::onUserInfoUpdated(agora::user_id_t userId,
                                                 ILocalUserObserver::USER_MEDIA_INFO msg, bool val) {
  // AG_LOG(INFO, "onUserInfoUpdated: userId %s, msg %d, val %d", userId, msg, val);
 
+   if(_onUserInfoChanged!=nullptr){
+       _onUserInfoChanged(userId, msg, val);
+   }
   std::cout<<"UserObserver::onUserInfoUpdated: "
            <<"userId "
            <<userId

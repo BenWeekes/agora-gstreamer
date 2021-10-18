@@ -8,14 +8,21 @@
 #define _USER_OBSERVER_H_
 
 #include <mutex>
+#include <functional>
 
 #include "AgoraBase.h"
 #include "NGIAgoraLocalUser.h"
+
+using OnUserInfofn=std::function<void(const std::string& userId, const int& messsage, const int& value)>;
 
 class UserObserver : public agora::rtc::ILocalUserObserver {
  public:
   UserObserver(agora::rtc::ILocalUser* local_user);
   virtual ~UserObserver();
+
+  void setOnUserInfofn (const OnUserInfofn& fn){
+     _onUserInfoChanged=fn;
+  }
 
  public:
   agora::rtc::ILocalUser* GetLocalUser();
@@ -155,6 +162,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   agora::agora_refptr<agora::rtc::IVideoSinkBase> video_frame_observer_{nullptr};
 
   std::mutex observer_lock_;
+
+  OnUserInfofn       _onUserInfoChanged;
 };
 
 using UserObserver_ptr=std::shared_ptr<UserObserver>;
