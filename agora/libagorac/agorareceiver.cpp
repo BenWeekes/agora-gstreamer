@@ -186,6 +186,9 @@ bool AgoraReceiverUser::connect()
         if(messsage==1 && value==1){
            handleUserStateChange(userId, USER_LEAVE);
         }
+        else if(messsage==1 && value==0){
+            handleUserStateChange(userId, USER_JOIN);
+        }
     });
 
     _connected = true;
@@ -261,6 +264,7 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
     }
     else if(newState==USER_LEAVE){
 
+         _connection->getLocalUser()->unsubscribeVideo(userId.c_str());
         _activeUsers.remove_if([userId](const std::string& id){ return (userId==id); });
         if(_activeUsers.empty()==false && _currentVideoUser==userId){
 
