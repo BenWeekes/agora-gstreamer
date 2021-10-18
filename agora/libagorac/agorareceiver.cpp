@@ -230,6 +230,12 @@ void AgoraReceiverUser::receiveAudioFrame(const uint userId, const uint8_t* buff
 
 void AgoraReceiverUser::handleUserStateChange(const std::string& userId, 
                                               const UserState& newState){
+
+    if(newState==USER_JOIN && _receiveAudio==true){
+        if(userId!=_currentAgoraSink){
+            _connection->getLocalUser()->subscribeAudio(userId.c_str());
+        } 
+    }                                              
     //is a user id is provided by the plugin, we do not need to subscribe to someone else
     if(_userId!="" || _receiveVideo==false)  return;
 
@@ -240,11 +246,7 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
             subscribeToVideoUser(userId);
         }
 
-        _activeUsers.emplace_back(userId);
-     
-        if(userId!=_currentAgoraSink){
-            _connection->getLocalUser()->subscribeAudio(userId.c_str());
-        }   
+        _activeUsers.emplace_back(userId);  
     }
     else if(newState==USER_LEAVE){
 
