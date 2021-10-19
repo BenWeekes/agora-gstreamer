@@ -31,21 +31,18 @@
   }
   std::string UidToFile::readUid(){
 
-    std::string uid;
+    /*std::string uid;
     std::ifstream file(_fileName);
     if(file.is_open()==false) return "";
 
-    file>>uid;
+    std::getline(file, uid);
 
     file.close();
 
-    return uid;
+    return uid;*/
+
+    return "";
   }
-
-  /*void UidToFile::removeUid(){
-
-      remove(_fileName.c_str());
-  }*/
 
 std::string  UidToFile::checkAndReadUid(){
 

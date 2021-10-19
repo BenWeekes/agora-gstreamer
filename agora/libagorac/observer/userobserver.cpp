@@ -7,9 +7,10 @@
 #include "userobserver.h"
 #include <iostream>
 
-UserObserver::UserObserver(agora::rtc::ILocalUser* local_user)
+UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose)
     : local_user_(local_user),
-    _onUserInfoChanged(nullptr){
+    _onUserInfoChanged(nullptr),
+    _verbose(verbose){
   local_user_->registerLocalUserObserver(this);
 }
 
@@ -76,24 +77,26 @@ void UserObserver::onUserInfoUpdated(agora::user_id_t userId,
    if(_onUserInfoChanged!=nullptr){
        _onUserInfoChanged(userId, msg, val);
    }
-  std::cout<<"UserObserver::onUserInfoUpdated: "
+
+   if(_verbose){
+       std::cout<<"UserObserver::onUserInfoUpdated: "
            <<"userId "
            <<userId
            <<", msg "<<msg
            <<", val "<<val 
            <<std::endl;
+   }
+ 
 }
 
 void UserObserver::onUserAudioTrackStateChanged(
     agora::user_id_t userId, agora::agora_refptr<agora::rtc::IRemoteAudioTrack> audioTrack,
     agora::rtc::REMOTE_AUDIO_STATE state, agora::rtc::REMOTE_AUDIO_STATE_REASON reason,
     int elapsed) {
-  /*AG_LOG(INFO, "onUserAudioTrackStateChanged: userId %s, state %d, reason %d", userId, state,
-         reason);*/
+  
 
-   std::cout<<"UserObserver::onUserAudioTrackStateChanged\n";
 }
 
 void UserObserver::onIntraRequestReceived() {
- // AG_LOG(INFO, "onIntraRequestReceived");
+ 
 }

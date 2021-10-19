@@ -45,14 +45,14 @@
  */
 
 /**
- * SECTION:element-agorasrc
+ * SECTION:element-agoraioudp
  *
- * FIXME:Describe agorasrc here.
+ * FIXME:Describe agoraioudp here.
  *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch -v -m fakesrc ! agorasrc ! fakesink silent=TRUE
+ * gst-launch -v -m fakesrc ! agoraioudp ! fakesink silent=TRUE
  * ]|
  * </refsect2>
  */
@@ -62,12 +62,14 @@
 #endif
 
 #include <gst/gst.h>
+
 #include <gst/base/gstbasesrc.h>
 #include <glib/gstdio.h>
-#include "gstagorasrc.h"
 
-GST_DEBUG_CATEGORY_STATIC (gst_agorasrc_debug);
-#define GST_CAT_DEFAULT gst_agorasrc_debug
+#include "gstagoraioudp.h"
+
+GST_DEBUG_CATEGORY_STATIC (gst_agoraioudp_debug);
+#define GST_CAT_DEFAULT gst_agoraioudp_debug
 
 /* Filter signals and args */
 enum
@@ -91,6 +93,12 @@ enum
  * describe the real formats here.
  */
 
+static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE ("sink",
+    GST_PAD_SINK,
+    GST_PAD_ALWAYS,
+    GST_STATIC_CAPS ("ANY")
+    );
+
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
@@ -98,118 +106,34 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     );
 
 
-//#define gst_agorasrc_parent_class parent_class
-G_DEFINE_TYPE (Gstagorasrc, gst_agorasrc, GST_TYPE_PUSH_SRC);
+#define gst_agoraioudp_parent_class parent_class
+G_DEFINE_TYPE (Gstagoraioudp, gst_agoraioudp, GST_TYPE_PUSH_SRC);
 
-static void gst_agorasrc_set_property (GObject * object, guint prop_id,
+static void gst_agoraioudp_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
-static void gst_agorasrc_get_property (GObject * object, guint prop_id,
+static void gst_agoraioudp_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
+static GstFlowReturn gst_agoraio_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
 
-int init_agora(Gstagorasrc * src){
-
-   if (strlen(src->app_id)==0){
-       g_print("app id cannot be empty!\n");
-       return -1;
-   }
-
-   if (strlen(src->channel_id)==0){
-       g_print("channel id cannot be empty!\n");
-       return -1;
-   }
-
-    /*initialize agora*/
-   if(src->audio==TRUE){
-       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                        src->user_id, TRUE, FALSE,
-                                        src->verbose,
-                                        "");
-   }
-   else{
-       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                           src->user_id, FALSE, TRUE, 
-                                           src->verbose,
-                                           "");
-   }
-  
-   if(src->agora_ctx==NULL){
-
-      g_print("agora COULD NOT  be initialized\n");
-      return -1;   
-   }
-
-   g_print("agora has been successfuly initialized\n");
-  
-
-   return 0;
+   // g_print("gst_agoraio_src_fill\n");
+    
+    return GST_FLOW_OK;
 }
 
-static GstFlowReturn
-gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
-   
-  const size_t  max_size=4*1024*1024;
-  int is_key_frame=0;
-  size_t data_size=0;
-  size_t in_buffer_size=0;
-   GstMemory *memory=NULL;
+static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * buf){
 
-  Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
-  if(agoraSrc->agora_ctx==NULL && init_agora(agoraSrc)!=0){
-     g_print("cannot initialize agora\n");
-     return GST_FLOW_ERROR;
-   }
+    g_print("gst_agoraio_chain\n");
 
-  unsigned char* data=malloc(max_size);
-  if(data==NULL){
-     g_print("cannot allocate memory\n");
-     return GST_FLOW_ERROR;
-  }
-
-
-  if(agoraSrc->audio==FALSE){
-     data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
-  }
-  else{
-    data_size=get_next_audio_frame(agoraSrc->agora_ctx, data, max_size);
-  }
-
-  in_buffer_size=gst_buffer_get_size (buffer);
-
-  /*increase the buffer if it is less than the frame data size*/
-  if(data_size>in_buffer_size){
-    memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
-    gst_buffer_insert_memory (buffer, -1, memory);
-  }
-
-  gst_buffer_fill(buffer, 0, data, data_size);
-  gst_buffer_set_size(buffer, data_size);
-
-  free(data);
-
-  if (agoraSrc->verbose == true){
-     g_print ("agorasrc: sending %" G_GSIZE_FORMAT" bytes!\n",data_size);
-  }
-
-   return GST_FLOW_OK;
+    return GST_FLOW_OK;
 }
 
-static gboolean
-gst_video_test_src_start (GstBaseSrc * basesrc)
-{
-  Gstagorasrc *src = GST_AGORASRC (basesrc);
 
-  GST_OBJECT_LOCK (src);
+/* GObject vmethod implementations */
 
-
-  GST_OBJECT_UNLOCK (src);
-
-  return TRUE;
-}
-
-/* initialize the agorasrc's class */
+/* initialize the agoraioudp's class */
 static void
-gst_agorasrc_class_init (GstagorasrcClass * klass)
+gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 {
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
@@ -223,13 +147,11 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
   gstbasesrc_class = (GstBaseSrcClass *) klass;
   gstpushsrc_class = (GstPushSrcClass *) klass;
 
-  gstpushsrc_class->fill = gst_video_test_src_fill;
-  gstbasesrc_class->start = gst_video_test_src_start;
-  //gstbasesrc_class->negotiate = gst_base_src_default_negotiate;
-  
+  gstpushsrc_class->fill = gst_agoraio_src_fill;
+  //gstbasesrc_class->start = gst_video_test_src_start;  
 
-  gobject_class->set_property = gst_agorasrc_set_property;
-  gobject_class->get_property = gst_agorasrc_get_property;
+  gobject_class->set_property = gst_agoraioudp_set_property;
+  gobject_class->get_property = gst_agoraioudp_get_property;
 
  g_object_class_install_property (gobject_class, PROP_VERBOSE,
       g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
@@ -264,6 +186,8 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&src_factory));
 
+  gst_element_class_add_pad_template (gstelement_class,
+      gst_static_pad_template_get (&sink_factory));
 }
 
 /* initialize the new element
@@ -272,49 +196,53 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
  * initialize instance structure
  */
 static void
-gst_agorasrc_init (Gstagorasrc * agoraSrc)
+gst_agoraioudp_init (Gstagoraioudp * agoraIO)
 {
+  gst_base_src_set_live (GST_BASE_SRC (agoraIO), TRUE);
+  gst_base_src_set_blocksize  (GST_BASE_SRC (agoraIO), 10*1024);
 
-  gst_base_src_set_live (GST_BASE_SRC (agoraSrc), TRUE);
-  gst_base_src_set_blocksize  (GST_BASE_SRC (agoraSrc), 10*1024);
+  agoraIO->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
+  gst_pad_set_chain_function (agoraIO->sinkpad,
+                              GST_DEBUG_FUNCPTR(gst_agoraio_chain));
 
   //set it initially to null
-  agoraSrc->agora_ctx=NULL;
+  agoraIO->agora_ctx=NULL;
    
   //set app_id and channel_id to zero
-  memset(agoraSrc->app_id, 0, MAX_STRING_LEN);
-  memset(agoraSrc->channel_id, 0, MAX_STRING_LEN);
-  memset(agoraSrc->user_id, 0, MAX_STRING_LEN);
+  memset(agoraIO->app_id, 0, MAX_STRING_LEN);
+  memset(agoraIO->channel_id, 0, MAX_STRING_LEN);
+  memset(agoraIO->user_id, 0, MAX_STRING_LEN);
   
-  agoraSrc->verbose = FALSE;
-  agoraSrc->audio=FALSE;
+  agoraIO->verbose = FALSE;
+  agoraIO->audio=FALSE;
 }
 static void
-gst_agorasrc_set_property (GObject * object, guint prop_id,
+gst_agoraioudp_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  Gstagorasrc *agoraSrc = GST_AGORASRC (object);
 
-  const gchar* str;
+ Gstagoraioudp *agoraIO = GST_AGORAIOUDP (object);
+
+ const gchar* str;
 
   switch (prop_id) {
     case PROP_VERBOSE:
-      agoraSrc->verbose = g_value_get_boolean (value);
-      break;
+         agoraIO->verbose = g_value_get_boolean (value);
+         break;
     case APP_ID:
         str=g_value_get_string (value);
-        g_strlcpy(agoraSrc->app_id, str, MAX_STRING_LEN);
+        g_strlcpy(agoraIO->app_id, str, MAX_STRING_LEN);
         break;
     case CHANNEL_ID:
         str=g_value_get_string (value);
-        g_strlcpy(agoraSrc->channel_id, str, MAX_STRING_LEN);
+        g_strlcpy(agoraIO->channel_id, str, MAX_STRING_LEN);
         break; 
      case USER_ID:
         str=g_value_get_string (value);
-        g_strlcpy(agoraSrc->user_id, str, MAX_STRING_LEN);
+        g_strlcpy(agoraIO->user_id, str, MAX_STRING_LEN);
         break; 
      case AUDIO: 
-        agoraSrc->audio = g_value_get_boolean (value);
+        agoraIO->audio = g_value_get_boolean (value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -323,53 +251,49 @@ gst_agorasrc_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_agorasrc_get_property (GObject * object, guint prop_id,
+gst_agoraioudp_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  Gstagorasrc *agoraSrc = GST_AGORASRC (object);
+  Gstagoraioudp *agoraIO = GST_AGORAIOUDP (object);
 
   switch (prop_id) {
     case PROP_VERBOSE:
-      g_value_set_boolean (value, agoraSrc->verbose);
-      break;
+       g_value_set_boolean (value, agoraIO->verbose);
+       break;
     case APP_ID:
-       g_value_set_string (value, agoraSrc->app_id);
+       g_value_set_string (value, agoraIO->app_id);
        break;
     case CHANNEL_ID:
-        g_value_set_string (value, agoraSrc->channel_id);
+        g_value_set_string (value, agoraIO->channel_id);
        break;
     case USER_ID:
-        g_value_set_string (value, agoraSrc->user_id);
+        g_value_set_string (value, agoraIO->user_id);
         break;
     case AUDIO:
-        g_value_set_boolean (value, agoraSrc->audio);
+        g_value_set_boolean (value, agoraIO->audio);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
   }
 }
-/* GstElement vmethod implementations */
-
 
 /* entry point to initialize the plug-in
  * initialize the plug-in itself
  * register the element factories and other features
  */
 static gboolean
-agorasrc_init (GstPlugin * agorasrc)
+agoraioudp_init (GstPlugin * agoraioudp)
 {
-
   /* debug category for fltering log messages
    *
-   * exchange the string 'Template agorasrc' with your description
+   * exchange the string 'Template agoraioudp' with your description
    */
-  GST_DEBUG_CATEGORY_INIT (gst_agorasrc_debug, "agorasrc",
-      0, "agorasrc");
+  GST_DEBUG_CATEGORY_INIT (gst_agoraioudp_debug, "agoraioudp",
+      0, "Template agoraioudp");
 
-
-  return gst_element_register (agorasrc, "agorasrc", GST_RANK_NONE,
-      GST_TYPE_AGORASRC);
+  return gst_element_register (agoraioudp, "agoraioudp", GST_RANK_NONE,
+      GST_TYPE_AGORAIOUDP);
 }
 
 /* PACKAGE: this is usually set by autotools depending on some _INIT macro
@@ -378,19 +302,19 @@ agorasrc_init (GstPlugin * agorasrc)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "agorasrc"
+#define PACKAGE "myfirstagoraioudp"
 #endif
 
-/* gstreamer looks for this structure to register agorasrcs
+/* gstreamer looks for this structure to register agoraioudps
  *
- * exchange the string 'Template agorasrc' with your agorasrc description
+ * exchange the string 'Template agoraioudp' with your agoraioudp description
  */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
-    agorasrc,
-    "agorasrc",
-    agorasrc_init,
+    agoraioudp,
+    "Template agoraioudp",
+    agoraioudp_init,
     PACKAGE_VERSION,
     GST_LICENSE,
     GST_PACKAGE_NAME,

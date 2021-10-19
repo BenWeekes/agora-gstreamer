@@ -25,6 +25,8 @@ _currentAgoraSink("")
 
 {
      _activeUsers.clear();
+
+     _subscribedAudioUsers.clear();
 }
 
 AgoraReceiverUser::~AgoraReceiverUser()
@@ -66,8 +68,6 @@ bool AgoraReceiverUser::connect()
         return false;
     }
     
-    //_rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_AUDIENCE;
-   // _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
     _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
 
     _rtcConfig.autoSubscribeAudio = false;
@@ -76,8 +76,10 @@ bool AgoraReceiverUser::connect()
     
     _currentAgoraSink=ReadCurrentUid();
     
-    std::cout<<"agorasink user id: "<<_currentAgoraSink<<std::endl;
-
+    if(_verbose){
+        std::cout<<"agorasink user id: "<<_currentAgoraSink<<std::endl;
+    }
+   
     _connection = _service->createRtcConnection(_rtcConfig);
     if (!_connection)
     {
@@ -102,10 +104,8 @@ bool AgoraReceiverUser::connect()
        _connection->getLocalUser()->subscribeAudio(_userId.c_str());
    }
 
-   _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser());
+   _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser(),_verbose);
    
-    // _connection->getLocalUser()->subscribeAllAudio();
-
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>(); 
     if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
@@ -145,10 +145,8 @@ bool AgoraReceiverUser::connect()
     _connection->getLocalUser()->publishVideo(_customVideoTrack);
 
 
-    localUserObserver = std::make_shared<UserObserver>(_connection->getLocalUser());
-
     h264FrameReceiver = std::make_shared<H264FrameReceiver>();
-    localUserObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
+    _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
 
     //video
      _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
@@ -184,10 +182,10 @@ bool AgoraReceiverUser::connect()
 
     _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
         if(messsage==1 && value==1){
-           handleUserStateChange(userId, USER_LEAVE);
+           handleUserStateChange(userId, USER_CAM_OFF);
         }
         else if(messsage==1 && value==0){
-            handleUserStateChange(userId, USER_JOIN);
+            handleUserStateChange(userId, USER_CAM_ON);
         }
     });
 
@@ -237,7 +235,6 @@ void AgoraReceiverUser::receiveAudioFrame(const uint userId, const uint8_t* buff
          else{
              std::cout<<"audio buffer reached max size"<<std::endl;
          }
-
 }
 
 void AgoraReceiverUser::handleUserStateChange(const std::string& userId, 
@@ -246,14 +243,13 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
     if(newState==USER_JOIN && _receiveAudio==true){
         _currentAgoraSink=ReadCurrentUid();
         if(userId!=_currentAgoraSink){
-            _connection->getLocalUser()->subscribeAudio(userId.c_str());
-            std::cout<<"subscribed to audio user "<<userId<<std::endl;
+           subscribeAudioUser(userId);
         } 
     }                                              
     //is a user id is provided by the plugin, we do not need to subscribe to someone else
     if(_userId!="" || _receiveVideo==false)  return;
 
-    if(newState==USER_JOIN){
+    if(newState==USER_JOIN || newState==USER_CAM_ON){
 
         //if there is not active user we are subscribing to, subscribe to this user
         if(_activeUsers.empty()){
@@ -262,7 +258,7 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
 
         _activeUsers.emplace_back(userId);  
     }
-    else if(newState==USER_LEAVE){
+    else if(newState==USER_LEAVE || USER_CAM_OFF){
 
          _connection->getLocalUser()->unsubscribeVideo(userId.c_str());
         _activeUsers.remove_if([userId](const std::string& id){ return (userId==id); });
@@ -288,7 +284,7 @@ void AgoraReceiverUser::handleUserStateChange(const std::string& userId,
 bool AgoraReceiverUser::disconnect(){
 
     // Unregister video frame observers
-    localUserObserver->unsetVideoFrameObserver();
+    _userObserver->unsetVideoFrameObserver();
     
     // Disconnect from Agora channel
     auto res = _connection->disconnect();;
@@ -301,7 +297,7 @@ bool AgoraReceiverUser::disconnect(){
     logMessage("Disconnected from receiver channel");
 
     // Destroy Agora connection and related resources
-    localUserObserver.reset();
+    _userObserver.reset();
     h264FrameReceiver.reset();
     _pcmFrameObserver.reset();
 
@@ -342,4 +338,16 @@ size_t AgoraReceiverUser::getNextAudioFrame(unsigned char* data, size_t max_buff
     memcpy(data, work->buffer, work->len);
 
     return work->len;
+}
+
+void AgoraReceiverUser::subscribeAudioUser(const std::string& userId){
+
+    _connection->getLocalUser()->subscribeAudio(userId.c_str());
+    std::cout<<"subscribed to audio user "<<userId<<std::endl;
+
+    //_subscribedAudioUsers.emplace_back(userId);
+}
+void AgoraReceiverUser::unsubscribeAudioUser(const std::string& userId){
+
+  _connection->getLocalUser()->unsubscribeAudio(userId.c_str());
 }

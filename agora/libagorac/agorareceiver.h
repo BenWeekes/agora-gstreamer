@@ -61,9 +61,11 @@ protected:
     void handleUserStateChange(const std::string& userId, 
                                const UserState& newState);
 
+    void subscribeAudioUser(const std::string& userId);
+    void unsubscribeAudioUser(const std::string& userId);
+
 private:
     std::shared_ptr<H264FrameReceiver>  h264FrameReceiver;
-    std::shared_ptr<UserObserver>       localUserObserver;
 
     PcmFrameObserver_ptr                 _pcmFrameObserver;
     ConnectionObserver_ptr               _connectionObserver;
@@ -102,6 +104,8 @@ private:
 
      std::string                        _currentAgoraSink;
      UidToFile                          _sinkUidMonitor;
+
+     std::list<std::string>             _subscribedAudioUsers;
 };
 
 

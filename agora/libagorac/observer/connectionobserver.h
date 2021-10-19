@@ -6,7 +6,11 @@
 #include "../agoraevent.h"
 
 
-enum UserState{USER_JOIN, USER_LEAVE, USER_CONNECTED};
+enum UserState{USER_JOIN, 
+               USER_LEAVE,
+               USER_CAM_ON,
+               USER_CAM_OFF, 
+               USER_CONNECTED};
 
 using OnUserStateChange_fn=std::function<void(const std::string& userId, const UserState& newState)>;
 

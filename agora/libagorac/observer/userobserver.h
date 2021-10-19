@@ -17,7 +17,7 @@ using OnUserInfofn=std::function<void(const std::string& userId, const int& mess
 
 class UserObserver : public agora::rtc::ILocalUserObserver {
  public:
-  UserObserver(agora::rtc::ILocalUser* local_user);
+  UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose);
   virtual ~UserObserver();
 
   void setOnUserInfofn (const OnUserInfofn& fn){
@@ -164,6 +164,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   std::mutex observer_lock_;
 
   OnUserInfofn       _onUserInfoChanged;
+
+  bool               _verbose;
 };
 
 using UserObserver_ptr=std::shared_ptr<UserObserver>;
