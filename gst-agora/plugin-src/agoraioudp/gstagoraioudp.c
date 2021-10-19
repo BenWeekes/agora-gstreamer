@@ -138,13 +138,13 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
 
-  GstBaseSrcClass *gstbasesrc_class;
+ // GstBaseSrcClass *gstbasesrc_class;
   GstPushSrcClass *gstpushsrc_class;
 
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
 
-  gstbasesrc_class = (GstBaseSrcClass *) klass;
+  //gstbasesrc_class = (GstBaseSrcClass *) klass;
   gstpushsrc_class = (GstPushSrcClass *) klass;
 
   gstpushsrc_class->fill = gst_agoraio_src_fill;
