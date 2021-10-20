@@ -216,6 +216,10 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      free(data); 
      agoraIO->ts+=30;
 
+     GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
+     if(peer==NULL){
+         return GST_FLOW_OK;
+     }
 
      //receive data
      const size_t  max_size=4*1024*1024;

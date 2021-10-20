@@ -31,7 +31,7 @@
 
 
 AgoraIo::AgoraIo():
- _verbose(false),
+ _verbose(true),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""){
 
@@ -326,8 +326,8 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
                                           const size_t& length,const int& isKeyFrame){
       if(_verbose==true){
              auto  timeDiff=GetTimeDiff(_lastReceivedFrameTime,Now());
-             std::cout<<"Time since last frame (ms): "<<timeDiff<<std::endl;
-             logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
+             //std::cout<<"Time since last frame (ms): "<<timeDiff<<std::endl;
+             //logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
        }
 
       _lastReceivedFrameTime=Now();
