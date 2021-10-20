@@ -408,6 +408,11 @@ void AgoraIo::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
 
 size_t AgoraIo::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame){
    
+    //do not wait for frames to arrive
+    if(_receivedVideoFrames->isEmpty()){
+        return 0;
+    }
+
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
 

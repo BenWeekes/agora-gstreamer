@@ -226,6 +226,10 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      }
 
      data_size=agoraio_read_video(agoraIO->agora_ctx, recvData, max_size, &is_key_frame);
+     if(data_size==0){
+         free(recvData);
+         return GST_FLOW_OK;
+     }
 
     in_buffer_size=gst_buffer_get_size (in_buffer);
 
@@ -239,8 +243,6 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      gst_buffer_set_size(in_buffer, data_size);
 
      free(recvData);
-
-     //return GST_FLOW_OK;
 
     return gst_pad_push (agoraIO->srcpad, in_buffer);
 }
