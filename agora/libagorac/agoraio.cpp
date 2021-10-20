@@ -165,15 +165,15 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
   }
 
   // Create media node factory
-  auto factory = _service->createMediaNodeFactory();
-  if (!factory) {
+  _factory = _service->createMediaNodeFactory();
+  if (!_factory) {
     return NULL;
   }
 
 
   //audio
   // Create audio data sender
-   ctx->audioSender = factory->createAudioEncodedFrameSender();
+   ctx->audioSender = _factory->createAudioEncodedFrameSender();
   if (!ctx->audioSender) {
     return NULL;
   }
@@ -185,7 +185,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
   }
 
   // Create video frame sender
-  ctx->videoSender = factory->createVideoEncodedImageSender();
+  ctx->videoSender = _factory->createVideoEncodedImageSender();
   if (!ctx->videoSender) {
     return NULL;
   }
@@ -329,6 +329,10 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
              //std::cout<<"Time since last frame (ms): "<<timeDiff<<std::endl;
              //logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
        }
+
+      if(_receivedVideoFrames->size()>0){
+        std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
+      }
 
       _lastReceivedFrameTime=Now();
 

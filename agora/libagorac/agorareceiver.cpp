@@ -107,10 +107,19 @@ bool AgoraReceiverUser::connect()
    _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser(),_verbose);
    
     //register audio observer
-    _pcmFrameObserver = std::make_shared<PcmFrameObserver>(); 
-    if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
-       logMessage("Agora: Failed to set audio frame parameters!");
-       return false;
+    _pcmFrameObserver = std::make_shared<PcmFrameObserver>();
+
+    if(_userId=="") {
+       if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
+          logMessage("Agora: Failed to set audio frame parameters!");
+          return false;
+      }
+    }
+    else{
+        if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+          logMessage("Agora: Failed to set audio frame parameters!");
+          return false;
+      }
     }
 
     // Register connection observer to monitor connection event

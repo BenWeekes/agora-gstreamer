@@ -122,6 +122,8 @@ protected:
     PcmFrameObserver_ptr                 _pcmFrameObserver;
     ConnectionObserver_ptr               _connectionObserver;
     UserObserver_ptr                     _userObserver;
+
+    agora::agora_refptr<agora::rtc::IMediaNodeFactory> _factory;
  };
 
 #endif
