@@ -50,6 +50,12 @@ cd release
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    
+ ## agoraioudp
+
+<ins>Video in/out from webcam</ins>     
+
+ gst-launch-1.0 v4l2src ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=xxx channel=xxx verbose=false  ! queue ! decodebin ! queue ! glimagesink
+   
  ## agorasink
    
 <ins>Video into Agora from test source:</ins>    
