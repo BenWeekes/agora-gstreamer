@@ -1,3 +1,6 @@
+#ifndef _H264_FRAME_OBSERVER_H_
+#define _H264_FRAME_OBSERVER_H_
+
 #include <functional>
 #include "AgoraBase.h"
 
@@ -19,3 +22,5 @@ public:
 private:
     OnNewFrame_fn                   _onVideoFrameReceived;
 };
+
+#endif

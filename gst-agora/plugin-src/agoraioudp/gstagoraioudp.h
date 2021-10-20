@@ -72,18 +72,20 @@ G_DECLARE_FINAL_TYPE (Gstagoraioudp, gst_agoraioudp,
 
 struct _Gstagoraioudp
 {
-  GstPushSrc element;
+  GstElement element;
 
   GstPad  *srcpad, *sinkpad;
 
   gboolean verbose;
   gboolean audio;
 
-  agora_receive_context_t* agora_ctx;
+  AgoraIoContext_t* agora_ctx;
 
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
+
+  size_t                 ts;
 };
 
 G_END_DECLS

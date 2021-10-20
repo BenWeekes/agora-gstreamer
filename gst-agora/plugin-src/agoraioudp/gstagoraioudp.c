@@ -107,7 +107,7 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
 
 
 #define gst_agoraioudp_parent_class parent_class
-G_DEFINE_TYPE (Gstagoraioudp, gst_agoraioudp, GST_TYPE_PUSH_SRC);
+G_DEFINE_TYPE (Gstagoraioudp, gst_agoraioudp, GST_TYPE_ELEMENT);
 
 static void gst_agoraioudp_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
@@ -121,11 +121,128 @@ static GstFlowReturn gst_agoraio_src_fill (GstPushSrc * psrc, GstBuffer * buffer
     return GST_FLOW_OK;
 }
 
-static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * buf){
+int init_agora(Gstagoraioudp *agoraIO){
 
-    g_print("gst_agoraio_chain\n");
+   if (strlen(agoraIO->app_id)==0){
+       g_print("app id cannot be empty!\n");
+       return -1;
+   }
 
-    return GST_FLOW_OK;
+   if (strlen(agoraIO->channel_id)==0){
+       g_print("channel id cannot be empty!\n");
+       return -1;
+   }
+
+    /*initialize agora*/
+   agoraIO->agora_ctx=agoraio_init2(agoraIO->app_id,  /*appid*/
+                                agoraIO->channel_id, /*channel*/
+                                agoraIO->user_id,    /*user id*/
+                                 FALSE,      /*is audio user*/
+                                 0,                 /*enable encryption */
+                                 0,                 /*enable dual */
+                                 500000,            /*dual video bitrate*/
+                                 320,               /*dual video width*/
+                                 180,               /*dual video height*/
+                                 12,                /*initial size of video buffer*/
+                                 30);               /*dual fps*/
+
+   if(agoraIO->agora_ctx==NULL){
+
+      g_print("agora COULD NOT  be initialized\n");
+      return FALSE;   
+   }
+
+   g_print("agora has been successfuly initialized\n");
+
+   return TRUE;
+}
+
+void print_packet(u_int8_t* data, int size){
+  
+  int i=0;
+
+  for(i=0;i<size;i++){
+    printf(" %d ", data[i]);
+  }
+
+  printf("\n================================\n");
+    
+}
+
+static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
+
+    size_t data_size=0;
+    int    is_key_frame=0;
+
+    size_t in_buffer_size=0;
+
+    GstMemory *memory=NULL;
+
+    Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
+
+   //TODO: we need a better position to initialize agora. 
+   //gst_agorasink_init() is good, however, it is called before reading app and channels ids
+   if(agoraIO->agora_ctx==NULL && init_agora(agoraIO)!=TRUE){
+      g_print("cannot initialize agora\n");
+      return GST_FLOW_ERROR;
+    }
+
+    data_size=gst_buffer_get_size (in_buffer);
+  
+    gpointer data=malloc(data_size);
+    if(data==NULL){
+       g_print("cannot allocate memory!\n");
+       return GST_FLOW_ERROR;
+    }
+
+    gst_buffer_extract(in_buffer,0, data, data_size);
+     if(GST_BUFFER_FLAG_IS_SET(in_buffer, GST_BUFFER_FLAG_DELTA_UNIT) == FALSE){
+        is_key_frame=1;
+     }
+
+     if(agoraIO->audio==FALSE){
+        agoraio_send_video(agoraIO->agora_ctx, data, data_size,is_key_frame, agoraIO->ts);
+      }
+     else{
+        //agoraio_send_audio(agoraIO->agora_ctx, data, data_size, agoraIO->ts);
+      }
+ 
+     if (agoraIO->verbose == true){
+        g_print ("agorasink: received %" G_GSIZE_FORMAT" bytes!\n",data_size);
+        print_packet(data, 10);
+        g_print("agorasink: is key frame: %d\n", is_key_frame);
+     }
+
+     free(data); 
+     agoraIO->ts+=30;
+
+
+     //receive data
+     const size_t  max_size=4*1024*1024;
+     unsigned char* recvData=malloc(max_size);
+     if(recvData==NULL){
+        g_print("cannot allocate memory\n");
+        return GST_FLOW_ERROR;
+     }
+
+     data_size=agoraio_read_video(agoraIO->agora_ctx, recvData, max_size, &is_key_frame);
+
+    in_buffer_size=gst_buffer_get_size (in_buffer);
+
+     /*increase the buffer if it is less than the frame data size*/
+    if(data_size>in_buffer_size){
+       memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
+       gst_buffer_insert_memory (in_buffer, -1, memory);
+     }
+
+     gst_buffer_fill(in_buffer, 0, recvData, data_size);
+     gst_buffer_set_size(in_buffer, data_size);
+
+     free(recvData);
+
+     //return GST_FLOW_OK;
+
+    return gst_pad_push (agoraIO->srcpad, in_buffer);
 }
 
 
@@ -198,12 +315,22 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 static void
 gst_agoraioudp_init (Gstagoraioudp * agoraIO)
 {
-  gst_base_src_set_live (GST_BASE_SRC (agoraIO), TRUE);
-  gst_base_src_set_blocksize  (GST_BASE_SRC (agoraIO), 10*1024);
+  //gst_base_src_set_live (GST_BASE_SRC (agoraIO), TRUE);
+  //gst_base_src_set_blocksize  (GST_BASE_SRC (agoraIO), 10*1024);
 
+  //for src
+  agoraIO->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
+
+  GST_PAD_SET_PROXY_CAPS (agoraIO->srcpad);
+  gst_element_add_pad (GST_ELEMENT (agoraIO), agoraIO->srcpad);
+
+  //for sink 
   agoraIO->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
   gst_pad_set_chain_function (agoraIO->sinkpad,
                               GST_DEBUG_FUNCPTR(gst_agoraio_chain));
+
+  GST_PAD_SET_PROXY_CAPS (agoraIO->sinkpad);
+  gst_element_add_pad (GST_ELEMENT (agoraIO), agoraIO->sinkpad);
 
   //set it initially to null
   agoraIO->agora_ctx=NULL;

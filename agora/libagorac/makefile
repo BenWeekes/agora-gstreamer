@@ -23,10 +23,14 @@ AGORA_RECEIVER =agorareceiver.cpp \
 
 AGORA_HELPERS =  agoraevent.cpp
 
+AGORA_IO_FILES=agoraio.cpp
+
 all: ${TARGET_LIB}
 
 $(TARGET_LIB): $(OBJS) agorac.cpp 
-	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp ${HELPER_FILES} ${AGORA_RECEIVER} ${AGORA_HELPERS} $(CFLAGS)
+	$(CC)  $(FLAGS) ${LDFLAGS} -o $(TARGET_LIB) agorac.cpp \
+	       ${HELPER_FILES} ${AGORA_RECEIVER} \
+	       ${AGORA_HELPERS} ${AGORA_IO_FILES} $(CFLAGS)
 
 clean:
 	rm $(TARGET_LIB)

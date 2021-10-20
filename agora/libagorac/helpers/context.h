@@ -16,6 +16,7 @@ struct agora_context_t{
   agora::agora_refptr<agora::rtc::IRtcConnection>  connection;
 
   int                                              isConnected;
+
   ConnectionConfig                                 config;
 
   AgoraVideoSender_ptr                             videoSender;
@@ -86,6 +87,12 @@ class AgoraReceiverUser;
 struct agora_receive_context_t{
 
    std::shared_ptr<AgoraReceiverUser> _receiver;
+};
+
+class AgoraIo;
+struct AgoraIoContext_t{
+
+   std::shared_ptr<AgoraIo>  agoraIo;
 };
 
 class Work{
