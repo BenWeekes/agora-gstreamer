@@ -121,6 +121,42 @@ static GstFlowReturn gst_agoraio_src_fill (GstPushSrc * psrc, GstBuffer * buffer
     return GST_FLOW_OK;
 }
 
+static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
+                           gpointer    user_data)
+{
+    //g_print("In %s\n", __func__);
+   
+    static GstClockTime timestamp = 0;
+    GstBuffer *buffer;
+    GstFlowReturn ret;
+    size_t data_size=0;
+
+    size_t  max_data_size=960*2*2;  //two channels of 48000 sample rate
+
+    AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
+
+    gpointer recv_data=malloc(max_data_size);
+    data_size=agoraio_read_audio(agora_ctx, recv_data, max_data_size);
+
+    buffer = gst_buffer_new_allocate (NULL, data_size, NULL);
+    gst_buffer_fill(buffer, 0, recv_data, data_size);
+    gst_buffer_set_size(buffer, data_size);
+
+   // GST_BUFFER_PTS (buffer) = timestamp;
+    //GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 2);
+
+    timestamp += GST_BUFFER_DURATION (buffer);
+
+    //g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
+    ret = gst_app_src_push_buffer(appsrc, buffer);
+
+    if (ret != GST_FLOW_OK) {
+        g_print("Error pushing data\n");
+        /* something wrong, stop pushing */
+       // g_main_loop_quit (loop);
+    }
+}
+
 int init_agora(Gstagoraioudp *agoraIO){
 
    if (strlen(agoraIO->app_id)==0){
@@ -153,6 +189,43 @@ int init_agora(Gstagoraioudp *agoraIO){
    }
 
    g_print("agora has been successfuly initialized\n");
+
+   agoraIO->appAudioSrc= gst_element_factory_make ("appsrc", "source");
+   if(!agoraIO->appAudioSrc){
+       g_print("failed to create audio app src\n");
+   }
+   else{
+       g_print("created audio app src successfully\n");
+   }
+   agoraIO->udpsink = gst_element_factory_make("udpsink", "udpsink");
+   if(!agoraIO->udpsink){
+       g_print("failed to create audio udpsink\n");
+   }
+   else{
+       g_print("created udpsink successfully\n");
+   }
+
+   agoraIO->pipeline = gst_pipeline_new ("pipeline");
+   if(!agoraIO->pipeline){
+       g_print("failed to create audio pipeline\n");
+   }
+
+   gst_bin_add_many (GST_BIN (agoraIO->pipeline), agoraIO->appAudioSrc, agoraIO->udpsink, NULL);
+   gst_element_link_many (agoraIO->appAudioSrc, agoraIO->udpsink, NULL);
+
+    /* setup appsrc */
+    g_object_set (G_OBJECT (agoraIO->appAudioSrc),
+            "stream-type", 0,
+            "is-live", TRUE,
+            "format", GST_FORMAT_TIME, NULL);
+
+    agoraIO->cbs.need_data = on_request_audio_data;
+    //agoraIO->cbs.enough_data = cb_enough_data;
+    //agoraIO->cbs.seek_data = cb_seek_data;
+
+    gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
+                                 &agoraIO->cbs, agoraIO->agora_ctx, NULL);
+    gst_element_set_state (agoraIO->pipeline, GST_STATE_PLAYING);
 
    return TRUE;
 }
@@ -311,6 +384,7 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&sink_factory));
+
 }
 
 /* initialize the new element

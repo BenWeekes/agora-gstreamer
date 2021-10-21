@@ -51,6 +51,8 @@
 #include <gst/base/gstpushsrc.h>
 #include "agorac.h"
 
+#include <gst/app/gstappsrc.h>
+
 G_BEGIN_DECLS
 
 #define GST_TYPE_AGORAIOUDP \
@@ -75,6 +77,11 @@ struct _Gstagoraioudp
   GstElement element;
 
   GstPad  *srcpad, *sinkpad;
+
+  GstElement * appAudioSrc, *udpsink;
+  GstElement *pipeline;
+
+  GstAppSrcCallbacks cbs;
 
   gboolean verbose;
   gboolean audio;

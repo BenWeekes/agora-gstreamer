@@ -46,9 +46,11 @@ agora::base::IAgoraService* AgoraIo::createAndInitAgoraService(bool enableAudioD
 						      bool enableEncryption, const char* appid) {
   auto service = createAgoraService();
   agora::base::AgoraServiceConfiguration scfg;
-  scfg.enableAudioProcessor = enableAudioProcessor;
-  scfg.enableAudioDevice = enableAudioDevice;
-  scfg.enableVideo = enableVideo;
+
+  scfg.enableAudioProcessor = true;
+  scfg.enableAudioDevice = false;
+  scfg.enableVideo = true;
+
   scfg.useStringUid=stringUserid;
   if (enableEncryption) {
     scfg.appId = appid;
@@ -56,6 +58,35 @@ agora::base::IAgoraService* AgoraIo::createAndInitAgoraService(bool enableAudioD
 
   int ret = service->initialize(scfg);
   return (ret == agora::ERR_OK) ? service : nullptr;
+}
+
+bool AgoraIo::doConnect(const std::string& appid)
+{
+    _service = createAgoraService();
+    if (!_service)
+    {
+        logMessage("Error init Agora SDK");
+        return false;
+    }
+
+    int32_t buildNum = 0;
+    getAgoraSdkVersion(&buildNum);
+    logMessage("Agora SDK version: {}"+std::to_string(buildNum));
+
+    agora::base::AgoraServiceConfiguration scfg;
+    scfg.appId = appid.c_str();
+    scfg.enableAudioProcessor = true;
+    scfg.enableAudioDevice = false;
+    scfg.enableVideo = true;
+ 
+
+    if (_service->initialize(scfg) != agora::ERR_OK)
+    {
+        logMessage("Error initialize Agora SDK");
+        return false;
+    }
+
+    return true;
 }
 
 #define ENC_KEY_LENGTH        128
@@ -71,217 +102,91 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
                         unsigned short min_video_jb,
                         unsigned short dfps){
 
-  int32_t buildNum = 0;
-  getAgoraSdkVersion(&buildNum);
-  logMessage("**** Agora SDK version: "+std::to_string(buildNum)+" ****");
+    _ctx=new agora_context_t;
 
-  //rotate log file if necessary
-  CheckAndRollLogFile();
-
-  agora_context_t* ctx=new agora_context_t;
-
-  _ctx=ctx;
-
-  std::string app_id(in_app_id);
-  std::string chanel_id=(in_ch_id);
-  std::string user_id(in_user_id);
-  std::string proj_appid = "abcd";
-  char encryptionKey[ENC_KEY_LENGTH] = "";
-
-  //set configuration
-  _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
-  _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_LIVE_BROADCASTING;
-  _rtcConfig.autoSubscribeAudio = false;
-  _rtcConfig.autoSubscribeVideo = false;
-
-  ctx->enable_dual=enable_dual;
-
-  //create a local config
-  ctx->callConfig=std::make_shared<LocalConfig>();
-  ctx->callConfig->print();
-
-  ctx->jb_size=ctx->callConfig->getInitialJbSize();
-
-  if (enable_enc) {
-    std::ifstream inf;
-    std::string temp_str;
-    inf.open("/tmp/nginx_agora_appid.txt",std::ifstream::in);
-    if(!inf.is_open()){
-      logMessage("agora Failed to open AppId and key for encryption!");
+    if(!doConnect(in_app_id)){
+        return NULL;
     }
-    getline(inf, proj_appid);
-    //logMessage(proj_appid.c_str());
-    getline(inf, temp_str);
-    //logMessage(temp_str.c_str());
-    inf.close();
-    int str_leng = temp_str.copy(encryptionKey, temp_str.length());
-    encryptionKey[str_leng] = '\0';
-  }
 
-  // Create Agora service
-   if(user_id=="" ||  isNumber(user_id)){
-      logMessage("numeric  user id: "+ user_id);
-      _service = createAndInitAgoraService(false, true, true,  false, enable_enc, proj_appid.c_str());
-  }
-  else{
-     logMessage("string user id: "+ user_id);
-     _service = createAndInitAgoraService(false, true, true,  true, enable_enc, proj_appid.c_str());
-  }
+    std::string _userId=in_user_id;
+    
+    _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
 
+    _rtcConfig.autoSubscribeAudio = false;
+    _rtcConfig.autoSubscribeVideo = false;
+    _rtcConfig.enableAudioRecordingOrPlayout = false; 
 
-  if (!_service) {
-    delete ctx;
-    return NULL;
-  }
+    _ctx->enable_dual=enable_dual;
 
-  _connection =_service->createRtcConnection(_rtcConfig);
-  if (!_connection) {
-     delete ctx;
-     return NULL;
-  }
+    //create a local config
+    _ctx->callConfig=std::make_shared<LocalConfig>();
+    _ctx->callConfig->loadConfig("/usr/local/nginx/conf/rtmpg.conf");
+    _ctx->callConfig->print();
 
-  // open the encryption mode
-  if ( _connection && enable_enc) {
-     agora::rtc::EncryptionConfig Config;
-    Config.encryptionMode = agora::rtc::SM4_128_ECB;  //currently only this mode is supported
-    Config.encryptionKey = encryptionKey;
-
-    if (_connection->enableEncryption(true, Config) < 0) {
-      logMessage("agora Failed to enable Encryption!");
-      delete ctx;
-      return NULL;
-    } else {
-      logMessage("agora built-in encryption enabled!");
+    _ctx->jb_size=_ctx->callConfig->getInitialJbSize();
+    
+    
+    _connection = _service->createRtcConnection(_rtcConfig);
+    if (!_connection)
+    {
+        logMessage("Error creating connection to Agora SDK");
+        return NULL;
     }
-  }
+    
+    _factory = _service->createMediaNodeFactory();
+    if (!_factory)
+    {
+        logMessage("Error creating factory");
+        return NULL;
+    }
 
-   //TODO: may be move observers here
+   _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser(),_verbose);
+   
+    //register audio observer
+    _pcmFrameObserver = std::make_shared<PcmFrameObserver>();
+    if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+        logMessage("Agora: Failed to set audio frame parameters!");
+        return NULL;
+    }
 
-  // Connect to Agora channel
-  auto  connected = _connection->connect(app_id.c_str(), chanel_id.c_str(), user_id.c_str());
-  if (_connected) {
-     delete ctx;
-     return NULL;
-  }
+    // Register connection observer to monitor connection event
+    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connection->registerObserver(_connectionObserver.get());
 
-  // Create media node factory
-  _factory = _service->createMediaNodeFactory();
-  if (!_factory) {
-    return NULL;
-  }
+    _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
+    auto res = _connection->connect(in_app_id, in_ch_id, in_user_id);
+    if (res)
+    {
+       logMessage("Error connecting to channel");
+        return NULL;
+    }
 
-
-  //audio
-  // Create audio data sender
-   ctx->audioSender = _factory->createAudioEncodedFrameSender();
-  if (!ctx->audioSender) {
-    return NULL;
-  }
-
-  // Create audio track
-  ctx->audioTrack =_service->createCustomAudioTrack(ctx->audioSender, agora::base::MIX_DISABLED);
-  if (!ctx->audioTrack) {
-    return NULL;
-  }
-
-  // Create video frame sender
-  ctx->videoSender = _factory->createVideoEncodedImageSender();
-  if (!ctx->videoSender) {
-    return NULL;
-  }
-
-
-  // Create video track
-  agora::base::SenderOptions options;
-  options.ccMode=agora::base::CC_ENABLED;  //for send_dual_h264
-  ctx->videoTrack =_service->createCustomVideoTrack(ctx->videoSender,options);
-  if (!ctx->videoTrack) {
-    return NULL;
-  }
-
-  // Set the dual_model
-  agora::rtc::SimulcastStreamConfig Low_streamConfig;
-  ctx->videoTrack->enableSimulcastStream(true, Low_streamConfig);
-
-  // Publish audio & video track
-  _connection->getLocalUser()->publishAudio(ctx->audioTrack);
-  _connection->getLocalUser()->publishVideo(ctx->videoTrack);
-
-  ctx->isConnected=1;
-  
-  ctx->videoJB=std::make_shared<WorkQueue <Work_ptr> >();
-  ctx->audioJB=std::make_shared<WorkQueue <Work_ptr> >();
-
-  ctx->isRunning=true;
-
-  //start thread handlers
-   ctx->videoThreadHigh=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerHigh,this,ctx);
-   ctx->audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this, ctx);
- 
-  //is dual streaming is enabled 
-  if(ctx->enable_dual){
-      //create video encoder/decoder
-      ctx->videoDecoder=std::make_shared<AgoraDecoder>();
-      ctx->videoEncoder=std::make_shared<AgoraEncoder>(dual_width,dual_height,dual_vbr, dfps);
-
-      ctx->videoEncoder->setQMin(ctx->callConfig->getQMin());
-      ctx->videoEncoder->setQMax(ctx->callConfig->getQMax());
-
-      if(!ctx->videoDecoder->init() || ! ctx->videoEncoder->init()){
-         return NULL;
-      }
-
-      ctx->videoQueueLow=std::make_shared<WorkQueue <Work_ptr> >();
-      ctx->videoThreadLow=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerLow,this,ctx);
-  }
-
-
-  ctx->encodeNextFrame=true;
-
-  ctx->fps=0;
-  ctx->lastFpsPrintTime=Now();
-  ctx->lastBufferingTime=Now();
-  ctx->reBufferingCount=0;
-
-  ctx->lastFrameTimestamp=0; 
-  ctx->timestampPerSecond=0;
-
-  //initially set to 30fps
-  ctx->predictedFps=30;
-
-  ctx->lastHighFrameSendTime=Now();
-  ctx->lastLowFrameSendTime=Now();
-
-  ctx->isJbBuffering=false;
-
-  ctx->lastVideoTimestamp=0;
-  ctx->lastAudioTimestamp=0;
-
-  ctx->highVideoFrameCount=0;
-  ctx->lowVideoFrameCount=0;
-
-  ctx->lastVideoSampingInterval=1000/(float)ctx->predictedFps;
-
-  ctx->dfps=dfps;
-
-  ctx->audioDumpFileName="/tmp/rtmp_agora_audio_"+std::to_string((long)(ctx))+".raw";
-
-  //register audio observer
-   _pcmFrameObserver = std::make_shared<PcmFrameObserver>(); 
-   if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
-       logMessage("Agora: Failed to set audio frame parameters!");
+    _videoFrameSender=_factory->createVideoEncodedImageSender();
+    if (!_videoFrameSender) {
+       std::cout<<"Failed to create video frame sender!"<<std::endl;
        return NULL;
     }
 
-  //handle receiver events
-   _userObserver=std::make_shared<UserObserver>(_connection->getLocalUser(),_verbose);
+    //if you want to send_dual_h264,the ccMode must be enabled
+     agora::base::SenderOptions option;
+     option.ccMode = agora::base::CC_ENABLED;
+    // Create video track
+    _customVideoTrack=_service->createCustomVideoTrack(_videoFrameSender, option);
+    if (!_customVideoTrack) {
+         std::cout<<"Failed to create video track!"<<std::endl;
+         return NULL;
+     }
 
-   h264FrameReceiver = std::make_shared<H264FrameReceiver>();
-   _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
+    // Publish  video track
+    _connection->getLocalUser()->publishVideo(_customVideoTrack);
+
+
+    h264FrameReceiver = std::make_shared<H264FrameReceiver>();
+    _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
 
     //video
-   _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
-   h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
+     _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
+    h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
                                                     const int& isKeyFrame){
@@ -291,17 +196,13 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
     });
 
    //audio
-   _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
+     _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
     _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length){
 
           receiveAudioFrame(userId, buffer, length);
     });
-
-    // Register connection observer to monitor connection event
-   _connectionObserver = std::make_shared<ConnectionObserver>();
-   _connection->registerObserver(_connectionObserver.get());
 
     //connection observer: handles user join and leave
     _connectionObserver->setOnUserStateChanged([this](const std::string& userId,
@@ -319,7 +220,47 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
     });
 
 
-  return ctx;
+  _ctx->isConnected=1;
+  _ctx->videoJB=std::make_shared<WorkQueue <Work_ptr> >();
+  _ctx->audioJB=std::make_shared<WorkQueue <Work_ptr> >();
+
+  _ctx->isRunning=true;
+
+    //start thread handlers
+  _videoThreadHigh=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerHigh, this,_ctx);
+  //_audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this, _ctx);
+
+  _connected = true;
+
+  _ctx->encodeNextFrame=true;
+
+  _ctx->fps=0;
+  _ctx->lastFpsPrintTime=Now();
+  _ctx->lastBufferingTime=Now();
+  _ctx->reBufferingCount=0;
+
+  _ctx->lastFrameTimestamp=0; 
+  _ctx->timestampPerSecond=0;
+
+  //initially set to 30fps
+  _ctx->predictedFps=30;
+
+  _ctx->lastHighFrameSendTime=Now();
+  _ctx->lastLowFrameSendTime=Now();
+
+  _ctx->isJbBuffering=false;
+
+  _ctx->lastVideoTimestamp=0;
+  _ctx->lastAudioTimestamp=0;
+
+  _ctx->highVideoFrameCount=0;
+  _ctx->lowVideoFrameCount=0;
+
+  _ctx->lastVideoSampingInterval=1000/(float)_ctx->predictedFps;
+
+  _ctx->dfps=dfps;
+
+  return _ctx;
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
@@ -484,7 +425,7 @@ bool AgoraIo::doSendLowVideo(agora_context_t* ctx, const unsigned char* buffer, 
     videoEncodedFrameInfo.frameType = frameType;
 
     videoEncodedFrameInfo.streamType = agora::rtc::VIDEO_STREAM_LOW;
-    ctx->videoSender->sendEncodedVideoImage(outBuffer.get(),outBufferSize,videoEncodedFrameInfo);
+    _videoFrameSender->sendEncodedVideoImage(outBuffer.get(),outBufferSize,videoEncodedFrameInfo);
 
     ctx->lowVideoFrameCount++;
   }
@@ -507,7 +448,7 @@ bool AgoraIo::doSendHighVideo(agora_context_t* ctx, const unsigned char* buffer,
   videoEncodedFrameInfo.frameType = frameType;
   videoEncodedFrameInfo.streamType = agora::rtc::VIDEO_STREAM_HIGH;
 
-  ctx->videoSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
+  _videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 
   return true;
 }

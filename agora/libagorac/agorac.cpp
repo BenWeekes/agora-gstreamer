@@ -711,6 +711,15 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
     return ctx->agoraIo->getNextVideoFrame(data, max_buffer_size, is_key_frame);;
  }
 
+ size_t agoraio_read_audio(AgoraIoContext_t* ctx, 
+                                  unsigned char* data, size_t max_buffer_size){
+
+   if(ctx==NULL ||  ctx->agoraIo==nullptr)  return 0;
+
+    return ctx->agoraIo->getNextAudioFrame(data, max_buffer_size);
+
+}
+
  size_t get_next_audio_frame(agora_receive_context_t* context, 
                                      unsigned char* data, size_t max_buffer_size){
 
@@ -754,6 +763,7 @@ int  agoraio_send_video(AgoraIoContext_t* ctx,
 							           long timestamp){
 
         return ctx->agoraIo->agora_send_video( buffer, len, is_key_frame, timestamp);
+
 }
 
 

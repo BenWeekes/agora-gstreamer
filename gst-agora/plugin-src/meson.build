@@ -90,11 +90,12 @@ swscale = dependency('libswscale')
 opus = dependency('opus')
 
 gst_base_dep = dependency('gstreamer-base-1.0')
+gst_app_dep = dependency('gstreamer-app-1.0')
 
 gstagorioudp = library('gstagoraioudp',
   agoraioudp_sources,
   c_args: plugin_c_args,
-  dependencies : [gst_dep,x264, swscale, opus, gst_base_dep],
+  dependencies : [gst_dep,x264, swscale, opus, gst_base_dep, gst_app_dep],
   install : true,
   install_dir : plugins_install_dir,
   objects: [

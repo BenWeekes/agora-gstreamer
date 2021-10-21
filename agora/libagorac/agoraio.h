@@ -47,6 +47,8 @@ class AgoraIo{
 
 protected:
 
+  bool doConnect(const std::string& appid);
+
   agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
                                                       bool enableAudioProcessor,
 						                              bool enableVideo,
@@ -124,6 +126,17 @@ protected:
     UserObserver_ptr                     _userObserver;
 
     agora::agora_refptr<agora::rtc::IMediaNodeFactory> _factory;
+
+    agora::agora_refptr<agora::rtc::ILocalAudioTrack> _customAudioTrack;
+    agora::agora_refptr<agora::rtc::ILocalVideoTrack> _customVideoTrack;
+
+    agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
+
+    std::shared_ptr<std::thread>                  _videoThreadHigh;
+  std::shared_ptr<std::thread>                    _videoThreadLow;
+
+  std::shared_ptr<std::thread>                    _audioThread;
+
  };
 
 #endif
