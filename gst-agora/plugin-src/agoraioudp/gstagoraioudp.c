@@ -278,6 +278,8 @@ int init_agora(Gstagoraioudp *agoraIO){
     g_signal_connect (agoraIO->appAudioSink, "new-sample",
                     G_CALLBACK (new_sample), &agoraIO->agora_ctx);
 
+    gst_element_set_state (agoraIO->in_pipeline, GST_STATE_PLAYING);
+
    return TRUE;
 }
 
