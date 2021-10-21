@@ -93,8 +93,8 @@ struct _Gstagoraioudp
   gchar user_id[MAX_STRING_LEN];
 
   gchar host[MAX_STRING_LEN];
-  gchar out_port[MAX_STRING_LEN];
-  gchar in_port[MAX_STRING_LEN];
+  gint out_port;
+  gint in_port;
 
   size_t                 ts;
 };

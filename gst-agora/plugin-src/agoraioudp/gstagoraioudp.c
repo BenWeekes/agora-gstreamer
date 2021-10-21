@@ -446,12 +446,10 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   memset(agoraIO->user_id, 0, MAX_STRING_LEN);
 
   memset(agoraIO->host, 0, MAX_STRING_LEN);
-  memset(agoraIO->in_port, 0, MAX_STRING_LEN);
-  memset(agoraIO->out_port, 0, MAX_STRING_LEN);
-
   strcpy(agoraIO->host,"127.0.0.1");
-  strcpy(agoraIO->in_port,"5004");
-  strcpy(agoraIO->out_port,"5004");
+
+  agoraIO->in_port=5004;
+  agoraIO->out_port=5004;
   
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
@@ -485,12 +483,10 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
         agoraIO->audio = g_value_get_boolean (value);
         break;
     case IN_PORT: 
-       str=g_value_get_string (value);
-       g_strlcpy(agoraIO->in_port, str, MAX_STRING_LEN);
+       agoraIO->in_port=g_value_get_int (value);
        break;
     case OUT_PORT: 
-       str=g_value_get_string (value);
-       g_strlcpy(agoraIO->out_port, str, MAX_STRING_LEN);
+       agoraIO->out_port=g_value_get_int (value);
        break;
     case HOST: 
        str=g_value_get_string (value);
@@ -525,10 +521,10 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
         g_value_set_boolean (value, agoraIO->audio);
         break;
     case IN_PORT:
-        g_value_set_string (value, agoraIO->in_port);
+        g_value_set_int (value, agoraIO->in_port);
         break;
     case OUT_PORT:
-        g_value_set_string (value, agoraIO->out_port);
+        g_value_set_int (value, agoraIO->out_port);
         break;
     case HOST:
         g_value_set_string (value, agoraIO->host);
