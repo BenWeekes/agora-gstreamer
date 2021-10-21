@@ -20,7 +20,7 @@
 class AgoraIo{
   public:
 
-   AgoraIo();
+   AgoraIo(const bool& verbose);
 
    agora_context_t*  init(char* in_app_id, 
                         char* in_ch_id,

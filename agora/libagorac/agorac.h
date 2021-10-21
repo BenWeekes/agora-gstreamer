@@ -29,7 +29,8 @@
 				                        unsigned short  dual_width, 
 										unsigned short  dual_height,
 									    unsigned short min_video_jb,
-										unsigned short dfps);
+										unsigned short dfps,
+										bool verbose);
 
  EXTERNC agora_receive_context_t* agora_receive_init(char* app_id,
                                                      char* ch_id, 

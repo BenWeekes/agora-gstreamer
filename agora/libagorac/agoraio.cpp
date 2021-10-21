@@ -30,8 +30,8 @@
 
 
 
-AgoraIo::AgoraIo():
- _verbose(true),
+AgoraIo::AgoraIo(const bool& verbose):
+ _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""){
 
@@ -290,7 +290,7 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
              //logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
        }
 
-      if(_receivedVideoFrames->size()>0){
+      if(_receivedVideoFrames->size()>0 && _verbose){
         std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
       }
 
@@ -302,7 +302,7 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
              auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
              _receivedVideoFrames->add(frame);
        }
-       else{
+       else if(_verbose){
              std::cout<<"video buffer reached max size"<<std::endl;
       }
 }
@@ -316,7 +316,7 @@ void AgoraIo::receiveAudioFrame(const uint userId, const uint8_t* buffer,
              auto frame=std::make_shared<Work>(buffer, length,false);
              _receivedAudioFrames->add(frame);
          }
-         else{
+         else if(_verbose){
              std::cout<<"audio buffer reached max size"<<std::endl;
          }
 }

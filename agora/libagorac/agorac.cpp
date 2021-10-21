@@ -746,19 +746,20 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
 AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
                                         bool is_audiouser,
                                         bool enc_enable,
-		                                short enable_dual,
-										unsigned int    dual_vbr, 
-				                        unsigned short  dual_width, 
-										unsigned short  dual_height,
-									    unsigned short  min_video_jb,
-										unsigned short  dfps){
+		                                  short enable_dual,
+										          unsigned int    dual_vbr, 
+				                            unsigned short  dual_width, 
+										          unsigned short  dual_height,
+									             unsigned short  min_video_jb,
+										          unsigned short  dfps,
+                                        bool verbose){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
         return NULL;
     }
 
-    ctx->agoraIo=std::make_shared<AgoraIo>();
+    ctx->agoraIo=std::make_shared<AgoraIo>(verbose);
 
     ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,
