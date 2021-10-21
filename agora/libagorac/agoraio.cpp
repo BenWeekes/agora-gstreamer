@@ -95,9 +95,9 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
                         char* in_user_id,
                         bool is_audiouser,
                         bool enable_enc,
-		                  short enable_dual,
+		                    short enable_dual,
                         unsigned int  dual_vbr, 
-			               unsigned short  dual_width,
+			                  unsigned short  dual_width,
                         unsigned short  dual_height,
                         unsigned short min_video_jb,
                         unsigned short dfps){
@@ -144,7 +144,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
    
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>();
-    if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+    if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
         logMessage("Agora: Failed to set audio frame parameters!");
         return NULL;
     }
