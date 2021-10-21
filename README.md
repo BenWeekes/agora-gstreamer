@@ -53,8 +53,17 @@ cd release
  ## agoraioudp
 
 <ins>Video in/out from webcam</ins>     
+ 
+gst-launch-1.0 v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=xxx channel=xxx outport=7372 inport=7373 verbose=false  ! queue ! decodebin ! queue ! glimagesink
 
- gst-launch-1.0 v4l2src ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=xxx channel=xxx verbose=false  ! queue ! decodebin ! queue ! glimagesink
+<ins>Audio out of Agora to speaker </ins>     
+
+gst-launch-1.0 -v udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
+
+<ins>Audio in from mic</ins>     
+
+gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=127.0.0.1 port=7373
+
    
  ## agorasink
    
