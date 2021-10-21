@@ -156,9 +156,17 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
     if (ret != GST_FLOW_OK) {
         g_print("Error pushing data\n");
         /* something wrong, stop pushing */
-       // g_main_loop_quit (loop);
     }
 }
+
+/* The appsink has received a buffer */
+static GstFlowReturn new_sample (GstElement *sink, gpointer *data) {
+  
+    g_print("new_sample!\n");
+
+  return GST_FLOW_ERROR;
+}
+
 
 int init_agora(Gstagoraioudp *agoraIO){
 
@@ -208,13 +216,39 @@ int init_agora(Gstagoraioudp *agoraIO){
        g_print("created udpsink successfully\n");
    }
 
-   agoraIO->pipeline = gst_pipeline_new ("pipeline");
-   if(!agoraIO->pipeline){
+   agoraIO->udpsrc = gst_element_factory_make("udpsrc", "udpsrc");
+   if(!agoraIO->udpsrc){
+       g_print("failed to create audio udpsrc\n");
+   }
+   else{
+       g_print("created udpsrc successfully\n");
+   }
+
+   agoraIO->appAudioSink = gst_element_factory_make("appsink", "appsink");
+   if(!agoraIO->appAudioSink){
+       g_print("failed to create audio appsink\n");
+   }
+   else{
+       g_print("created appsink successfully\n");
+   }
+
+   agoraIO->out_pipeline = gst_pipeline_new ("pipeline");
+   if(!agoraIO->out_pipeline){
        g_print("failed to create audio pipeline\n");
    }
 
-   gst_bin_add_many (GST_BIN (agoraIO->pipeline), agoraIO->appAudioSrc, agoraIO->udpsink, NULL);
+   agoraIO->in_pipeline = gst_pipeline_new ("pipeline");
+   if(!agoraIO->in_pipeline){
+       g_print("failed to create audio pipeline\n");
+   }
+
+   //out plugin
+   gst_bin_add_many (GST_BIN (agoraIO->out_pipeline), agoraIO->appAudioSrc, agoraIO->udpsink, NULL);
    gst_element_link_many (agoraIO->appAudioSrc, agoraIO->udpsink, NULL);
+
+   //in plugin
+   gst_bin_add_many (GST_BIN (agoraIO->in_pipeline),agoraIO->udpsrc, agoraIO->appAudioSink, NULL);
+   gst_element_link_many (agoraIO->appAudioSink, agoraIO->udpsrc, NULL);
 
     /* setup appsrc */
     g_object_set (G_OBJECT (agoraIO->appAudioSrc),
@@ -227,13 +261,22 @@ int init_agora(Gstagoraioudp *agoraIO){
             "port", agoraIO->out_port,
               NULL);
 
+    g_object_set (G_OBJECT (agoraIO->udpsrc),
+             "port", agoraIO->in_port,
+              NULL);
+
     agoraIO->cbs.need_data = on_request_audio_data;
     //agoraIO->cbs.enough_data = cb_enough_data;
     //agoraIO->cbs.seek_data = cb_seek_data;
 
     gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
                                  &agoraIO->cbs, agoraIO->agora_ctx, NULL);
-    gst_element_set_state (agoraIO->pipeline, GST_STATE_PLAYING);
+    gst_element_set_state (agoraIO->out_pipeline, GST_STATE_PLAYING);
+
+    /* Configure appsink */
+    g_object_set (agoraIO->appAudioSink, "emit-signals", TRUE, NULL);
+    g_signal_connect (agoraIO->appAudioSink, "new-sample",
+                    G_CALLBACK (new_sample), &agoraIO->agora_ctx);
 
    return TRUE;
 }

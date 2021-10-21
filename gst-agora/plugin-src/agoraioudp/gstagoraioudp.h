@@ -78,8 +78,11 @@ struct _Gstagoraioudp
 
   GstPad  *srcpad, *sinkpad;
 
-  GstElement * appAudioSrc, *udpsink;
-  GstElement *pipeline;
+  GstElement *appAudioSrc, *udpsink;
+  GstElement *out_pipeline;
+
+  GstElement *appAudioSink, *udpsrc;
+  GstElement *in_pipeline;
 
   GstAppSrcCallbacks cbs;
 
