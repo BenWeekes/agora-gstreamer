@@ -383,14 +383,14 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   /*in port*/
   g_object_class_install_property (gobject_class, IN_PORT,
-      g_param_spec_string ("inport", "inport", "udp port that we receive audio on it",
-          FALSE, G_PARAM_READWRITE));
+      g_param_spec_int ("inport", "inport", "udp port that we receive audio on it",0, G_MAXUINT16,
+          5004, G_PARAM_READWRITE));
     
 
   /*out port*/
   g_object_class_install_property (gobject_class, OUT_PORT,
-      g_param_spec_string ("outport", "outport", "udp port that we send audio on it",
-          FALSE, G_PARAM_READWRITE));
+      g_param_spec_int ("outport", "outport", "udp port that we send audio on it", 0, G_MAXUINT16,
+          5004, G_PARAM_READWRITE));
 
   /*host*/
   g_object_class_install_property (gobject_class, HOST,
@@ -475,11 +475,11 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
         str=g_value_get_string (value);
         g_strlcpy(agoraIO->channel_id, str, MAX_STRING_LEN);
         break; 
-     case USER_ID:
+    case USER_ID:
         str=g_value_get_string (value);
         g_strlcpy(agoraIO->user_id, str, MAX_STRING_LEN);
         break; 
-     case AUDIO: 
+    case AUDIO: 
         agoraIO->audio = g_value_get_boolean (value);
         break;
     case IN_PORT: 
