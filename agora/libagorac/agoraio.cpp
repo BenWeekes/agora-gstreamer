@@ -177,8 +177,22 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
          return NULL;
      }
 
+     //audio
+    // Create audio data sender
+     _audioSender = _factory->createAudioEncodedFrameSender();
+     if (!_audioSender) {
+        return NULL;
+      }
+
+     // Create audio track
+     _customAudioTrack =_service->createCustomAudioTrack(_audioSender, agora::base::MIX_DISABLED);
+     if (!_customAudioTrack) {
+        return NULL;
+     }
+
     // Publish  video track
     _connection->getLocalUser()->publishVideo(_customVideoTrack);
+    _connection->getLocalUser()->publishAudio(_customAudioTrack);
 
 
     h264FrameReceiver = std::make_shared<H264FrameReceiver>();
@@ -222,13 +236,13 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
 
   _ctx->isConnected=1;
   _ctx->videoJB=std::make_shared<WorkQueue <Work_ptr> >();
-  _ctx->audioJB=std::make_shared<WorkQueue <Work_ptr> >();
+  _audioJB=std::make_shared<WorkQueue <Work_ptr> >();
 
   _ctx->isRunning=true;
 
     //start thread handlers
   _videoThreadHigh=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerHigh, this,_ctx);
-  //_audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this, _ctx);
+  _audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this, _ctx);
 
   _connected = true;
 
@@ -261,6 +275,11 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
   _ctx->dfps=dfps;
 
   return _ctx;
+}
+
+void AgoraIo::addAudioFrame(const Work_ptr& work){
+
+  _audioJB->add(work);
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
@@ -460,7 +479,7 @@ bool AgoraIo::doSendAudio(agora_context_t* ctx, const unsigned char* buffer,  un
   audioFrameInfo.sampleRateHz = 48000; //TODO
   audioFrameInfo.codec = agora::rtc::AUDIO_CODEC_OPUS;
 
-  ctx->audioSender->sendEncodedAudioFrame(buffer,len, audioFrameInfo);
+  _audioSender->sendEncodedAudioFrame(buffer,len, audioFrameInfo);
 
   return true;
 }
@@ -660,20 +679,20 @@ void AgoraIo::AudioThreadHandler(agora_context_t* ctx){
 
    const int waitTimeForBufferToBeFull=10;
    
-   while(ctx->isRunning==true){
+   while(_ctx->isRunning==true){
 
      //wait untill work is available
-     ctx->audioJB->waitForWork();
-     Work_ptr work=ctx->audioJB->get();
+     _audioJB->waitForWork();
+     Work_ptr work=_audioJB->get();
      if(work==NULL) continue;
 
      if(work->is_finished){
         return;
      }
 
-     doSendAudio(ctx,work->buffer, work->len);
+     doSendAudio(_ctx,work->buffer, work->len);
 
-     ctx->lastAudioTimestamp=work->timestamp;
+     _ctx->lastAudioTimestamp=work->timestamp;
   }
 }
 void AgoraIo::agora_disconnect(agora_context_t** ctx){

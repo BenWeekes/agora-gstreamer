@@ -455,6 +455,19 @@ int agora_send_audio(agora_context_t* ctx,
     return 0;
 }
 
+int agoraio_send_audio(AgoraIoContext_t* ctx,
+                     const unsigned char * buffer, 
+                     unsigned long len,
+                     long timestamp){
+
+    Work_ptr work=std::make_shared<Work>(buffer,len, 0);
+    work->timestamp=timestamp;
+
+    ctx->agoraIo->addAudioFrame(work);
+
+    return 0;
+}
+
 /*
  * buffer size doubling logic;
      input: jb-initial-size-ms -- intial buffer size in ms

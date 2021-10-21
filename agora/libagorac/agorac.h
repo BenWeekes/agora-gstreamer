@@ -56,6 +56,11 @@
 							   unsigned long len,
 							   long timestamp);
 
+EXTERNC int  agoraio_send_audio(AgoraIoContext_t* ctx,  
+                               const unsigned char* buffer,  
+							   unsigned long len,
+							   long timestamp);
+
  EXTERNC void agora_disconnect(agora_context_t** ctx);
 
  EXTERNC void agora_set_log_function(agora_context_t* ctx, agora_log_func_t f, void* log_ctx);

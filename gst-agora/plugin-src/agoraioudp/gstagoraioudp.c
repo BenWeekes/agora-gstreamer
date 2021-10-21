@@ -160,9 +160,34 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
 }
 
 /* The appsink has received a buffer */
-static GstFlowReturn new_sample (GstElement *sink, gpointer *data) {
+static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
   
-    g_print("new_sample!\n");
+  GstSample *sample;
+
+   AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
+
+  /* Retrieve the buffer */
+  g_signal_emit_by_name (sink, "pull-sample", &sample);
+  if (sample) 
+  {
+    GstBuffer * in_buffer=gst_sample_get_buffer (sample);
+
+    size_t data_size=gst_buffer_get_size (in_buffer);
+    gpointer data=malloc(data_size);
+    if(data==NULL){
+       g_print("cannot allocate memory!\n");
+       return GST_FLOW_ERROR;
+    }
+
+    gst_buffer_extract(in_buffer,0, data, data_size);
+
+    agoraio_send_audio(agora_ctx, data, data_size,0);
+
+    free(data);
+
+    gst_sample_unref (sample);
+    return GST_FLOW_OK;
+  }
 
   return GST_FLOW_ERROR;
 }
@@ -237,7 +262,7 @@ int init_agora(Gstagoraioudp *agoraIO){
        g_print("failed to create audio pipeline\n");
    }
 
-   agoraIO->in_pipeline = gst_pipeline_new ("pipeline");
+   agoraIO->in_pipeline = gst_pipeline_new ("in-pipeline");
    if(!agoraIO->in_pipeline){
        g_print("failed to create audio pipeline\n");
    }
@@ -248,7 +273,7 @@ int init_agora(Gstagoraioudp *agoraIO){
 
    //in plugin
    gst_bin_add_many (GST_BIN (agoraIO->in_pipeline),agoraIO->udpsrc, agoraIO->appAudioSink, NULL);
-   gst_element_link_many (agoraIO->appAudioSink, agoraIO->udpsrc, NULL);
+   gst_element_link_many (agoraIO->udpsrc, agoraIO->appAudioSink, NULL);
 
     /* setup appsrc */
     g_object_set (G_OBJECT (agoraIO->appAudioSrc),
@@ -276,7 +301,7 @@ int init_agora(Gstagoraioudp *agoraIO){
     /* Configure appsink */
     g_object_set (agoraIO->appAudioSink, "emit-signals", TRUE, NULL);
     g_signal_connect (agoraIO->appAudioSink, "new-sample",
-                    G_CALLBACK (new_sample), &agoraIO->agora_ctx);
+                    G_CALLBACK (new_sample), agoraIO->agora_ctx);
 
     gst_element_set_state (agoraIO->in_pipeline, GST_STATE_PLAYING);
 

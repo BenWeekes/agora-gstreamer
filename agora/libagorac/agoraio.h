@@ -45,6 +45,8 @@ class AgoraIo{
     size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
     size_t getNextAudioFrame(unsigned char* data, size_t max_buffer_size);
 
+    void addAudioFrame(const Work_ptr& work);
+
 protected:
 
   bool doConnect(const std::string& appid);
@@ -131,11 +133,14 @@ protected:
     agora::agora_refptr<agora::rtc::ILocalVideoTrack> _customVideoTrack;
 
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
+    agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
     std::shared_ptr<std::thread>                  _videoThreadHigh;
-  std::shared_ptr<std::thread>                    _videoThreadLow;
+    std::shared_ptr<std::thread>                    _videoThreadLow;
 
-  std::shared_ptr<std::thread>                    _audioThread;
+    std::shared_ptr<std::thread>                    _audioThread;
+
+     WorkQueue_ptr                                   _audioJB;
 
  };
 
