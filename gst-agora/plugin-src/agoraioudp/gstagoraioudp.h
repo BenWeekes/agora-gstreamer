@@ -92,6 +92,10 @@ struct _Gstagoraioudp
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
 
+  gchar host[MAX_STRING_LEN];
+  gchar out_port[MAX_STRING_LEN];
+  gchar in_port[MAX_STRING_LEN];
+
   size_t                 ts;
 };
 

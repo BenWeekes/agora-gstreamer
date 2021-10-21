@@ -85,6 +85,9 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
+  IN_PORT,
+  OUT_PORT,
+  HOST,
   AUDIO
 };
 
@@ -218,6 +221,11 @@ int init_agora(Gstagoraioudp *agoraIO){
             "stream-type", 0,
             "is-live", TRUE,
             "format", GST_FORMAT_TIME, NULL);
+
+     g_object_set (G_OBJECT (agoraIO->udpsink),
+            "host", agoraIO->host,
+            "port", agoraIO->out_port,
+              NULL);
 
     agoraIO->cbs.need_data = on_request_audio_data;
     //agoraIO->cbs.enough_data = cb_enough_data;
@@ -373,6 +381,23 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
           FALSE, G_PARAM_READWRITE));
 
 
+  /*in port*/
+  g_object_class_install_property (gobject_class, IN_PORT,
+      g_param_spec_string ("inport", "inport", "udp port that we receive audio on it",
+          FALSE, G_PARAM_READWRITE));
+    
+
+  /*out port*/
+  g_object_class_install_property (gobject_class, OUT_PORT,
+      g_param_spec_string ("outport", "outport", "udp port that we send audio on it",
+          FALSE, G_PARAM_READWRITE));
+
+  /*host*/
+  g_object_class_install_property (gobject_class, HOST,
+      g_param_spec_string ("host", "host", "udp host that we send audio to it",
+          FALSE, G_PARAM_READWRITE));
+
+
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
     "agorasrc",
@@ -419,6 +444,14 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   memset(agoraIO->app_id, 0, MAX_STRING_LEN);
   memset(agoraIO->channel_id, 0, MAX_STRING_LEN);
   memset(agoraIO->user_id, 0, MAX_STRING_LEN);
+
+  memset(agoraIO->host, 0, MAX_STRING_LEN);
+  memset(agoraIO->in_port, 0, MAX_STRING_LEN);
+  memset(agoraIO->out_port, 0, MAX_STRING_LEN);
+
+  strcpy(agoraIO->host,"127.0.0.1");
+  strcpy(agoraIO->in_port,"5004");
+  strcpy(agoraIO->out_port,"5004");
   
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
@@ -451,6 +484,18 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
      case AUDIO: 
         agoraIO->audio = g_value_get_boolean (value);
         break;
+    case IN_PORT: 
+       str=g_value_get_string (value);
+       g_strlcpy(agoraIO->in_port, str, MAX_STRING_LEN);
+       break;
+    case OUT_PORT: 
+       str=g_value_get_string (value);
+       g_strlcpy(agoraIO->out_port, str, MAX_STRING_LEN);
+       break;
+    case HOST: 
+       str=g_value_get_string (value);
+       g_strlcpy(agoraIO->host, str, MAX_STRING_LEN);
+       break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -478,6 +523,15 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
         break;
     case AUDIO:
         g_value_set_boolean (value, agoraIO->audio);
+        break;
+    case IN_PORT:
+        g_value_set_string (value, agoraIO->in_port);
+        break;
+    case OUT_PORT:
+        g_value_set_string (value, agoraIO->out_port);
+        break;
+    case HOST:
+        g_value_set_string (value, agoraIO->host);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
