@@ -150,6 +150,11 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
         return NULL;
     }
 
+    if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+        logMessage("Agora: Failed to set audio frame parameters!");
+        return NULL;
+    }
+
     // Register connection observer to monitor connection event
     _connectionObserver = std::make_shared<ConnectionObserver>();
     _connection->registerObserver(_connectionObserver.get());
@@ -222,6 +227,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
     //connection observer: handles user join and leave
     _connectionObserver->setOnUserStateChanged([this](const std::string& userId,
                                                       const UserState& newState){
+                                             
         handleUserStateChange(userId, newState);
     });
 
@@ -234,7 +240,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
         }
     });
 
-    _userObserver->setOnUserVolumeChangedFn([this](const std::string& userId, const int& volume){
+    _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){
 
         //no switching is needed if current user is already shown 
         if(userId==_currentVideoUser){
@@ -345,8 +351,12 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
                                               const UserState& newState){
 
     if(newState==USER_JOIN){
-         subscribeAudioUser(userId);
-    }                                             
+        subscribeAudioUser(userId);
+        _pcmFrameObserver->onUserJoined(userId);
+    }  
+    else if(newState==USER_LEAVE){
+      _pcmFrameObserver->onUserLeft(userId);
+    }                                           
 
     if(newState==USER_JOIN || newState==USER_CAM_ON){
 

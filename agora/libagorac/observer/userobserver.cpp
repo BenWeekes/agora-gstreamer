@@ -106,7 +106,7 @@ void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* sp
                                        unsigned int speakerNumber, int totalVolume) {
 
    
-     if(speakers!=nullptr && speakers->volume>0){
+    /* if(speakers!=nullptr && speakers->volume>0){
 
        if(_onUserVolumeChanged!=nullptr){
            _onUserVolumeChanged(speakers->userId, speakers->volume);
@@ -115,5 +115,5 @@ void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* sp
                 <<" speakerNumber: "<<speakerNumber
                 <<" volume: "<<speakers->volume
                 <<std::endl; 
-     }
+     }*/
 }
