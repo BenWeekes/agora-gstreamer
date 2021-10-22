@@ -71,7 +71,7 @@ bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioF
   if(iter!=_pcmUsers.end()){
       auto user=iter->second;
       auto isSpeaking=user->onAudioPacket((int16_t*)audioFrame.buffer, audioFrame.samplesPerChannel);
-      if(_onUserSpeaking!=nullptr){
+      if(isSpeaking && _onUserSpeaking!=nullptr){
           //std::cout<<"user: "<<uid<<" is speaking"<<std::endl;
          _onUserSpeaking(std::to_string(uid), user->lastVolume());
       }
