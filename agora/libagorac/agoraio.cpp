@@ -310,13 +310,9 @@ void AgoraIo::addAudioFrame(const Work_ptr& work){
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
                                           const size_t& length,const int& isKeyFrame){
-      if(_verbose==true){
-             auto  timeDiff=GetTimeDiff(_lastReceivedFrameTime,Now());
-             //std::cout<<"Time since last frame (ms): "<<timeDiff<<std::endl;
-             //logMessage("Time since last frame (ms): "+std::to_string(timeDiff));
-       }
 
-      if(_receivedVideoFrames->size()>0 && _verbose){
+
+      if(_receivedVideoFrames->size()>1 && _verbose){
         std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
       }
 

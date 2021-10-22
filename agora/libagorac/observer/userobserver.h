@@ -114,14 +114,14 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                     int elapsed) override {}
 
   void onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
-                                    const agora::rtc::RemoteVideoTrackStats& stats) override {}
+                                    const agora::rtc::RemoteVideoTrackStats& stats) override;
 
   void onLocalVideoTrackStateChanged(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                      agora::rtc::LOCAL_VIDEO_STREAM_STATE state,
                                      agora::rtc::LOCAL_VIDEO_STREAM_ERROR errorCode) override {}
 
   void onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
-                                   const agora::rtc::LocalVideoTrackStats& stats) override {}
+                                   const agora::rtc::LocalVideoTrackStats& stats) override;
 
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
                                unsigned int speakerNumber, int totalVolume) override;

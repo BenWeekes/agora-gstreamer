@@ -99,7 +99,7 @@ void UserObserver::onUserAudioTrackStateChanged(
 }
 
 void UserObserver::onIntraRequestReceived() {
- 
+   std::cout<<"Agora sdk requested an iframe\n";
 }
 
 void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
@@ -116,4 +116,31 @@ void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* sp
                 <<" volume: "<<speakers->volume
                 <<std::endl; 
      }*/
+}
+
+void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
+                                    const agora::rtc::RemoteVideoTrackStats& stats)
+{
+
+   std::cout<< "video stats (remote): "
+            <<" receivedBitrate "<<stats.receivedBitrate
+            <<", decoderOutputFrameRate "<<stats.decoderOutputFrameRate
+            <<", rendererOutputFrameRate "<<stats.rendererOutputFrameRate
+            <<", frameLossRate "<<stats.frameLossRate
+            <<", packetLossRate "<<stats.packetLossRate
+            <<", rxStreamType "<<stats.rxStreamType
+            <<", totalFrozenTime "<<stats.totalFrozenTime
+            <<", frozenRate "<<stats.frozenRate
+            <<", totalDecodedFrames "<<stats.totalDecodedFrames
+            <<", avSyncTimeMs "<<stats.avSyncTimeMs
+            <<", downlink_process_time_ms "<<stats.downlink_process_time_ms
+            <<", frame_render_delay_ms "<<stats.frame_render_delay_ms
+            <<std::endl;
+
+}
+
+void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
+                                   const agora::rtc::LocalVideoTrackStats& stats) 
+{
+     
 }

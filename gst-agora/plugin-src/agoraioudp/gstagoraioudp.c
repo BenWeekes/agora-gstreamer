@@ -630,7 +630,7 @@ agoraioudp_init (GstPlugin * agoraioudp)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstagoraioudp"
+#define PACKAGE "agoraioudp"
 #endif
 
 /* gstreamer looks for this structure to register agoraioudps
@@ -641,7 +641,7 @@ GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     agoraioudp,
-    "Template agoraioudp",
+    "agoraioudp",
     agoraioudp_init,
     PACKAGE_VERSION,
     GST_LICENSE,
