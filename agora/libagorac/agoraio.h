@@ -142,6 +142,8 @@ protected:
 
      WorkQueue_ptr                                   _audioJB;
 
+     TimePoint                                       _lastVideoUserSwitchTime;
+
  };
 
 #endif

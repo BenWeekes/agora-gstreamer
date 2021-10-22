@@ -14,6 +14,7 @@
 #include "NGIAgoraLocalUser.h"
 
 using OnUserInfofn=std::function<void(const std::string& userId, const int& messsage, const int& value)>;
+using OnUserVolumeChangedFn=std::function<void(const std::string& userId, const int& volume)>;
 
 class UserObserver : public agora::rtc::ILocalUserObserver {
  public:
@@ -22,6 +23,10 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   void setOnUserInfofn (const OnUserInfofn& fn){
      _onUserInfoChanged=fn;
+  }
+
+  void setOnUserVolumeChangedFn(const OnUserVolumeChangedFn& fn){
+     _onUserVolumeChanged=fn;
   }
 
  public:
@@ -119,7 +124,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                    const agora::rtc::LocalVideoTrackStats& stats) override {}
 
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
-                               unsigned int speakerNumber, int totalVolume) override {}
+                               unsigned int speakerNumber, int totalVolume) override;
 
   void onLocalAudioTrackStatistics(const agora::rtc::LocalAudioStats& stats) override {}
 
@@ -163,7 +168,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   std::mutex observer_lock_;
 
-  OnUserInfofn       _onUserInfoChanged;
+  OnUserInfofn           _onUserInfoChanged;
+  OnUserVolumeChangedFn  _onUserVolumeChanged;
 
   bool               _verbose;
 };

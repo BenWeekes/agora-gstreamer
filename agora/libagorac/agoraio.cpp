@@ -33,7 +33,8 @@
 AgoraIo::AgoraIo(const bool& verbose):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
- _currentVideoUser(""){
+ _currentVideoUser(""),
+ _lastVideoUserSwitchTime(Now()){
 
    _activeUsers.clear();
 }
@@ -233,6 +234,25 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
         }
     });
 
+    _userObserver->setOnUserVolumeChangedFn([this](const std::string& userId, const int& volume){
+
+        //no switching is needed if current user is already shown 
+        if(userId==_currentVideoUser){
+           return;  
+        }
+
+        //no switching if last switch time was less than 3 second
+        auto diffTime=GetTimeDiff(_lastVideoUserSwitchTime, Now());
+        if(diffTime<3000){
+            return;
+        }
+
+        if(_currentVideoUser!=""){
+            _connection->getLocalUser()->unsubscribeVideo(_currentVideoUser.c_str());
+        }
+        subscribeToVideoUser(userId);
+        _lastVideoUserSwitchTime=Now();
+    });
 
   _ctx->isConnected=1;
   _ctx->videoJB=std::make_shared<WorkQueue <Work_ptr> >();

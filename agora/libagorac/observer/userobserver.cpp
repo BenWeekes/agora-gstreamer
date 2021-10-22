@@ -10,6 +10,7 @@
 UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose)
     : local_user_(local_user),
     _onUserInfoChanged(nullptr),
+    _onUserVolumeChanged(nullptr),
     _verbose(verbose){
   local_user_->registerLocalUserObserver(this);
 }
@@ -99,4 +100,20 @@ void UserObserver::onUserAudioTrackStateChanged(
 
 void UserObserver::onIntraRequestReceived() {
  
+}
+
+void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
+                                       unsigned int speakerNumber, int totalVolume) {
+
+   
+     if(speakers!=nullptr && speakers->volume>0){
+
+       if(_onUserVolumeChanged!=nullptr){
+           _onUserVolumeChanged(speakers->userId, speakers->volume);
+       }
+       std::cout<< "spearker: "<<speakers->uid
+                <<" speakerNumber: "<<speakerNumber
+                <<" volume: "<<speakers->volume
+                <<std::endl; 
+     }
 }
