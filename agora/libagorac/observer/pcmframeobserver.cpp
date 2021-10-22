@@ -12,7 +12,7 @@ class AudioUser{
 
      bool onAudioPacket(const int16_t* samples, const uint16_t& packetLen){
 
-        const int _silenceCountThreashold=20;
+        const int _silenceCountThreashold=10;
         const int _speakingCountThreashold=6;
 
         auto volume=calcVol(samples, packetLen);
@@ -21,7 +21,7 @@ class AudioUser{
         if(_maxVolume<volume){
              _maxVolume=volume;
         }
-        if (volume>1000){  
+        if (volume>3000){  
            _volExceedThresholdCount++;
            _volBelowThresholdCount=0;
         }
@@ -72,8 +72,8 @@ bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioF
       auto user=iter->second;
       auto isSpeaking=user->onAudioPacket((int16_t*)audioFrame.buffer, audioFrame.samplesPerChannel);
       if(isSpeaking && _onUserSpeaking!=nullptr){
-          //std::cout<<"user: "<<uid<<" is speaking"<<std::endl;
          _onUserSpeaking(std::to_string(uid), user->lastVolume());
+          //std::cout<<"user: "<<uid<<" is speaking, volume: "<<user->lastVolume()<<std::endl;
       }
   }
 

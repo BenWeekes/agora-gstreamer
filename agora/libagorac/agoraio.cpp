@@ -249,7 +249,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
 
         //no switching if last switch time was less than 3 second
         auto diffTime=GetTimeDiff(_lastVideoUserSwitchTime, Now());
-        if(diffTime<3000){
+        if(diffTime<5000){
             return;
         }
 
@@ -352,9 +352,13 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     if(newState==USER_JOIN){
         subscribeAudioUser(userId);
+    }  
+
+    //we monitor user volumes only for those who have camera events
+    if(newState==USER_CAM_ON){
         _pcmFrameObserver->onUserJoined(userId);
     }  
-    else if(newState==USER_LEAVE){
+    else if(newState==USER_CAM_OFF){
       _pcmFrameObserver->onUserLeft(userId);
     }                                           
 
