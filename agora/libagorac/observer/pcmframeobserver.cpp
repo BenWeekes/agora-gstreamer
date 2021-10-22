@@ -15,13 +15,15 @@ class AudioUser{
         const int _silenceCountThreashold=10;
         const int _speakingCountThreashold=6;
 
+        const int volumeThreshold=2000;
+
         auto volume=calcVol(samples, packetLen);
         _lastVolume=volume;
 
         if(_maxVolume<volume){
              _maxVolume=volume;
         }
-        if (volume>3000){  
+        if (volume>volumeThreshold){  
            _volExceedThresholdCount++;
            _volBelowThresholdCount=0;
         }

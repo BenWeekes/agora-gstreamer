@@ -249,7 +249,7 @@ agora_context_t*  AgoraIo::init(char* in_app_id,
 
         //no switching if last switch time was less than 3 second
         auto diffTime=GetTimeDiff(_lastVideoUserSwitchTime, Now());
-        if(diffTime<5000){
+        if(diffTime<3000){
             return;
         }
 
