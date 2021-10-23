@@ -22,7 +22,7 @@ class AgoraIo{
 
    AgoraIo(const bool& verbose);
 
-   agora_context_t*  init(char* in_app_id, 
+   bool  init(char* in_app_id, 
                         char* in_ch_id,
                         char* in_user_id,
                         bool is_audiouser,
@@ -34,7 +34,7 @@ class AgoraIo{
                         unsigned short min_video_jb,
                         unsigned short dfps);
 
-    int agora_send_video(const unsigned char * buffer,  
+    int sendVideo(const uint8_t * buffer,  
                         unsigned long len,
                         int is_key_frame,
                         long timestamp);
@@ -42,8 +42,8 @@ class AgoraIo{
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
-    size_t getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame);
-    size_t getNextAudioFrame(unsigned char* data, size_t max_buffer_size);
+    size_t getNextVideoFrame(uint8_t* data, size_t max_buffer_size, int* is_key_frame);
+    size_t getNextAudioFrame(uint8_t* data, size_t max_buffer_size);
 
     void addAudioFrame(const Work_ptr& work);
 
@@ -53,35 +53,22 @@ protected:
 
   agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
                                                       bool enableAudioProcessor,
-						                              bool enableVideo,
-						                              bool stringUserid,
-						                              bool enableEncryption,
+						                                          bool enableVideo,
+						                                          bool stringUserid,
+						                                          bool enableEncryption,
                                                       const char* appid);
 
-   //threads
-  bool doSendLowVideo(agora_context_t* ctx, const unsigned char* buffer, 
-                             unsigned long len,int is_key_frame);
+  bool doSendHighVideo(const uint8_t* buffer,
+                       uint64_t len,int is_key_frame);
 
-  bool doSendHighVideo(agora_context_t* ctx, const unsigned char* buffer,
-                         unsigned long len,int is_key_frame);
+  bool doSendAudio( const uint8_t* buffer,  uint64_t len);
 
-  bool doSendAudio(agora_context_t* ctx, 
-              const unsigned char* buffer,  unsigned long len);
+  void UpdatePredictedFps(const long& timestamp);
 
-  void UpdatePredictedFps(agora_context_t* ctx, const long& timestamp);
-
-   int agora_send_audio(agora_context_t* ctx,
-                        const unsigned char * buffer, 
-                        unsigned long len,
-                        long timestamp);
-
-   void CheckAndFillInVideoJb(agora_context_t* ctx, const TimePoint& lastSendTime);
-
-   void VideoThreadHandlerHigh(agora_context_t* ctx);
-   void VideoThreadHandlerLow(agora_context_t* ctx);
-   void AudioThreadHandler(agora_context_t* ctx);
+   void VideoThreadHandlerHigh();
+   void AudioThreadHandler();
  
-   void agora_disconnect(agora_context_t** ctx);
+   void agora_disconnect();
 
    //receiver events
    void subscribeToVideoUser(const std::string& userId);
@@ -96,14 +83,12 @@ protected:
                            const size_t& length);
 
    void handleUserStateChange(const std::string& userId, 
-                               const UserState& newState);
+                              const UserState& newState);
 
     void subscribeAudioUser(const std::string& userId);
     void unsubscribeAudioUser(const std::string& userId);
 
  private:
-
-    agora_context_t*    _ctx;
 
     WorkQueue_ptr                                 _receivedVideoFrames;
     WorkQueue_ptr                                 _receivedAudioFrames;
@@ -140,9 +125,12 @@ protected:
 
     std::shared_ptr<std::thread>                    _audioThread;
 
-     WorkQueue_ptr                                   _audioJB;
+    WorkQueue_ptr                                   _videoJB;
+    WorkQueue_ptr                                   _audioJB;
 
-     TimePoint                                       _lastVideoUserSwitchTime;
+    TimePoint                                       _lastVideoUserSwitchTime;
+
+    bool                                            _isRunning;
 
  };
 

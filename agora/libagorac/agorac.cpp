@@ -776,7 +776,7 @@ int  agoraio_send_video(AgoraIoContext_t* ctx,
 								        int is_key_frame,
 							           long timestamp){
 
-        return ctx->agoraIo->agora_send_video( buffer, len, is_key_frame, timestamp);
+        return ctx->agoraIo->sendVideo( buffer, len, is_key_frame, timestamp);
 
 }
 
