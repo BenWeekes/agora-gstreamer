@@ -32,6 +32,8 @@
 										unsigned short dfps,
 										bool verbose);
 
+EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
+
  EXTERNC agora_receive_context_t* agora_receive_init(char* app_id,
                                                      char* ch_id, 
 													 char* user_id,
@@ -83,6 +85,9 @@ EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx,
 
  EXTERNC size_t get_next_audio_frame(agora_receive_context_t* context, 
                                      unsigned char* data, size_t max_buffer_size);
+
+ EXTERNC void logText(const char* message);
+
  #undef EXTERNC
 
 

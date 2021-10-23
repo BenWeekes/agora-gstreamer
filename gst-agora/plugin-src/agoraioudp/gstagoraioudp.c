@@ -117,13 +117,6 @@ static void gst_agoraioudp_set_property (GObject * object, guint prop_id,
 static void gst_agoraioudp_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
-static GstFlowReturn gst_agoraio_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
-
-   // g_print("gst_agoraio_src_fill\n");
-    
-    return GST_FLOW_OK;
-}
-
 static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
                            gpointer    user_data)
 {
@@ -328,6 +321,7 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 
     size_t in_buffer_size=0;
 
+
     GstMemory *memory=NULL;
 
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
@@ -413,17 +407,8 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
   GObjectClass *gobject_class;
   GstElementClass *gstelement_class;
 
- // GstBaseSrcClass *gstbasesrc_class;
-  GstPushSrcClass *gstpushsrc_class;
-
   gobject_class = (GObjectClass *) klass;
   gstelement_class = (GstElementClass *) klass;
-
-  //gstbasesrc_class = (GstBaseSrcClass *) klass;
-  gstpushsrc_class = (GstPushSrcClass *) klass;
-
-  gstpushsrc_class->fill = gst_agoraio_src_fill;
-  //gstbasesrc_class->start = gst_video_test_src_start;  
 
   gobject_class->set_property = gst_agoraioudp_set_property;
   gobject_class->get_property = gst_agoraioudp_get_property;
@@ -483,6 +468,44 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
 }
 
+/* this function handles sink events */
+static gboolean
+gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
+{
+  Gstagoraioudp *agoraIO;
+  gboolean ret;
+
+  char buffer[100];
+
+  sprintf(buffer, "received event: %d",  GST_EVENT_TYPE (event));
+  logText(buffer);
+
+  agoraIO = GST_AGORAIOUDP (parent);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_CAPS:
+    {
+      GstCaps * caps;
+
+      gst_event_parse_caps (event, &caps);
+    
+      ret = gst_pad_event_default (pad, parent, event);
+      break;
+    }
+    case GST_EVENT_EOS:
+
+       agoraio_disconnect(&agoraIO->agora_ctx);
+      ret = gst_pad_push_event (agoraIO->srcpad, event);
+      //may be this is not the best way to do it, but any way it does the purpose for now
+      exit(0);
+      break;
+    default:
+      ret = gst_pad_event_default (pad, parent, event);
+      break;
+  }
+  return ret;
+}
+
 /* initialize the new element
  * instantiate pads and add them to element
  * set pad calback functions
@@ -505,8 +528,12 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   gst_pad_set_chain_function (agoraIO->sinkpad,
                               GST_DEBUG_FUNCPTR(gst_agoraio_chain));
 
+  gst_pad_set_event_function (agoraIO->sinkpad,gst_agoraio_sink_event);
+ //gst_pad_set_event_function (agoraIO->srcpad,gst_agoraio_sink_event);
+
   GST_PAD_SET_PROXY_CAPS (agoraIO->sinkpad);
   gst_element_add_pad (GST_ELEMENT (agoraIO), agoraIO->sinkpad);
+
 
   //set it initially to null
   agoraIO->agora_ctx=NULL;
@@ -525,6 +552,7 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
 }
+
 static void
 gst_agoraioudp_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)

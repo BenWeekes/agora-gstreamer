@@ -509,9 +509,9 @@ void AgoraIo::AudioThreadHandler(){
      doSendAudio(work->buffer, work->len);
    }
 }
-void AgoraIo::agora_disconnect(){
+void AgoraIo::disconnect(){
 
-  logMessage("start agora disonnect ...");
+    logMessage("start agora disonnect ...");
 
    _isRunning=false;
    //tell the thread that we are finished
@@ -530,7 +530,6 @@ void AgoraIo::agora_disconnect(){
    if(isdisconnected){
       return;
    }
-
 
    _audioSender = nullptr;
    _videoFrameSender = nullptr;
@@ -552,6 +551,10 @@ void AgoraIo::agora_disconnect(){
 
    _videoThreadHigh=nullptr;;
    _audioThread=nullptr; 
+
+   h264FrameReceiver=nullptr;
+
+   std::cout<<"agora disconnected\n";
 
    logMessage("Agora disonnected ");
 }

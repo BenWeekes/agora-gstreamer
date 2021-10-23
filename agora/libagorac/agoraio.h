@@ -47,6 +47,8 @@ class AgoraIo{
 
     void addAudioFrame(const Work_ptr& work);
 
+     void disconnect();
+
 protected:
 
   bool doConnect(const std::string& appid);
@@ -67,8 +69,6 @@ protected:
 
    void VideoThreadHandlerHigh();
    void AudioThreadHandler();
- 
-   void agora_disconnect();
 
    //receiver events
    void subscribeToVideoUser(const std::string& userId);

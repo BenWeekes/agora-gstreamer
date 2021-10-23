@@ -780,4 +780,16 @@ int  agoraio_send_video(AgoraIoContext_t* ctx,
 
 }
 
+void agoraio_disconnect(AgoraIoContext_t** ctx){
+
+   if(ctx==nullptr){
+      std::cout<<"cannot disconnect agora!\n";
+   }
+   (*ctx)->agoraIo->disconnect();
+}
+
+void logText(const char* message){
+    logMessage(message);
+}
+
 
