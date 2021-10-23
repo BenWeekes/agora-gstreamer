@@ -418,7 +418,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   return true;
 }
 
-bool AgoraIo::doSendAudio(const uint8_t* buffer,  unsigned long len){
+bool AgoraIo::doSendAudio(const uint8_t* buffer,  uint64_t len){
 
   agora::rtc::EncodedAudioFrameInfo audioFrameInfo;
   audioFrameInfo.numberOfChannels =1; //TODO

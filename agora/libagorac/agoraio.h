@@ -35,7 +35,7 @@ class AgoraIo{
                         unsigned short dfps);
 
     int sendVideo(const uint8_t * buffer,  
-                        unsigned long len,
+                        uint64_t len,
                         int is_key_frame,
                         long timestamp);
 
@@ -120,7 +120,7 @@ protected:
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
     agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
-    std::shared_ptr<std::thread>                  _videoThreadHigh;
+    std::shared_ptr<std::thread>                    _videoThreadHigh;
     std::shared_ptr<std::thread>                    _videoThreadLow;
 
     std::shared_ptr<std::thread>                    _audioThread;
