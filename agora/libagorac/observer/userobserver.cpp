@@ -99,6 +99,7 @@ void UserObserver::onUserAudioTrackStateChanged(
 }
 
 void UserObserver::onIntraRequestReceived() {
+  if(_verbose==false)  return;
    std::cout<<"Agora sdk requested an iframe\n";
 }
 
@@ -122,6 +123,8 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
                                     const agora::rtc::RemoteVideoTrackStats& stats)
 {
 
+  if(_verbose==false)  return;
+
    std::cout<< "video stats (remote): "
             <<" receivedBitrate "<<stats.receivedBitrate
             <<", decoderOutputFrameRate "<<stats.decoderOutputFrameRate
@@ -143,4 +146,23 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
                                    const agora::rtc::LocalVideoTrackStats& stats) 
 {
      
+     if(_verbose==false)  return;
+
+     std::cout<< "video stats (remote): "
+            <<" number_of_streams "<<stats.number_of_streams
+            <<", bytes_major_stream "<<stats.bytes_major_stream
+            <<", bytes_minor_stream "<<stats.bytes_minor_stream
+            <<", frames_encoded "<<stats.frames_encoded
+            <<", ssrc_major_stream "<<stats.ssrc_major_stream
+            <<", ssrc_minor_stream "<<stats.ssrc_minor_stream
+            <<", input_frame_rate "<<stats.input_frame_rate
+            <<", encode_frame_rate "<<stats.encode_frame_rate
+            <<", render_frame_rate "<<stats.render_frame_rate
+            <<", target_media_bitrate_bps "<<stats.target_media_bitrate_bps
+            <<", media_bitrate_bps "<<stats.media_bitrate_bps
+            <<", total_bitrate_bps "<<stats.total_bitrate_bps
+            <<", width "<<stats.width
+            <<", height "<<stats.height
+            <<", encoder_type "<<stats.encoder_type
+            <<std::endl;
 }
