@@ -353,11 +353,11 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
         //agoraio_send_audio(agoraIO->agora_ctx, data, data_size, agoraIO->ts);
       }
  
-     if (agoraIO->verbose == true){
+     /*if (agoraIO->verbose == true){
         g_print ("agorasink: received %" G_GSIZE_FORMAT" bytes!\n",data_size);
         print_packet(data, 10);
         g_print("agorasink: is key frame: %d\n", is_key_frame);
-     }
+     }*/
 
      free(data); 
      agoraIO->ts+=30;

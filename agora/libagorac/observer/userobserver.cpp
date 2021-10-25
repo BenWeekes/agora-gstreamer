@@ -148,7 +148,7 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
      
      if(_verbose==false)  return;
 
-     std::cout<< "video stats (remote): "
+     std::cout<< "video stats (local): "
             <<" number_of_streams "<<stats.number_of_streams
             <<", bytes_major_stream "<<stats.bytes_major_stream
             <<", bytes_minor_stream "<<stats.bytes_minor_stream
