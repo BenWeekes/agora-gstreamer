@@ -35,11 +35,13 @@ cd release
 
 ## Pipeline Configuration Properties
 
- appid -- sets agora app id
+ appid -- sets agora app id or token
  
  channel  -- sets agora channel id
 
- userid   -- sets agora user id (optional)
+ userid   -- sets agora userid to connect with (optional)
+ 
+ remoteuserid -- specifies a single userid to subscribe to (optional)
 
  audio -- boolean (true/false) to specify if pipeline is audio     
  
@@ -64,6 +66,10 @@ gst-launch-1.0 -v udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48
 
 gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=127.0.0.1 port=7373
 
+<ins>Token example</ins>
+
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency !  queue ! agoraioudp appid="006e24ca3eb5db7440ea673061316187b06IAB63A2UQqvEo8f1Ou8yGA2d4nYbefdEqP+/YTS0z+JJR0kQgrCBkyDDIgBEAvsBNXKGYQQAAQDFLoVhAgDFLoVhAwDffFLoVhBADFLoVh"  channel=ttt userid=1001 outport=7372 inport=7373 verbose=false ! fakesink sync=false
+
    
  ## agorasink
    
@@ -87,18 +93,17 @@ gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid
 <ins>Video out of Agora:</ins>    
    agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:     
    
-   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx userid=xxx ! decodebin ! glimagesink     
+   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx  ! decodebin ! glimagesink     
 
-   gst-launch-1.0 agorasrc verbose=false  appid=xxx channel=xxx userid=xxx ! decodebin ! autovideosink      
+   gst-launch-1.0 agorasrc verbose=false  appid=xxx channel=xxx! decodebin ! autovideosink      
 
-   where appid and channel is same as agorasink. The value of userid represents which user agorasrc should subscribe to    
+   where appid and channel is same as agorasink. 
    
- 
  <ins>Audio out of Agora</ins>
  
-   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=gstreamer userid=xxx ! filesink location=test.raw     
+   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=gstreamer ! filesink location=test.raw     
    
-   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx userid=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
+   gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
  
  ## Developer Notes
