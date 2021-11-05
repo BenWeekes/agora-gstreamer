@@ -251,7 +251,7 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
 
   /*user_id*/
   g_object_class_install_property (gobject_class, USER_ID,
-      g_param_spec_string ("remoteuserid", "remoteuserid", "agora user id to subscript to it (optional)",
+      g_param_spec_string ("remoteuserid", "remoteuserid", "agora user id to subscribe to it (optional)",
           FALSE, G_PARAM_READWRITE));
 
 
