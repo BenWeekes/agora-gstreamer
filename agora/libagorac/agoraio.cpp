@@ -88,6 +88,10 @@ bool AgoraIo::doConnect(const std::string& appid)
         return false;
     }
 
+    if(verifyLicense() != 0) {
+      return false;
+    }
+
     return true;
 }
 
