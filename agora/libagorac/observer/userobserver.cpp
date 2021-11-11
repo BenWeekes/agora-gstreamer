@@ -123,6 +123,7 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
                                     const agora::rtc::RemoteVideoTrackStats& stats)
 {
 
+ #if SDK_BUILD_NUM!=110077
   if(_verbose==false)  return;
 
    std::cout<< "video stats (remote): "
@@ -139,6 +140,7 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
             <<", downlink_process_time_ms "<<stats.downlink_process_time_ms
             <<", frame_render_delay_ms "<<stats.frame_render_delay_ms
             <<std::endl;
+ #endif 
 
 }
 

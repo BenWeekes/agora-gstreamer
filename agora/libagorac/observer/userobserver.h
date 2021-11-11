@@ -130,9 +130,10 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   void onRemoteAudioTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteAudioTrack> audioTrack,
                                     const agora::rtc::RemoteAudioTrackStats& stats) override {}
-                                  
+
+ #if SDK_BUILD_NUM !=110077                                 
   void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
-  
+ #endif 
 
   void onUserInfoUpdated(agora::user_id_t userId, USER_MEDIA_INFO msg, bool val) override;
 
