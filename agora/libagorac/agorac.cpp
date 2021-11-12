@@ -129,7 +129,7 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id,
   }
 
   if(verifyLicense() != 0) {
-      return false;
+      return NULL;
    }
 
 
