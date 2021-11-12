@@ -128,6 +128,10 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id,
      ctx->service = createAndInitAgoraService(false, true, true,  true, enable_enc, proj_appid.c_str());
   }
 
+  if(verifyLicense() != 0) {
+      return false;
+   }
+
 
   if (!ctx->service) {
     delete ctx;

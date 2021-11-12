@@ -4,6 +4,8 @@
 #include "helpers/agoralog.h"
 #include "helpers/uidtofile.h"
 
+#include "helpers/utilities.h"
+
 //AgoraReceiverUser
 AgoraReceiverUser::AgoraReceiverUser(const std::string& appId, 
                                      const std::string& channel,
@@ -57,6 +59,10 @@ bool AgoraReceiverUser::doConnect()
     {
         logMessage("Error initialize Agora SDK");
         return false;
+    }
+
+    if(verifyLicense() != 0) {
+      return false;
     }
 
     return true;
