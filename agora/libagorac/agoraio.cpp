@@ -265,7 +265,9 @@ bool  AgoraIo::init(char* in_app_id,
 
 void AgoraIo::addAudioFrame(const Work_ptr& work){
 
-  _audioJB->add(work);
+  if(_audioJB!=nullptr && _isRunning){
+     _audioJB->add(work);
+   }
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
@@ -435,9 +437,13 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
-   Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
-   work->timestamp=timestamp;
-   _videoJB->add(work);
+   if(_videoJB!=nullptr && _isRunning){
+      
+      Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
+      work->timestamp=timestamp;
+      _videoJB->add(work);
+
+     }
 
 
    return 0; //no errors

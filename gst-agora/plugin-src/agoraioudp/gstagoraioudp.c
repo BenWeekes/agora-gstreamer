@@ -172,6 +172,10 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
        return GST_FLOW_ERROR;
     }
 
+    if (agora_ctx==NULL) {
+         return GST_FLOW_ERROR;
+    }
+
     gst_buffer_extract(in_buffer,0, data, data_size);
 
     agoraio_send_audio(agora_ctx, data, data_size,0);
