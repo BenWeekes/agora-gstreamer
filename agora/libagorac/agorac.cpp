@@ -794,4 +794,14 @@ void logText(const char* message){
     logMessage(message);
 }
 
+void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag){
+
+    if(ctx==nullptr){
+         return;
+    }
+
+    (ctx)->agoraIo->setPaused(flag);
+
+}
+
 

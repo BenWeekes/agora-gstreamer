@@ -17,9 +17,10 @@
 #include "observer/h264frameobserver.h"
 #include "observer/userobserver.h"
 
-class AgoraIo{
-  public:
 
+class AgoraIo{
+
+  public:
    AgoraIo(const bool& verbose);
 
    bool  init(char* in_app_id, 
@@ -47,7 +48,9 @@ class AgoraIo{
 
     void addAudioFrame(const Work_ptr& work);
 
-     void disconnect();
+   void disconnect();
+
+   void setPaused(const bool& flag);
 
 protected:
 
@@ -132,6 +135,9 @@ protected:
 
     bool                                            _isRunning;
 
+    TimePoint                                       _lastVideoSendTime;
+
+    bool                                             _isPaused;
  };
 
 #endif

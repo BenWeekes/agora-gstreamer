@@ -72,6 +72,9 @@ G_DECLARE_FINAL_TYPE (Gstagoraioudp, gst_agoraioudp,
 
 #define MAX_STRING_LEN  1024
 
+//the state of the current streaming
+enum State{PAUSED, RUNNING};
+
 struct _Gstagoraioudp
 {
   GstElement element;
@@ -100,6 +103,8 @@ struct _Gstagoraioudp
   gint in_port;
 
   size_t                 ts;
+
+  enum State      state;
 };
 
 G_END_DECLS
