@@ -91,6 +91,8 @@ protected:
     void subscribeAudioUser(const std::string& userId);
     void unsubscribeAudioUser(const std::string& userId);
 
+    void unsubscribeAllVideo();
+
  private:
 
     WorkQueue_ptr                                 _receivedVideoFrames;

@@ -788,6 +788,8 @@ void agoraio_disconnect(AgoraIoContext_t** ctx){
       std::cout<<"cannot disconnect agora!\n";
    }
    (*ctx)->agoraIo->disconnect();
+
+   delete (*ctx);
 }
 
 void logText(const char* message){

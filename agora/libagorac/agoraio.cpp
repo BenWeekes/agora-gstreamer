@@ -543,6 +543,9 @@ void AgoraIo::disconnect(){
       return;
    }
 
+   _connectionObserver.reset();
+   _userObserver.reset();
+
    _audioSender = nullptr;
    _videoFrameSender = nullptr;
    _customAudioTrack = nullptr;
@@ -578,8 +581,20 @@ void agora_log_message(const char* message){
    }*/
 }
 
+void AgoraIo::unsubscribeAllVideo(){
+
+    _connection->getLocalUser()->unsubscribeAllVideo(); 
+}
 void AgoraIo::setPaused(const bool& flag){
+
     _isPaused=flag;
+    if(_isPaused==true){
+        unsubscribeAllVideo();
+    }
+    else{
+       unsubscribeAllVideo();
+       subscribeToVideoUser(_currentVideoUser);
+    }
 }
 
 
