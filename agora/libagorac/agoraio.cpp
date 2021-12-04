@@ -35,7 +35,8 @@ AgoraIo::AgoraIo(const bool& verbose):
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
  _lastVideoUserSwitchTime(Now()),
- _isRunning(false){
+ _isRunning(false),
+ _isPaused(true){
 
    _activeUsers.clear();
 }
@@ -269,7 +270,9 @@ bool  AgoraIo::init(char* in_app_id,
 
 void AgoraIo::addAudioFrame(const Work_ptr& work){
 
-  _audioJB->add(work);
+  if(_audioJB!=nullptr && _isRunning){
+     _audioJB->add(work);
+   }
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
@@ -281,6 +284,9 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
       }
 
       _lastReceivedFrameTime=Now();
+
+      //do not read video if the pipeline is in pause state
+      if(_isPaused) return;
 
       const size_t MAX_BUFFER_SIZE=200;
       if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
@@ -295,6 +301,9 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
 
 void AgoraIo::receiveAudioFrame(const uint userId, const uint8_t* buffer,
                                           const size_t& length){
+
+         //do not read audio if the pipeline is in pause state
+         if(_isPaused) return;
 
          const size_t MAX_BUFFER_SIZE=200;
          if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
@@ -439,9 +448,13 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
-   Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
-   work->timestamp=timestamp;
-   _videoJB->add(work);
+   if(_videoJB!=nullptr && _isRunning){
+      
+      Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
+      work->timestamp=timestamp;
+      _videoJB->add(work);
+
+     }
 
 
    return 0; //no errors
@@ -469,13 +482,12 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
 
 void AgoraIo::VideoThreadHandlerHigh(){
 
-   TimePoint  lastSendTime=Now();
+   _lastVideoSendTime=Now();
    uint8_t currentFramePerSecond=0;
 
    while(_isRunning==true){
 
-
-     lastSendTime=Now();
+     _lastVideoSendTime=Now();
 
      //wait untill work is available
      _videoJB->waitForWork();	  
@@ -535,6 +547,9 @@ void AgoraIo::disconnect(){
       return;
    }
 
+   _connectionObserver.reset();
+   _userObserver.reset();
+
    _audioSender = nullptr;
    _videoFrameSender = nullptr;
    _customAudioTrack = nullptr;
@@ -568,6 +583,22 @@ void agora_log_message(const char* message){
    /*if(ctx->callConfig->useDetailedAudioLog()){
       logMessage(std::string(message));
    }*/
+}
+
+void AgoraIo::unsubscribeAllVideo(){
+
+    _connection->getLocalUser()->unsubscribeAllVideo(); 
+}
+void AgoraIo::setPaused(const bool& flag){
+
+    _isPaused=flag;
+    if(_isPaused==true){
+        unsubscribeAllVideo();
+    }
+    else{
+       unsubscribeAllVideo();
+       subscribeToVideoUser(_currentVideoUser);
+    }
 }
 
 

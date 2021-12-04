@@ -53,6 +53,8 @@ EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 							    unsigned long len, 
 								int is_key_frame,
 							    long timestamp);
+
+ EXTERNC void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag);
 								
  EXTERNC int  agora_send_audio(agora_context_t* ctx,  
                                const unsigned char* buffer,  

@@ -467,7 +467,9 @@ int agoraio_send_audio(AgoraIoContext_t* ctx,
     Work_ptr work=std::make_shared<Work>(buffer,len, 0);
     work->timestamp=timestamp;
 
-    ctx->agoraIo->addAudioFrame(work);
+    if(ctx->agoraIo!=nullptr){
+       ctx->agoraIo->addAudioFrame(work);
+     }
 
     return 0;
 }
@@ -790,10 +792,22 @@ void agoraio_disconnect(AgoraIoContext_t** ctx){
       std::cout<<"cannot disconnect agora!\n";
    }
    (*ctx)->agoraIo->disconnect();
+
+   delete (*ctx);
 }
 
 void logText(const char* message){
     logMessage(message);
+}
+
+void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag){
+
+    if(ctx==nullptr){
+         return;
+    }
+
+    (ctx)->agoraIo->setPaused(flag);
+
 }
 
 

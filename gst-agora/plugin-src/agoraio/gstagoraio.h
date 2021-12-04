@@ -48,8 +48,10 @@
 
 #include <gst/gst.h>
 
-
+#include <gst/base/gstpushsrc.h>
 #include "agorac.h"
+
+#include <gst/app/gstappsrc.h>
 
 G_BEGIN_DECLS
 
@@ -71,20 +73,39 @@ G_DECLARE_FINAL_TYPE (Gstagoraio, gst_agoraio,
 
 #define MAX_STRING_LEN  1024
 
+//the state of the current streaming
+enum State{PAUSED, RUNNING, ENDED};
+
 struct _Gstagoraio
 {
   GstElement element;
 
-  GstPad *sinkpad, *srcpad;
+  GstPad  *srcpad, *sinkpad;
+
+  GstElement *appAudioSrc, *udpsink;
+  GstElement *out_pipeline;
+
+  GstElement *appAudioSink, *udpsrc;
+  GstElement *in_pipeline;
+
+  GstAppSrcCallbacks cbs;
 
   gboolean verbose;
   gboolean audio;
 
-  agora_receive_context_t* agora_ctx;
+  AgoraIoContext_t* agora_ctx;
 
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
+
+  gchar host[MAX_STRING_LEN];
+  gint out_port;
+  gint in_port;
+
+  size_t                 ts;
+
+  enum State      state;
 };
 
 G_END_DECLS

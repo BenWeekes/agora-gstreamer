@@ -117,11 +117,10 @@ static void gst_agoraioudp_set_property (GObject * object, guint prop_id,
 static void gst_agoraioudp_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
+
 static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
                            gpointer    user_data)
-{
-    //g_print("In %s\n", __func__);
-   
+{   
     static GstClockTime timestamp = 0;
     GstBuffer *buffer;
     GstFlowReturn ret;
@@ -138,16 +137,13 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
     gst_buffer_fill(buffer, 0, recv_data, data_size);
     gst_buffer_set_size(buffer, data_size);
 
-   // GST_BUFFER_PTS (buffer) = timestamp;
-    //GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 2);
-
     timestamp += GST_BUFFER_DURATION (buffer);
 
     //g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
     ret = gst_app_src_push_buffer(appsrc, buffer);
 
     if (ret != GST_FLOW_OK) {
-        g_print("Error pushing data\n");
+       // g_print("not able to push audio data\n");
         /* something wrong, stop pushing */
     }
 }
@@ -155,8 +151,7 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
 /* The appsink has received a buffer */
 static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
   
-  GstSample *sample;
-
+   GstSample *sample;
    AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
 
   /* Retrieve the buffer */
@@ -170,6 +165,10 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
     if(data==NULL){
        g_print("cannot allocate memory!\n");
        return GST_FLOW_ERROR;
+    }
+
+    if (agora_ctx==NULL) {
+         return GST_FLOW_ERROR;
     }
 
     gst_buffer_extract(in_buffer,0, data, data_size);
@@ -269,7 +268,8 @@ int init_agora(Gstagoraioudp *agoraIO){
    gst_bin_add_many (GST_BIN (agoraIO->in_pipeline),agoraIO->udpsrc, agoraIO->appAudioSink, NULL);
    gst_element_link_many (agoraIO->udpsrc, agoraIO->appAudioSink, NULL);
 
-    /* setup appsrc */
+
+    //setup appsrc 
     g_object_set (G_OBJECT (agoraIO->appAudioSrc),
             "stream-type", 0,
             "is-live", TRUE,
@@ -285,20 +285,20 @@ int init_agora(Gstagoraioudp *agoraIO){
               NULL);
 
     agoraIO->cbs.need_data = on_request_audio_data;
-    //agoraIO->cbs.enough_data = cb_enough_data;
-    //agoraIO->cbs.seek_data = cb_seek_data;
-
+    
     gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
                                  &agoraIO->cbs, agoraIO->agora_ctx, NULL);
-    gst_element_set_state (agoraIO->out_pipeline, GST_STATE_PLAYING);
 
-    /* Configure appsink */
+    //set the pipeline in playing mode
+    gst_element_set_state (agoraIO->out_pipeline, GST_STATE_PLAYING);
+    gst_element_set_state (agoraIO->in_pipeline, GST_STATE_PLAYING);
+
+    //Configure appsink 
     g_object_set (agoraIO->appAudioSink, "emit-signals", TRUE, NULL);
     g_signal_connect (agoraIO->appAudioSink, "new-sample",
                     G_CALLBACK (new_sample), agoraIO->agora_ctx);
 
-    gst_element_set_state (agoraIO->in_pipeline, GST_STATE_PLAYING);
-
+  
    return TRUE;
 }
 
@@ -321,16 +321,14 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 
     size_t in_buffer_size=0;
 
-
     GstMemory *memory=NULL;
 
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
 
-   //TODO: we need a better position to initialize agora. 
-   //gst_agorasink_init() is good, however, it is called before reading app and channels ids
-   if(agoraIO->agora_ctx==NULL && init_agora(agoraIO)!=TRUE){
-      g_print("cannot initialize agora\n");
-      return GST_FLOW_ERROR;
+  
+    //do nothing in case of pause
+    if(agoraIO->state==PAUSED){
+        return GST_FLOW_OK;
     }
 
     data_size=gst_buffer_get_size (in_buffer);
@@ -398,6 +396,93 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 }
 
 
+static GstStateChangeReturn
+gst_on_change_state (GstElement *element, GstStateChange transition)
+{
+
+  GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
+
+  Gstagoraioudp *agoraIO=GST_AGORAIOUDP (element);
+
+  switch (transition) {
+       case GST_STATE_CHANGE_NULL_TO_READY:
+            g_print("AgoraIO: state change: NULL to READY \n");   
+            if(agoraIO->agora_ctx==NULL && init_agora(agoraIO)!=TRUE){
+                g_print("cannot initialize agora\n");
+                return GST_FLOW_ERROR;
+             }
+            break;
+	   case GST_STATE_CHANGE_READY_TO_NULL:
+	        g_print("AgoraIO: state change: READY to NULL\n");
+	        break;
+       case GST_STATE_CHANGE_READY_TO_PAUSED:
+            g_print("AgoraIO: state change: READY to PAUSED\n");
+            break;
+       case GST_STATE_CHANGE_PAUSED_TO_READY:
+            g_print("AgoraIO: state change: PAUSED to READY \n");
+            break;
+       case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
+            agoraIO->state=PAUSED;
+            if(agoraIO->agora_ctx!=NULL)
+                agoraio_set_paused(agoraIO->agora_ctx, TRUE);
+            g_print("AgoraIO: state change: PLAYING to PAUSED \n");
+            break;
+        case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
+            agoraIO->state=RUNNING;
+            if(agoraIO->agora_ctx!=NULL)
+                agoraio_set_paused(agoraIO->agora_ctx, FALSE);
+            g_print("AgoraIO: state change: PAUSED to PLAYING  \n");
+            break;
+	   default:
+            g_print("AgoraIO: unknown state change\n");  
+	        break;
+  }
+
+  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
+  
+  return ret;
+}
+
+/* this function handles sink events */
+static gboolean
+gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
+{
+  Gstagoraioudp *agoraIO;
+
+  char buffer[100];
+
+  sprintf(buffer, "received event: %d",  GST_EVENT_TYPE (event));
+  logText(buffer);
+
+  agoraIO = GST_AGORAIOUDP (parent);
+
+  switch (GST_EVENT_TYPE (event)) {
+    case GST_EVENT_CAPS:
+    {
+        GstCaps * caps;
+        gst_event_parse_caps (event, &caps);
+    }
+        break;
+    case GST_EVENT_EOS:
+        agoraIO->state=ENDED;
+        gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
+        gst_element_send_event(agoraIO->out_pipeline, gst_event_new_eos());
+        
+        if(!gst_element_set_state (agoraIO->in_pipeline, GST_STATE_NULL) ||
+           !gst_element_set_state (agoraIO->out_pipeline, GST_STATE_NULL)){
+               g_print("not able to stop audio plugins!\n");
+        }
+
+        agoraio_disconnect(&agoraIO->agora_ctx);
+        agoraIO->agora_ctx=NULL;
+        break;
+    default:
+      break;
+  }
+
+  return  gst_pad_event_default (pad, parent, event);
+}
+
 /* GObject vmethod implementations */
 
 /* initialize the agoraioudp's class */
@@ -412,6 +497,9 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   gobject_class->set_property = gst_agoraioudp_set_property;
   gobject_class->get_property = gst_agoraioudp_get_property;
+
+  //on pipeline stae change
+  gstelement_class->change_state = gst_on_change_state;
 
  g_object_class_install_property (gobject_class, PROP_VERBOSE,
       g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
@@ -468,44 +556,6 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
 }
 
-/* this function handles sink events */
-static gboolean
-gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
-{
-  Gstagoraioudp *agoraIO;
-  gboolean ret;
-
-  char buffer[100];
-
-  sprintf(buffer, "received event: %d",  GST_EVENT_TYPE (event));
-  logText(buffer);
-
-  agoraIO = GST_AGORAIOUDP (parent);
-
-  switch (GST_EVENT_TYPE (event)) {
-    case GST_EVENT_CAPS:
-    {
-      GstCaps * caps;
-
-      gst_event_parse_caps (event, &caps);
-    
-      ret = gst_pad_event_default (pad, parent, event);
-      break;
-    }
-    case GST_EVENT_EOS:
-
-       agoraio_disconnect(&agoraIO->agora_ctx);
-      ret = gst_pad_push_event (agoraIO->srcpad, event);
-      //may be this is not the best way to do it, but any way it does the purpose for now
-      exit(0);
-      break;
-    default:
-      ret = gst_pad_event_default (pad, parent, event);
-      break;
-  }
-  return ret;
-}
-
 /* initialize the new element
  * instantiate pads and add them to element
  * set pad calback functions
@@ -514,9 +564,6 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 static void
 gst_agoraioudp_init (Gstagoraioudp * agoraIO)
 {
-  //gst_base_src_set_live (GST_BASE_SRC (agoraIO), TRUE);
-  //gst_base_src_set_blocksize  (GST_BASE_SRC (agoraIO), 10*1024);
-
   //for src
   agoraIO->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
 
@@ -529,7 +576,6 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
                               GST_DEBUG_FUNCPTR(gst_agoraio_chain));
 
   gst_pad_set_event_function (agoraIO->sinkpad,gst_agoraio_sink_event);
- //gst_pad_set_event_function (agoraIO->srcpad,gst_agoraio_sink_event);
 
   GST_PAD_SET_PROXY_CAPS (agoraIO->sinkpad);
   gst_element_add_pad (GST_ELEMENT (agoraIO), agoraIO->sinkpad);
