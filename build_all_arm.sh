@@ -4,7 +4,7 @@ BUILD_DIR=$PWD
 
 #build libagorac
 echo "building and installing libagorac ..."
-cd agora/libagorac/ && ./install.sh $BUILD_DIR/agora/sdk/arm
+cd agora/libagorac/ && ./install-arm.sh $BUILD_DIR/agora/sdk/arm
 
 sudo rm $BUILD_DIR/gst-agora/plugin-src/meson.build || true
 cp $BUILD_DIR/gst-agora/plugin-src/arm.build $BUILD_DIR/gst-agora/plugin-src/meson.build
