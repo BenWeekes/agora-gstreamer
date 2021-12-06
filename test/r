@@ -1,0 +1,5 @@
+for i in {1 ...30 }
+ do
+  echo "starting a new test."
+  ./endtest
+done
