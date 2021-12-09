@@ -1,0 +1,2 @@
+cc endtest2.c `pkg-config --cflags --libs gstreamer-1.0` -o endtest2
+cc endtest1.c `pkg-config --cflags --libs gstreamer-1.0` -o endtest1
