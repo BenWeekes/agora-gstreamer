@@ -105,6 +105,12 @@ gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid
    
    gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
+## Camera Debug on Linux
+sudo apt-get install -y v4l-utils    
+v4l2-ctl --list-formats    
+v4l2-ctl     
+v4l2-ctl --list-devices     
+
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
