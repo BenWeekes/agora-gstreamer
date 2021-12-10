@@ -375,18 +375,15 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO){
     } 
     
 }
+
 static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
 
+    
     size_t data_size=0;
     int    is_key_frame=0;
 
-    size_t in_buffer_size=0;
-
-    GstMemory *memory=NULL;
-
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
 
-  
     //do nothing in case of pause
     if(agoraIO->state==PAUSED){
         return GST_FLOW_OK;
@@ -398,6 +395,7 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
   
     gpointer data=malloc(data_size);
     if(data==NULL){
+      gst_buffer_unref (in_buffer);
        g_print("cannot allocate memory!\n");
        return GST_FLOW_ERROR;
     }
@@ -421,12 +419,15 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      }*/
 
      free(data); 
+     gst_buffer_unref (in_buffer);
      agoraIO->ts+=30;
 
+    
      GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
      if(peer==NULL){
          return GST_FLOW_OK;
      }
+
 
      //receive data
      const size_t  max_size=4*1024*1024;
@@ -438,24 +439,23 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 
      data_size=agoraio_read_video(agoraIO->agora_ctx, recvData, max_size, &is_key_frame);
      if(data_size==0){
+         gst_object_unref(peer);
          free(recvData);
          return GST_FLOW_OK;
      }
 
-    in_buffer_size=gst_buffer_get_size (in_buffer);
+     GstBuffer * out_buffer=gst_buffer_new_allocate (NULL, data_size, NULL);
 
-     /*increase the buffer if it is less than the frame data size*/
-    if(data_size>in_buffer_size){
-       memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
-       gst_buffer_insert_memory (in_buffer, -1, memory);
-     }
-
-     gst_buffer_fill(in_buffer, 0, recvData, data_size);
-     gst_buffer_set_size(in_buffer, data_size);
+     gst_buffer_fill(out_buffer, 0, recvData, data_size);
+     gst_buffer_set_size(out_buffer, data_size);
 
      free(recvData);
 
-    return gst_pad_push (agoraIO->srcpad, in_buffer);
+    GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
+
+    gst_object_unref(peer);
+
+    return retCode;
 }
 
 
@@ -541,6 +541,11 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 
         agoraio_disconnect(&agoraIO->agora_ctx);
         agoraIO->agora_ctx=NULL;
+
+        //release internal pipelines
+        gst_object_unref (agoraIO->in_pipeline);
+        gst_object_unref (agoraIO->out_pipeline);
+
         break;
     default:
       break;
