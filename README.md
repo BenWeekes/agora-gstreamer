@@ -113,9 +113,17 @@ To compile all test programs:
 
 $ ./c
 
-To run any test just type:
+To run any test just type its name:
 
 $ ./endtest2
+
+
+## Camera Debug on Linux
+sudo apt-get install -y v4l-utils    
+v4l2-ctl --list-formats    
+v4l2-ctl     
+v4l2-ctl --list-devices     
+
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
