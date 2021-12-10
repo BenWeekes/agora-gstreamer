@@ -74,6 +74,17 @@ GST_DEBUG_CATEGORY_STATIC (gst_agoraioudp_debug);
 /* Filter signals and args */
 enum
 {
+  ON_IFRAME_SIGNAL=1,
+  ON_CONNECTING_SIGNAL,
+  ON_CONNECTED_SIGNAL,
+  ON_USER_CONNECTED_SIGNAL,
+  ON_USER_DISCONNECTED_SIGNAL,
+  ON_USER_STATE_CHANGED_SIGNAL,
+  ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL,
+
+  ON_CONNECTION_LOST_SIGNAL,
+  ON_CONNECTION_FAILURE_SIGNAL,
+
   /* FILL ME */
   LAST_SIGNAL
 };
@@ -90,6 +101,10 @@ enum
   HOST,
   AUDIO
 };
+
+
+static guint agoraio_signals[LAST_SIGNAL] = { 0 };
+
 
 /* the capabilities of the inputs and outputs.
  *
@@ -314,6 +329,52 @@ void print_packet(u_int8_t* data, int size){
     
 }
 
+void handle_agora_pending_events(Gstagoraioudp *agoraIO){
+
+    int eventType=-1;
+    long param1=0;
+    long param2=0;
+
+    char userName[MAX_STRING_LEN];
+
+    //read all events (untill eventType=-1)
+    while(agoraIO!=NULL && agoraIO->agora_ctx!=NULL&& agoraIO->state!=PAUSED)
+    {
+       agoraio_get_next_event(agoraIO->agora_ctx,&eventType, userName, &param1, &param2);
+       switch (eventType){
+             case ON_IFRAME_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_IFRAME_SIGNAL], 0);
+                  break;
+             case ON_CONNECTING_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTING_SIGNAL], 0);
+                  break;
+             case ON_CONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTED_SIGNAL], 0);
+                  break;
+             case ON_USER_CONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_CONNECTED_SIGNAL], 0,userName,param2);
+                  break;
+             case ON_USER_DISCONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_DISCONNECTED_SIGNAL], 0,userName,param2);
+                  break;
+             case ON_USER_STATE_CHANGED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL], 0,userName,param2);
+                  break;
+             case ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL], 0);
+                  break;
+             case ON_CONNECTION_LOST_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_LOST_SIGNAL], 0);
+                  break;
+             case ON_CONNECTION_FAILURE_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL], 0);
+                  break;
+            default:
+                 return; //may be there is no more signals 
+       }
+    } 
+    
+}
 static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
 
     size_t data_size=0;
@@ -330,6 +391,8 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
     if(agoraIO->state==PAUSED){
         return GST_FLOW_OK;
     }
+
+    handle_agora_pending_events(agoraIO);
 
     data_size=gst_buffer_get_size (in_buffer);
   
@@ -404,6 +467,8 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
 
   Gstagoraioudp *agoraIO=GST_AGORAIOUDP (element);
 
+ handle_agora_pending_events(agoraIO);
+
   switch (transition) {
        case GST_STATE_CHANGE_NULL_TO_READY:
             g_print("AgoraIO: state change: NULL to READY \n");   
@@ -411,6 +476,7 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
                 g_print("cannot initialize agora\n");
                 return GST_FLOW_ERROR;
              }
+             handle_agora_pending_events(agoraIO);
             break;
 	   case GST_STATE_CHANGE_READY_TO_NULL:
 	        g_print("AgoraIO: state change: READY to NULL\n");
@@ -458,11 +524,11 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_CAPS:
-    {
+       {
         GstCaps * caps;
         gst_event_parse_caps (event, &caps);
-    }
-        break;
+       }
+       break;
     case GST_EVENT_EOS:
         agoraIO->state=ENDED;
         gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
@@ -553,6 +619,45 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&sink_factory));
+
+
+  /*install agoraio available signals*/
+  agoraio_signals[ON_IFRAME_SIGNAL] =
+      g_signal_new ("on-iframe", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+  agoraio_signals[ON_CONNECTING_SIGNAL] =
+      g_signal_new ("on-connecting", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+    
+  agoraio_signals[ON_CONNECTED_SIGNAL] =
+      g_signal_new ("on-connected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,0);
+
+ agoraio_signals[ON_USER_CONNECTED_SIGNAL] =
+      g_signal_new ("on-user-connected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_USER_DISCONNECTED_SIGNAL] =
+      g_signal_new ("on-user-disconnected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+
+  agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL] =
+      g_signal_new ("on-user-state-changed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL] =
+      g_signal_new ("on-uplink-network-changed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_CONNECTION_LOST_SIGNAL] =
+      g_signal_new ("on-connection-lost", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL] =
+      g_signal_new ("on-connection-failure", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
 
 }
 

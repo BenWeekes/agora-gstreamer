@@ -2,6 +2,8 @@
 #include "connectionobserver.h"
 #include "AgoraBase.h"
 
+#include "../agoraio.h"
+
 #include "iostream"
 
 void ConnectionObserver::onConnected(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -22,6 +24,11 @@ void ConnectionObserver::onConnected(const agora::rtc::TConnectionInfo &connecti
 
 	// notify the thread which is waiting for the SDK to be connected
 	connect_ready_.Set();
+
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+        _parent->addEvent(AGORA_EVENT_ON_CONNECTED, userId,0,0);
+    }
 }
 
 void ConnectionObserver::onDisconnected(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -34,6 +41,11 @@ void ConnectionObserver::onDisconnected(const agora::rtc::TConnectionInfo &conne
 
 	// notify the thread which is waiting for the SDK to be disconnected
 	disconnect_ready_.Set();
+
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_USER_DISCONNECTED,userId,0,0);
+    }
 }
 
 void ConnectionObserver::onConnecting(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -43,6 +55,11 @@ void ConnectionObserver::onConnecting(const agora::rtc::TConnectionInfo &connect
              <<", channelId "<<connectionInfo.channelId.get()->c_str()
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<", reason "<<reason<<std::endl;
+
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_CONNECTING,userId,0,0);
+    }
 }
 
 void ConnectionObserver::onReconnecting(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -52,6 +69,7 @@ void ConnectionObserver::onReconnecting(const agora::rtc::TConnectionInfo &conne
              <<", channelId "<<connectionInfo.channelId.get()->c_str()
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<", reason "<<reason<<std::endl;
+
 }
 
 void ConnectionObserver::onReconnected(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -69,6 +87,11 @@ void ConnectionObserver::onConnectionLost(const agora::rtc::TConnectionInfo &con
              <<", channelId "<<connectionInfo.channelId.get()->c_str()
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<std::endl;
+
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_CONNECTION_LOST,userId,0,0);
+    }
 }
 
 void ConnectionObserver::onUplinkNetworkInfoUpdated(const agora::rtc::UplinkNetworkInfo &info)
@@ -78,6 +101,10 @@ void ConnectionObserver::onUplinkNetworkInfoUpdated(const agora::rtc::UplinkNetw
 		   info.video_encoder_target_bitrate_bps);*/
 
     std::cout<<"onUplinkNetworkInfoUpdated\n";
+
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_UPLINK_NETWORK_INFO_UPDATED,"",0,0);
+    }
 }
 
 void ConnectionObserver::onUserJoined(agora::user_id_t userId)
@@ -87,6 +114,10 @@ void ConnectionObserver::onUserJoined(agora::user_id_t userId)
 
     if(_onUserStateChanged!=nullptr){
         _onUserStateChanged(userId, USER_JOIN);
+    }
+
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_USER_CONNECTED,userId,0,0);
     }
 }
 
@@ -99,4 +130,8 @@ void ConnectionObserver::onUserLeft(agora::user_id_t userId,
    if(_onUserStateChanged!=nullptr){
         _onUserStateChanged(userId, USER_LEAVE);
    }
+
+   if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_USER_DISCONNECTED,userId,0,0);
+    }
 }

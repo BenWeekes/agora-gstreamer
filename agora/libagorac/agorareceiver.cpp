@@ -123,7 +123,7 @@ bool AgoraReceiverUser::connect()
     }
 
     // Register connection observer to monitor connection event
-    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connectionObserver = std::make_shared<ConnectionObserver>(nullptr);
     _connection->registerObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());

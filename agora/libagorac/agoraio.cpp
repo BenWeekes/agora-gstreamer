@@ -146,7 +146,7 @@ bool  AgoraIo::init(char* in_app_id,
     }
 
     // Register connection observer to monitor connection event
-    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connectionObserver = std::make_shared<ConnectionObserver>(this);
     _connection->registerObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
@@ -219,6 +219,7 @@ bool  AgoraIo::init(char* in_app_id,
                                                       const UserState& newState){
                                              
         handleUserStateChange(userId, newState);
+
     });
 
     _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
@@ -228,6 +229,11 @@ bool  AgoraIo::init(char* in_app_id,
         else if(messsage==1 && value==0){
             handleUserStateChange(userId, USER_CAM_ON);
         }
+
+    });
+
+    _userObserver->setOnIframeRequestFn([this](){
+        addEvent(AGORA_EVENT_ON_IFRAME,"",0,0);
     });
 
     _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){
@@ -596,5 +602,42 @@ void AgoraIo::setPaused(const bool& flag){
        subscribeToVideoUser(_currentVideoUser);
     }
 }
+
+void AgoraIo::addEvent(const AgoraEventType& eventType, 
+                       const std::string& userName,
+                       const long& param1, 
+                       const long& param2){
+
+    const int MAX_EVENT=1000;
+
+    //a safeguard to prevent gst not 
+    if(_events.size()>MAX_EVENT){
+        return;
+    }
+    AgoraEvent e;
+
+    e.type=eventType;
+    e.userName=userName;
+    e.params[0]=param1;
+    e.params[1]=param2;
+
+    _events.push(e);
+}
+
+ void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
+
+     if(_events.empty()){
+         eventType=-1;
+     }
+     else{
+         auto e=_events.front();
+        _events.pop();
+
+        std::strcpy(userName, e.userName.c_str());
+        eventType= e.type;
+        param1=e.params[0];
+        param1=e.params[1];
+     }
+ }
 
 

@@ -16,6 +16,8 @@
 using OnUserInfofn=std::function<void(const std::string& userId, const int& messsage, const int& value)>;
 using OnUserVolumeChangedFn=std::function<void(const std::string& userId, const int& volume)>;
 
+using OnIframeRequestFn=std::function<void()>;
+
 class UserObserver : public agora::rtc::ILocalUserObserver {
  public:
   UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose);
@@ -27,6 +29,10 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   void setOnUserVolumeChangedFn(const OnUserVolumeChangedFn& fn){
      _onUserVolumeChanged=fn;
+  }
+
+  void setOnIframeRequestFn(const OnIframeRequestFn& fn){
+     _onIframeRequest=fn;
   }
 
  public:
@@ -170,6 +176,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   OnUserInfofn           _onUserInfoChanged;
   OnUserVolumeChangedFn  _onUserVolumeChanged;
+
+  OnIframeRequestFn      _onIframeRequest;
 
   bool               _verbose;
 };

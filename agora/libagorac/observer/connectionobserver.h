@@ -14,12 +14,15 @@ enum UserState{USER_JOIN,
 
 using OnUserStateChange_fn=std::function<void(const std::string& userId, const UserState& newState)>;
 
+class AgoraIo;
 class ConnectionObserver : public agora::rtc::IRtcConnectionObserver,
                                  public agora::rtc::INetworkObserver {
  public:
-  ConnectionObserver():
+  ConnectionObserver(AgoraIo*  parent):
        _onUserStateChanged(nullptr),
-       _onUserConnected(nullptr) {}
+       _onUserConnected(nullptr),
+       _parent(parent){}
+       
   int waitUntilConnected(int waitMs) { return connect_ready_.Wait(waitMs); }
 
   void setOnUserStateChanged(const OnUserStateChange_fn& f){
@@ -62,6 +65,8 @@ class ConnectionObserver : public agora::rtc::IRtcConnectionObserver,
 
   OnUserStateChange_fn     _onUserStateChanged;
   OnUserStateChange_fn     _onUserConnected;
+
+   AgoraIo*                _parent;
 };
 
 using ConnectionObserver_ptr=std::shared_ptr<ConnectionObserver>;

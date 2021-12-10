@@ -156,7 +156,7 @@ agora_context_t*  agora_init(char* in_app_id, char* in_ch_id, char* in_user_id,
   }
 
    // Register connection observer to monitor connection event
-   ctx->_connectionObserver = std::make_shared<ConnectionObserver>();
+   ctx->_connectionObserver = std::make_shared<ConnectionObserver>(nullptr);
    ctx->connection->registerObserver(ctx->_connectionObserver.get());
 
     ctx->_connectionObserver->setOnUserConnected([is_audiouser](const std::string& userId, const UserState& newState){
@@ -803,7 +803,21 @@ void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag){
     }
 
     (ctx)->agoraIo->setPaused(flag);
+}
 
+//try to pull an event from the event queue 
+ void  agoraio_get_next_event(AgoraIoContext_t* ctx,  
+                                     int* eventType,
+                                     char* userName,
+									          long* param1,
+									          long* param2){
+
+   if(ctx==nullptr){
+         *eventType=-1;
+         return;
+   }
+
+   ctx->agoraIo->getNextEvent(*eventType,userName, *param1, *param2);
 }
 
 

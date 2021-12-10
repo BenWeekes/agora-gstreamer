@@ -90,6 +90,14 @@ EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx,
 
  EXTERNC void logText(const char* message);
 
+
+ //try to pull an event from the event queue 
+ EXTERNC void  agoraio_get_next_event(AgoraIoContext_t* ctx,  
+                                     int* eventType,
+									 char* userName,
+									 long* param1,
+									 long* param2);
+
  #undef EXTERNC
 
 
