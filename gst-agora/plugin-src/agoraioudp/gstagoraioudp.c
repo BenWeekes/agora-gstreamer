@@ -458,8 +458,8 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      gst_buffer_set_size(out_buffer, data_size);
 
 
-     GST_BUFFER_CAST(out_buffer)->pts=frame_ts*1000;
-     GST_BUFFER_CAST(out_buffer)->pts=frame_ts*1000;
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_dts;
      GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
 
      free(recvData);
