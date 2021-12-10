@@ -23,7 +23,7 @@ void on_agora_on_user_connected_fn(GstElement* object,
 }
 
 void on_agora_on_user_disconnected_fn(GstElement* object,
-                         gchararray userName,gint state, gpointer user_data,){
+                         gchararray userName,gint state, gpointer user_data){
 
      g_print("->Endtest: on user disconnected: %s\n", userName);
 }
