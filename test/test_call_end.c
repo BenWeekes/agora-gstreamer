@@ -11,7 +11,8 @@ int main(int argc, char *argv[]) {
   /* Build the pipeline */
   pipeline = gst_parse_launch (
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 ! fakesink sync=false"
+	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xx channel=xx userid=123 verbose=true ! fakesink sync=false"
+	//"videotestsrc pattern=ball is-live=true ! fakesink sync=false"
 	,NULL);
 
   /* Start playing */
