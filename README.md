@@ -105,6 +105,17 @@ gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid
    
    gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
+## How to run the test programs:
+
+$ cd agora-gstreamer/test
+
+To compile all test programs:
+
+$ ./c
+
+To run any test just type:
+
+$ ./endtest2
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    

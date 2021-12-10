@@ -11,21 +11,7 @@ int main(int argc, char *argv[]) {
   /* Build the pipeline */
   pipeline = gst_parse_launch (
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=test userid=123 ! fakesink sync=false"
-	
-	// Without audio
-//	"v4l2src device=/dev/video0 ! "
-//	"agoraioudp  appid=ba68d9ec60fb45cb94254e0b4d01af92 channel=forme3 verbose=true ! "
-//	"queue ! h264parse ! vaapidecodebin ! "
-//	"autovideosink "
-
-	// Test with audio
-	//"v4l2src device=/dev/video0 ! video/x-h264,width=1440,height=1920,format=byte-stream,framerate=[30/1,10000000/333333] ! queue ! "
-	//"agoraioudp  appid=ba68d9ec60fb45cb94254e0b4d01af92 channel=forme3 outport=7372 inport=7373 verbose=true ! "
-	//"queue ! h264parse ! vaapidecodebin ! autovideosink "
- 	//"alsasrc device=sysdefault:CARD=CX20921 name=micsrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresa//imple quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373 "
-
-        //"udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink volume=1.0 name=incaudsink"
+	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 ! fakesink sync=false"
 	,NULL);
 
   /* Start playing */

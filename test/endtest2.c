@@ -16,6 +16,34 @@ void on_agora_on_connected_fn(GstElement* object,gpointer user_data){
      g_print("->Endtest: on connected!\n");
 }
 
+void on_agora_on_user_connected_fn(GstElement* object,
+                         gchararray userName,gint state, gpointer user_data){
+
+     g_print("->Endtest: on user connected: %s, %d\n", userName, state);
+}
+
+void on_agora_on_user_disconnected_fn(GstElement* object,
+                         gchararray userName,gint state, gpointer user_data,){
+
+     g_print("->Endtest: on user disconnected: %s\n", userName);
+}
+
+void on_agora_on_uplink_info_updated_fn(GstElement* object,gpointer user_data){
+
+     g_print("->Endtest: uplink info updated!\n");
+}
+
+void on_agora_on_disconnected_fn(GstElement* object,gpointer user_data){
+
+     g_print("->Endtest: disconnected!\n");
+}
+
+void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){
+
+     g_print("->Endtest: connection lost!\n");
+}
+
+
 int main(int argc, char *argv[]) {
 
   GstElement *pipeline;
@@ -32,7 +60,7 @@ int main(int argc, char *argv[]) {
 
   pipeline = gst_parse_launch (
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=test userid=123 ! fakesink sync=false"
+	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 ! fakesink sync=false"
 
 	,NULL);
 
@@ -46,7 +74,7 @@ int main(int argc, char *argv[]) {
   {
 		g_print (">>installing signals to agoraio\n");
 
-		//you ma not need all of them 
+		//you may not need all of them 
 		//on iframe request
 		g_signal_connect (agoraioUdp, "on-iframe",
                     G_CALLBACK (on_agora_iframe_request_fn), NULL);
@@ -58,6 +86,28 @@ int main(int argc, char *argv[]) {
 		//on connected
 		g_signal_connect (agoraioUdp, "on-connected",
                     G_CALLBACK (on_agora_on_connected_fn), NULL);
+
+        //on user connected 
+		g_signal_connect (agoraioUdp, "on-user-connected",
+                    G_CALLBACK (on_agora_on_user_connected_fn), NULL);
+
+		//on user disconnected 
+		g_signal_connect (agoraioUdp, "on-user-disconnected",
+                    G_CALLBACK (on_agora_on_user_disconnected_fn), NULL);
+
+		//on uplink info updated
+		g_signal_connect (agoraioUdp, "on-uplink-network-changed",
+                    G_CALLBACK (on_agora_on_uplink_info_updated_fn), NULL);
+
+		//on disconnected
+		g_signal_connect (agoraioUdp, "on-user-disconnected",
+                    G_CALLBACK (on_agora_on_disconnected_fn), NULL);
+
+
+		//on connection lost 
+		g_signal_connect (agoraioUdp, "on-connection-lost",
+                    G_CALLBACK (on_agora_on_connection_lost_fn), NULL);
+
   }
   
 
