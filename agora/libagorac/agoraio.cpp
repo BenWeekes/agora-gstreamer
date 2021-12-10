@@ -226,9 +226,18 @@ bool  AgoraIo::init(char* in_app_id,
     _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
         if(messsage==1 && value==1){
            handleUserStateChange(userId, USER_CAM_OFF);
+
+           addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_CAM_OFF,0);
         }
         else if(messsage==1 && value==0){
             handleUserStateChange(userId, USER_CAM_ON);
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_CAM_ON,0);
+        }
+        else if(messsage==0 && value==1){
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_ON,0);
+        }
+        else if(messsage==0 && value==0){
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_OFF,0);
         }
 
     });
@@ -366,6 +375,8 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     _currentVideoUser=userId;
     std::cout<<"subscribed to video user #"<<_currentVideoUser<<std::endl;
+
+    addEvent(AGORA_EVENT_ON_VIDEO_SUBSCRIBED,userId,0,0);
  }
 
 
@@ -643,7 +654,7 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
         std::strcpy(userName, e.userName.c_str());
         eventType= e.type;
         param1=e.params[0];
-        param1=e.params[1];
+        param2=e.params[1];
      }
  }
 

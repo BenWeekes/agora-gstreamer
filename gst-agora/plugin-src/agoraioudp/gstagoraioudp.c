@@ -77,13 +77,17 @@ enum
   ON_IFRAME_SIGNAL=1,
   ON_CONNECTING_SIGNAL,
   ON_CONNECTED_SIGNAL,
-  ON_USER_CONNECTED_SIGNAL,
-  ON_USER_DISCONNECTED_SIGNAL,
+  ON_DISCONNECTED_SIGNAL,
   ON_USER_STATE_CHANGED_SIGNAL,
   ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL,
 
   ON_CONNECTION_LOST_SIGNAL,
   ON_CONNECTION_FAILURE_SIGNAL,
+
+  ON_RECONNECTING_SIGNAL,
+  ON_RECONNECTED_SIGNAL,
+
+  ON_VIDEO_SUBSCRIBED_SIGNAL,
 
   /* FILL ME */
   LAST_SIGNAL
@@ -349,16 +353,10 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO){
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTING_SIGNAL], 0);
                   break;
              case ON_CONNECTED_SIGNAL: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTED_SIGNAL], 0);
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTED_SIGNAL], 0, userName,param1);
                   break;
-             case ON_USER_CONNECTED_SIGNAL: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_CONNECTED_SIGNAL], 0,userName,param2);
-                  break;
-             case ON_USER_DISCONNECTED_SIGNAL: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_DISCONNECTED_SIGNAL], 0,userName,param2);
-                  break;
-             case ON_USER_STATE_CHANGED_SIGNAL: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL], 0,userName,param2);
+              case ON_DISCONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_DISCONNECTED_SIGNAL], 0, userName,param1);
                   break;
              case ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL], 0);
@@ -368,6 +366,18 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO){
                   break;
              case ON_CONNECTION_FAILURE_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL], 0);
+                  break;
+            case ON_RECONNECTING_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_RECONNECTING_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_RECONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_RECONNECTED_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_USER_STATE_CHANGED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_VIDEO_SUBSCRIBED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL], 0,userName);
                   break;
             default:
                  return; //may be there is no more signals 
@@ -651,19 +661,11 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
     
   agoraio_signals[ON_CONNECTED_SIGNAL] =
       g_signal_new ("on-connected", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,0);
-
- agoraio_signals[ON_USER_CONNECTED_SIGNAL] =
-      g_signal_new ("on-user-connected", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
 
- agoraio_signals[ON_USER_DISCONNECTED_SIGNAL] =
-      g_signal_new ("on-user-disconnected", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
-
-  agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL] =
-      g_signal_new ("on-user-state-changed", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+  agoraio_signals[ON_DISCONNECTED_SIGNAL] =
+      g_signal_new ("on-disconnected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
 
  agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL] =
       g_signal_new ("on-uplink-network-changed", G_TYPE_FROM_CLASS (klass),
@@ -676,6 +678,22 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
  agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL] =
       g_signal_new ("on-connection-failure", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_RECONNECTING_SIGNAL] =
+      g_signal_new ("on-reconnecting", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_RECONNECTED_SIGNAL] =
+      g_signal_new ("on-reconnected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL] =
+      g_signal_new ("on-user-state-changed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL] =
+      g_signal_new ("on-user-video-subscribed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 1, G_TYPE_STRING);
 
 }
 

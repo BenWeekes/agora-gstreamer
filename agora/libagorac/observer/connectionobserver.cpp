@@ -27,7 +27,7 @@ void ConnectionObserver::onConnected(const agora::rtc::TConnectionInfo &connecti
 
     std::string userId=connectionInfo.localUserId.get()->c_str();
     if(_parent!=nullptr){
-        _parent->addEvent(AGORA_EVENT_ON_CONNECTED, userId,0,0);
+        _parent->addEvent(AGORA_EVENT_ON_CONNECTED, userId,reason,0);
     }
 }
 
@@ -44,7 +44,7 @@ void ConnectionObserver::onDisconnected(const agora::rtc::TConnectionInfo &conne
 
     std::string userId=connectionInfo.localUserId.get()->c_str();
     if(_parent!=nullptr){
-         _parent->addEvent(AGORA_EVENT_ON_USER_DISCONNECTED,userId,0,0);
+         _parent->addEvent(AGORA_EVENT_ON_DISCONNECTED,userId,reason,0);
     }
 }
 
@@ -70,6 +70,11 @@ void ConnectionObserver::onReconnecting(const agora::rtc::TConnectionInfo &conne
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<", reason "<<reason<<std::endl;
 
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_RECONNECTING,userId,reason,0);
+    }
+
 }
 
 void ConnectionObserver::onReconnected(const agora::rtc::TConnectionInfo &connectionInfo,
@@ -79,6 +84,11 @@ void ConnectionObserver::onReconnected(const agora::rtc::TConnectionInfo &connec
              <<", channelId "<<connectionInfo.channelId.get()->c_str()
              <<", localUserId "<<connectionInfo.localUserId.get()->c_str()
              <<", reason "<<reason<<std::endl;
+
+    std::string userId=connectionInfo.localUserId.get()->c_str();
+    if(_parent!=nullptr){
+         _parent->addEvent(AGORA_EVENT_ON_RECONNECTED,userId,reason,0);
+    }
 }
 
 void ConnectionObserver::onConnectionLost(const agora::rtc::TConnectionInfo &connectionInfo)
@@ -117,7 +127,7 @@ void ConnectionObserver::onUserJoined(agora::user_id_t userId)
     }
 
     if(_parent!=nullptr){
-         _parent->addEvent(AGORA_EVENT_ON_USER_CONNECTED,userId,0,0);
+         _parent->addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_JOIN,0);
     }
 }
 
@@ -132,6 +142,6 @@ void ConnectionObserver::onUserLeft(agora::user_id_t userId,
    }
 
    if(_parent!=nullptr){
-         _parent->addEvent(AGORA_EVENT_ON_USER_DISCONNECTED,userId,0,0);
+         _parent->addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_LEAVE,0);
     }
 }
