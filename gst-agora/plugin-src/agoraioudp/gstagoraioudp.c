@@ -392,6 +392,9 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
     handle_agora_pending_events(agoraIO);
 
     data_size=gst_buffer_get_size (in_buffer);
+    GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
+    GstClockTime in_buffer_dts= GST_BUFFER_CAST(in_buffer)->dts;
+    GstClockTime in_buffer_duration=GST_BUFFER_CAST(in_buffer)->duration;
   
     gpointer data=malloc(data_size);
     if(data==NULL){
@@ -448,6 +451,10 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 
      gst_buffer_fill(out_buffer, 0, recvData, data_size);
      gst_buffer_set_size(out_buffer, data_size);
+
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_dts;
+     GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
 
      free(recvData);
 
