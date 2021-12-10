@@ -199,9 +199,10 @@ bool  AgoraIo::init(char* in_app_id,
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
-                                                    const int& isKeyFrame){
+                                                    const int& isKeyFrame,
+                                                    const uint64_t& ts){
 
-           receiveVideoFrame(userId, buffer, length, isKeyFrame);
+           receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
 
     });
 
@@ -278,7 +279,8 @@ void AgoraIo::addAudioFrame(const Work_ptr& work){
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
-                                        const size_t& length,const int& isKeyFrame){
+                                        const size_t& length,const int& isKeyFrame,
+                                        const uint64_t& ts){
 
 
       if(_receivedVideoFrames->size()>1 && _verbose){
@@ -294,6 +296,7 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
       if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
 
              auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+             frame->timestamp=ts;
              _receivedVideoFrames->add(frame);
        }
        else if(_verbose){
@@ -375,7 +378,10 @@ void AgoraIo::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
   h264FrameReceiver->setOnVideoFrameReceivedFn(fn);
 }
 
-size_t AgoraIo::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame){
+size_t AgoraIo::getNextVideoFrame(unsigned char* data,
+                                  size_t max_buffer_size,
+                                  int* is_key_frame,
+                                  uint64_t* ts){
    
     //do not wait for frames to arrive
     if(_receivedVideoFrames->isEmpty()){
@@ -388,6 +394,7 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, i
     memcpy(data, work->buffer, work->len);
 
     *is_key_frame=work->is_key_frame;
+    *ts=work->timestamp;
 
     return work->len;
 }

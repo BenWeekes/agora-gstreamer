@@ -162,7 +162,8 @@ bool AgoraReceiverUser::connect()
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
-                                                    const int& isKeyFrame){
+                                                    const int& isKeyFrame,
+                                                    const uint64_t& ts){
 
            receiveVideoFrame(userId, buffer, length, isKeyFrame);
 

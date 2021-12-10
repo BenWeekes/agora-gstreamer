@@ -62,7 +62,11 @@ class AgoraIo{
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
-    size_t getNextVideoFrame(uint8_t* data, size_t max_buffer_size, int* is_key_frame);
+    size_t getNextVideoFrame(uint8_t* data, 
+                             size_t max_buffer_size,
+                             int* is_key_frame,
+                             uint64_t* ts);
+                             
     size_t getNextAudioFrame(uint8_t* data, size_t max_buffer_size);
 
     void addAudioFrame(const Work_ptr& work);
@@ -106,7 +110,8 @@ protected:
    void receiveVideoFrame(const uint userId, 
                            const uint8_t* buffer,
                            const size_t& length,
-                           const int& isKeyFrame);
+                           const int& isKeyFrame,
+                           const uint64_t& ts);
 
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,

@@ -79,8 +79,10 @@ EXTERNC int  agoraio_send_audio(AgoraIoContext_t* ctx,
 									 int* is_key_frame);
 
 EXTERNC size_t agoraio_read_video(AgoraIoContext_t* ctx, 
-                                   unsigned char* data, size_t max_buffer_size,
-								   int* is_key_frame);
+                                   unsigned char* data, 
+								   size_t max_buffer_size,
+								   int* is_key_frame,
+								   u_int64_t* ts);
 
 EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx, 
                                   unsigned char* data, size_t max_buffer_size);

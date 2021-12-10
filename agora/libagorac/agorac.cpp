@@ -718,12 +718,14 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
  }
 
  size_t agoraio_read_video(AgoraIoContext_t* ctx, 
-                           unsigned char* data, size_t max_buffer_size,
-                           int* is_key_frame){
+                           unsigned char* data, 
+                           size_t max_buffer_size,
+                           int* is_key_frame,
+                           u_int64_t* ts){
                               
     if(ctx==NULL || ctx->agoraIo==nullptr)  return 0;
 
-    return ctx->agoraIo->getNextVideoFrame(data, max_buffer_size, is_key_frame);;
+    return ctx->agoraIo->getNextVideoFrame(data, max_buffer_size, is_key_frame,ts);
  }
 
  size_t agoraio_read_audio(AgoraIoContext_t* ctx, 

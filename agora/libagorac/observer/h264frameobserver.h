@@ -7,7 +7,8 @@
 using OnNewFrame_fn=std::function<void(const uint userId, 
                                         const uint8_t* buffer,
                                         const size_t& size,
-                                        const int isKeyFrame)>;
+                                        const int isKeyFrame,
+                                        const uint64_t& ts)>;
 
 class H264FrameReceiver : public agora::rtc::IVideoEncodedImageReceiver
 {

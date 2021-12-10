@@ -1,4 +1,5 @@
 #include "h264frameobserver.h"
+#include <iostream>
 
 //H264FrameReceiver
 H264FrameReceiver::H264FrameReceiver()
@@ -11,9 +12,12 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
     if (!_onVideoFrameReceived)
         return false;
 
+
     bool isKeyFrame=videoEncodedFrameInfo.frameType == agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
     
-    _onVideoFrameReceived(videoEncodedFrameInfo.uid, imageBuffer, length,isKeyFrame);
+    _onVideoFrameReceived(videoEncodedFrameInfo.uid,
+                          imageBuffer, length,isKeyFrame,
+                          videoEncodedFrameInfo.renderTimeMs);
 
     return true;
 }
