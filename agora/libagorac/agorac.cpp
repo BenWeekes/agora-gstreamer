@@ -822,4 +822,11 @@ void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag){
    ctx->agoraIo->getNextEvent(*eventType,userName, *param1, *param2);
 }
 
+void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData){
+
+    if(ctx==nullptr)  return;
+
+    ctx->agoraIo->setEventFunction(fn, userData);
+}
+
 

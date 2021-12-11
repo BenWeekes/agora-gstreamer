@@ -36,7 +36,8 @@ AgoraIo::AgoraIo(const bool& verbose):
  _currentVideoUser(""),
  _lastVideoUserSwitchTime(Now()),
  _isRunning(false),
- _isPaused(true){
+ _isPaused(true),
+ _eventfn(nullptr){
 
    _activeUsers.clear();
 }
@@ -626,20 +627,9 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
                        const long& param1, 
                        const long& param2){
 
-    const int MAX_EVENT=1000;
-
-    //a safeguard to prevent gst not 
-    if(_events.size()>MAX_EVENT){
-        return;
+    if(_eventfn!=nullptr){
+        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2);
     }
-    AgoraEvent e;
-
-    e.type=eventType;
-    e.userName=userName;
-    e.params[0]=param1;
-    e.params[1]=param2;
-
-    _events.push(e);
 }
 
  void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
@@ -656,6 +646,12 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
         param1=e.params[0];
         param2=e.params[1];
      }
+ }
+
+ void AgoraIo::setEventFunction(event_fn fn, void* userData){
+
+     _userEventData=userData;
+     _eventfn=fn;
  }
 
 

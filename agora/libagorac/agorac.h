@@ -7,6 +7,12 @@
  #define EXTERNC
  #endif
 
+typedef void (*event_fn)(void* userData, 
+                         int type, 
+                         const char* userName,
+                         long param1,
+                         long param2);
+
  typedef  struct agora_context_t agora_context_t;
  typedef  void (*agora_log_func_t)(void*, const char*);
 
@@ -99,6 +105,9 @@ EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx,
 									 char* userName,
 									 long* param1,
 									 long* param2);
+
+
+EXTERNC  void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData);
 
  #undef EXTERNC
 

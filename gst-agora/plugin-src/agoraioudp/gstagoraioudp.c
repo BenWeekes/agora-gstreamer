@@ -203,7 +203,24 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
   return GST_FLOW_ERROR;
 }
 
+void handle_agora_pending_events(Gstagoraioudp *agoraIO, 
+                                 int eventType,
+                                 const char* userName,
+                                 long param1, 
+                                 long param2);
 
+static void handle_event_Signal(void* userData, 
+                         int type, 
+                         const char* userName,
+                         long param1,
+                         long param2){
+
+  
+    Gstagoraioudp* agoraIO=(Gstagoraioudp*)(userData);
+
+    handle_agora_pending_events(agoraIO, type, userName,param1, param2);
+
+}
 int init_agora(Gstagoraioudp *agoraIO){
 
    if (strlen(agoraIO->app_id)==0){
@@ -235,6 +252,9 @@ int init_agora(Gstagoraioudp *agoraIO){
       g_print("agora COULD NOT  be initialized\n");
       return FALSE;   
    }
+
+   //set event function
+   agoraio_set_event_handler(agoraIO->agora_ctx,handle_event_Signal, (void*)(agoraIO));
 
    g_print("agora has been successfuly initialized\n");
 
@@ -333,18 +353,11 @@ void print_packet(u_int8_t* data, int size){
     
 }
 
-void handle_agora_pending_events(Gstagoraioudp *agoraIO){
-
-    int eventType=-1;
-    long param1=0;
-    long param2=0;
-
-    char userName[MAX_STRING_LEN];
-
-    //read all events (untill eventType=-1)
-    while(agoraIO!=NULL && agoraIO->agora_ctx!=NULL&& agoraIO->state!=PAUSED)
-    {
-       agoraio_get_next_event(agoraIO->agora_ctx,&eventType, userName, &param1, &param2);
+void handle_agora_pending_events(Gstagoraioudp *agoraIO, 
+                                 int eventType,
+                                 const char* userName,
+                                 long param1, 
+                                 long param2){
        switch (eventType){
              case ON_IFRAME_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_IFRAME_SIGNAL], 0);
@@ -382,8 +395,6 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO){
             default:
                  return; //may be there is no more signals 
        }
-    } 
-    
 }
 
 static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
@@ -398,8 +409,6 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
     if(agoraIO->state==PAUSED){
         return GST_FLOW_OK;
     }
-
-    handle_agora_pending_events(agoraIO);
 
     data_size=gst_buffer_get_size (in_buffer);
     GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
@@ -490,8 +499,6 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
 
   Gstagoraioudp *agoraIO=GST_AGORAIOUDP (element);
 
- handle_agora_pending_events(agoraIO);
-
   switch (transition) {
        case GST_STATE_CHANGE_NULL_TO_READY:
             g_print("AgoraIO: state change: NULL to READY \n");   
@@ -499,7 +506,6 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
                 g_print("cannot initialize agora\n");
                 return GST_FLOW_ERROR;
              }
-             handle_agora_pending_events(agoraIO);
             break;
 	   case GST_STATE_CHANGE_READY_TO_NULL:
 	        g_print("AgoraIO: state change: READY to NULL\n");

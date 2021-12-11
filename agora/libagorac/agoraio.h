@@ -17,43 +17,7 @@
 #include "observer/h264frameobserver.h"
 #include "observer/userobserver.h"
 
-enum AgoraEventType{
 
-   AGORA_EVENT_ON_IFRAME=1,
-   AGORA_EVENT_ON_CONNECTING,
-   AGORA_EVENT_ON_CONNECTED,
-   AGORA_EVENT_ON_DISCONNECTED,
-
-   AGORA_EVENT_ON_USER_STATE_CHANED,
-
-   AGORA_EVENT_ON_UPLINK_NETWORK_INFO_UPDATED,
-   AGORA_EVENT_ON_CONNECTION_LOST,
-   AGORA_EVENT_ON_CONNECTION_FAILURE,
-
-   AGORA_EVENT_ON_RECONNECTING,
-   AGORA_EVENT_ON_RECONNECTED,
-
-   AGORA_EVENT_ON_VIDEO_SUBSCRIBED
-
-};
-
-enum State{
-
-   USER_STATE_JOIN=1,
-   USER_STATE_LEAVE,
-   USER_STATE_CAM_ON,
-   USER_STATE_CAM_OFF,
-   USER_STATE_MIC_ON,
-   USER_STATE_MIC_OFF
-};
-
-const int MAX_EVENT_PARAMS=10;
-
-struct AgoraEvent{
-   AgoraEventType  type;
-   std::string     userName;
-   long            params[MAX_EVENT_PARAMS];     
-};
 class AgoraIo{
 
   public:
@@ -95,10 +59,12 @@ class AgoraIo{
    void getNextEvent(int& eventType, char* userName, long& param1, long& param2);
 
    //right now we support two params to the event
-    void addEvent(const AgoraEventType& eventType, 
+   void addEvent(const AgoraEventType& eventType, 
                   const std::string& userName,
                   const long& param1=0, 
                   const long& param2=0);
+
+   void setEventFunction(event_fn fn, void* userData);
 
 protected:
 
@@ -191,7 +157,8 @@ protected:
 
     bool                                             _isPaused;
 
-    std::queue<AgoraEvent>                           _events;
+    event_fn                                         _eventfn;
+    void*                                            _userEventData;
  };
 
 #endif
