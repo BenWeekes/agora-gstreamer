@@ -634,7 +634,7 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
 
  void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
 
-     if(_events.empty()){
+     /*if(_events.empty()){
          eventType=-1;
      }
      else{
@@ -645,7 +645,7 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
         eventType= e.type;
         param1=e.params[0];
         param2=e.params[1];
-     }
+     }*/
  }
 
  void AgoraIo::setEventFunction(event_fn fn, void* userData){
