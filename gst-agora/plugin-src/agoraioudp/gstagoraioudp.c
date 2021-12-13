@@ -196,6 +196,9 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
 
     free(data);
 
+    //GstClockTime audio_pts=GST_BUFFER_CAST(in_buffer)->pts;
+    //g_print("audio timestamp: %ld\n", audio_pts);
+
     gst_sample_unref (sample);
     return GST_FLOW_OK;
   }
@@ -481,6 +484,11 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      GST_BUFFER_CAST(out_buffer)->pts=in_buffer_dts;
      GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
 
+     if(agoraIO->verbose){
+       g_print("Duration: %ld\n", in_buffer_duration);
+       g_print("Timestamp: %ld\n", in_buffer_pts);
+     }
+     
      free(recvData);
 
     GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
