@@ -126,7 +126,7 @@ public:
 
    bool                  is_finished;
 
-   long                  timestamp;
+   uint64_t               timestamp;
    
 };
 

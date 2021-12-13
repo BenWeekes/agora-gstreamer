@@ -36,7 +36,8 @@ AgoraIo::AgoraIo(const bool& verbose):
  _currentVideoUser(""),
  _lastVideoUserSwitchTime(Now()),
  _isRunning(false),
- _isPaused(true){
+ _isPaused(true),
+ _eventfn(nullptr){
 
    _activeUsers.clear();
 }
@@ -150,7 +151,7 @@ bool  AgoraIo::init(char* in_app_id,
     }
 
     // Register connection observer to monitor connection event
-    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connectionObserver = std::make_shared<ConnectionObserver>(this);
     _connection->registerObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
@@ -203,9 +204,10 @@ bool  AgoraIo::init(char* in_app_id,
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
-                                                    const int& isKeyFrame){
+                                                    const int& isKeyFrame,
+                                                    const uint64_t& ts){
 
-           receiveVideoFrame(userId, buffer, length, isKeyFrame);
+           receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
 
     });
 
@@ -223,15 +225,30 @@ bool  AgoraIo::init(char* in_app_id,
                                                       const UserState& newState){
                                              
         handleUserStateChange(userId, newState);
+
     });
 
     _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
         if(messsage==1 && value==1){
            handleUserStateChange(userId, USER_CAM_OFF);
+
+           addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_CAM_OFF,0);
         }
         else if(messsage==1 && value==0){
             handleUserStateChange(userId, USER_CAM_ON);
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_CAM_ON,0);
         }
+        else if(messsage==0 && value==1){
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_ON,0);
+        }
+        else if(messsage==0 && value==0){
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_OFF,0);
+        }
+
+    });
+
+    _userObserver->setOnIframeRequestFn([this](){
+        addEvent(AGORA_EVENT_ON_IFRAME,"",0,0);
     });
 
     _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){
@@ -276,7 +293,8 @@ void AgoraIo::addAudioFrame(const Work_ptr& work){
 }
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
-                                        const size_t& length,const int& isKeyFrame){
+                                        const size_t& length,const int& isKeyFrame,
+                                        const uint64_t& ts){
 
 
       if(_receivedVideoFrames->size()>1 && _verbose){
@@ -292,6 +310,7 @@ void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
       if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
 
              auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+             frame->timestamp=ts;
              _receivedVideoFrames->add(frame);
        }
        else if(_verbose){
@@ -361,6 +380,8 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     _currentVideoUser=userId;
     std::cout<<"subscribed to video user #"<<_currentVideoUser<<std::endl;
+
+    addEvent(AGORA_EVENT_ON_VIDEO_SUBSCRIBED,userId,0,0);
  }
 
 
@@ -373,7 +394,10 @@ void AgoraIo::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
   h264FrameReceiver->setOnVideoFrameReceivedFn(fn);
 }
 
-size_t AgoraIo::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, int* is_key_frame){
+size_t AgoraIo::getNextVideoFrame(unsigned char* data,
+                                  size_t max_buffer_size,
+                                  int* is_key_frame,
+                                  uint64_t* ts){
    
     //do not wait for frames to arrive
     if(_receivedVideoFrames->isEmpty()){
@@ -386,6 +410,7 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data, size_t max_buffer_size, i
     memcpy(data, work->buffer, work->len);
 
     *is_key_frame=work->is_key_frame;
+    *ts=work->timestamp;
 
     return work->len;
 }
@@ -600,5 +625,37 @@ void AgoraIo::setPaused(const bool& flag){
        subscribeToVideoUser(_currentVideoUser);
     }
 }
+
+void AgoraIo::addEvent(const AgoraEventType& eventType, 
+                       const std::string& userName,
+                       const long& param1, 
+                       const long& param2){
+
+    if(_eventfn!=nullptr){
+        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2);
+    }
+}
+
+ void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
+
+     /*if(_events.empty()){
+         eventType=-1;
+     }
+     else{
+         auto e=_events.front();
+        _events.pop();
+
+        std::strcpy(userName, e.userName.c_str());
+        eventType= e.type;
+        param1=e.params[0];
+        param2=e.params[1];
+     }*/
+ }
+
+ void AgoraIo::setEventFunction(event_fn fn, void* userData){
+
+     _userEventData=userData;
+     _eventfn=fn;
+ }
 
 

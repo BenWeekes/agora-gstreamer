@@ -105,6 +105,28 @@ gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid
    
    gst-launch-1.0 agorasrc audio=true verbose=false appid=xxx channel=xxx ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! pulsesink
 
+## How to run the test programs:
+
+$ cd agora-gstreamer/test
+
+To compile all test programs:
+
+$ ./c
+
+To run any test just type its name:
+
+$ ./endtest2
+
+
+## Camera Debug on Linux
+sudo apt-get install -y v4l-utils    
+v4l2-ctl --list-formats    
+v4l2-ctl     
+v4l2-ctl --list-devices     
+
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=1280,height=720,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency !  queue ! decodebin ! queue ! autovideosink
+
+
  
  ## Developer Notes
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    

@@ -11,6 +11,7 @@ UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbo
     : local_user_(local_user),
     _onUserInfoChanged(nullptr),
     _onUserVolumeChanged(nullptr),
+    _onIframeRequest(nullptr),
     _verbose(verbose){
   local_user_->registerLocalUserObserver(this);
 }
@@ -99,6 +100,11 @@ void UserObserver::onUserAudioTrackStateChanged(
 }
 
 void UserObserver::onIntraRequestReceived() {
+
+  if(_onIframeRequest){
+      _onIframeRequest();
+  }
+
   if(_verbose==false)  return;
    std::cout<<"Agora sdk requested an iframe\n";
 }

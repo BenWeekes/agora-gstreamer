@@ -74,6 +74,21 @@ GST_DEBUG_CATEGORY_STATIC (gst_agoraioudp_debug);
 /* Filter signals and args */
 enum
 {
+  ON_IFRAME_SIGNAL=1,
+  ON_CONNECTING_SIGNAL,
+  ON_CONNECTED_SIGNAL,
+  ON_DISCONNECTED_SIGNAL,
+  ON_USER_STATE_CHANGED_SIGNAL,
+  ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL,
+
+  ON_CONNECTION_LOST_SIGNAL,
+  ON_CONNECTION_FAILURE_SIGNAL,
+
+  ON_RECONNECTING_SIGNAL,
+  ON_RECONNECTED_SIGNAL,
+
+  ON_VIDEO_SUBSCRIBED_SIGNAL,
+
   /* FILL ME */
   LAST_SIGNAL
 };
@@ -90,6 +105,10 @@ enum
   HOST,
   AUDIO
 };
+
+
+static guint agoraio_signals[LAST_SIGNAL] = { 0 };
+
 
 /* the capabilities of the inputs and outputs.
  *
@@ -184,7 +203,24 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
   return GST_FLOW_ERROR;
 }
 
+void handle_agora_pending_events(Gstagoraioudp *agoraIO, 
+                                 int eventType,
+                                 const char* userName,
+                                 long param1, 
+                                 long param2);
 
+static void handle_event_Signal(void* userData, 
+                         int type, 
+                         const char* userName,
+                         long param1,
+                         long param2){
+
+  
+    Gstagoraioudp* agoraIO=(Gstagoraioudp*)(userData);
+
+    handle_agora_pending_events(agoraIO, type, userName,param1, param2);
+
+}
 int init_agora(Gstagoraioudp *agoraIO){
 
    if (strlen(agoraIO->app_id)==0){
@@ -216,6 +252,9 @@ int init_agora(Gstagoraioudp *agoraIO){
       g_print("agora COULD NOT  be initialized\n");
       return FALSE;   
    }
+
+   //set event function
+   agoraio_set_event_handler(agoraIO->agora_ctx,handle_event_Signal, (void*)(agoraIO));
 
    g_print("agora has been successfuly initialized\n");
 
@@ -314,27 +353,71 @@ void print_packet(u_int8_t* data, int size){
     
 }
 
+void handle_agora_pending_events(Gstagoraioudp *agoraIO, 
+                                 int eventType,
+                                 const char* userName,
+                                 long param1, 
+                                 long param2){
+       switch (eventType){
+             case ON_IFRAME_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_IFRAME_SIGNAL], 0);
+                  break;
+             case ON_CONNECTING_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTING_SIGNAL], 0);
+                  break;
+             case ON_CONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTED_SIGNAL], 0, userName,param1);
+                  break;
+              case ON_DISCONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_DISCONNECTED_SIGNAL], 0, userName,param1);
+                  break;
+             case ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL], 0);
+                  break;
+             case ON_CONNECTION_LOST_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_LOST_SIGNAL], 0);
+                  break;
+             case ON_CONNECTION_FAILURE_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL], 0);
+                  break;
+            case ON_RECONNECTING_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_RECONNECTING_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_RECONNECTED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_RECONNECTED_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_USER_STATE_CHANGED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL], 0,userName,param1);
+                  break;
+            case ON_VIDEO_SUBSCRIBED_SIGNAL: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL], 0,userName);
+                  break;
+            default:
+                 return; //may be there is no more signals 
+       }
+}
+
 static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
 
+    
     size_t data_size=0;
     int    is_key_frame=0;
 
-    size_t in_buffer_size=0;
-
-    GstMemory *memory=NULL;
-
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
 
-  
     //do nothing in case of pause
     if(agoraIO->state==PAUSED){
         return GST_FLOW_OK;
     }
 
     data_size=gst_buffer_get_size (in_buffer);
+    GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
+    GstClockTime in_buffer_dts= GST_BUFFER_CAST(in_buffer)->dts;
+    GstClockTime in_buffer_duration=GST_BUFFER_CAST(in_buffer)->duration;
   
     gpointer data=malloc(data_size);
     if(data==NULL){
+      gst_buffer_unref (in_buffer);
        g_print("cannot allocate memory!\n");
        return GST_FLOW_ERROR;
     }
@@ -358,12 +441,15 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      }*/
 
      free(data); 
+     gst_buffer_unref (in_buffer);
      agoraIO->ts+=30;
 
+    
      GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
      if(peer==NULL){
          return GST_FLOW_OK;
      }
+
 
      //receive data
      const size_t  max_size=4*1024*1024;
@@ -373,26 +459,35 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
         return GST_FLOW_ERROR;
      }
 
-     data_size=agoraio_read_video(agoraIO->agora_ctx, recvData, max_size, &is_key_frame);
+     u_int64_t frame_ts=0;
+     data_size=agoraio_read_video(agoraIO->agora_ctx, 
+                                  recvData,
+                                  max_size,
+                                  &is_key_frame,
+                                  &frame_ts);
      if(data_size==0){
+         gst_object_unref(peer);
          free(recvData);
          return GST_FLOW_OK;
      }
 
-    in_buffer_size=gst_buffer_get_size (in_buffer);
+     GstBuffer * out_buffer=gst_buffer_new_allocate (NULL, data_size, NULL);
 
-     /*increase the buffer if it is less than the frame data size*/
-    if(data_size>in_buffer_size){
-       memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
-       gst_buffer_insert_memory (in_buffer, -1, memory);
-     }
+     gst_buffer_fill(out_buffer, 0, recvData, data_size);
+     gst_buffer_set_size(out_buffer, data_size);
 
-     gst_buffer_fill(in_buffer, 0, recvData, data_size);
-     gst_buffer_set_size(in_buffer, data_size);
+
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
+     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_dts;
+     GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
 
      free(recvData);
 
-    return gst_pad_push (agoraIO->srcpad, in_buffer);
+    GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
+
+    gst_object_unref(peer);
+
+    return retCode;
 }
 
 
@@ -458,11 +553,11 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_CAPS:
-    {
+       {
         GstCaps * caps;
         gst_event_parse_caps (event, &caps);
-    }
-        break;
+       }
+       break;
     case GST_EVENT_EOS:
         agoraIO->state=ENDED;
         gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
@@ -475,6 +570,11 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 
         agoraio_disconnect(&agoraIO->agora_ctx);
         agoraIO->agora_ctx=NULL;
+
+        //release internal pipelines
+        gst_object_unref (agoraIO->in_pipeline);
+        gst_object_unref (agoraIO->out_pipeline);
+
         break;
     default:
       break;
@@ -553,6 +653,53 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&sink_factory));
+
+
+  /*install agoraio available signals*/
+  agoraio_signals[ON_IFRAME_SIGNAL] =
+      g_signal_new ("on-iframe", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+  agoraio_signals[ON_CONNECTING_SIGNAL] =
+      g_signal_new ("on-connecting", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+    
+  agoraio_signals[ON_CONNECTED_SIGNAL] =
+      g_signal_new ("on-connected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+  agoraio_signals[ON_DISCONNECTED_SIGNAL] =
+      g_signal_new ("on-disconnected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL] =
+      g_signal_new ("on-uplink-network-changed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_CONNECTION_LOST_SIGNAL] =
+      g_signal_new ("on-connection-lost", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_CONNECTION_FAILURE_SIGNAL] =
+      g_signal_new ("on-connection-failure", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+
+ agoraio_signals[ON_RECONNECTING_SIGNAL] =
+      g_signal_new ("on-reconnecting", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_RECONNECTED_SIGNAL] =
+      g_signal_new ("on-reconnected", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE,2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_USER_STATE_CHANGED_SIGNAL] =
+      g_signal_new ("on-user-state-changed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_INT);
+
+ agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL] =
+      g_signal_new ("on-user-video-subscribed", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 1, G_TYPE_STRING);
 
 }
 

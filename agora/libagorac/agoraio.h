@@ -28,9 +28,9 @@ class AgoraIo{
                         char* in_user_id,
                         bool is_audiouser,
                         bool enable_enc,
-		                    short enable_dual,
+		                  short enable_dual,
                         unsigned int  dual_vbr, 
-			                  unsigned short  dual_width,
+			               unsigned short  dual_width,
                         unsigned short  dual_height,
                         unsigned short min_video_jb,
                         unsigned short dfps);
@@ -43,7 +43,11 @@ class AgoraIo{
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
-    size_t getNextVideoFrame(uint8_t* data, size_t max_buffer_size, int* is_key_frame);
+    size_t getNextVideoFrame(uint8_t* data, 
+                             size_t max_buffer_size,
+                             int* is_key_frame,
+                             uint64_t* ts);
+                             
     size_t getNextAudioFrame(uint8_t* data, size_t max_buffer_size);
 
     void addAudioFrame(const Work_ptr& work);
@@ -51,6 +55,16 @@ class AgoraIo{
    void disconnect();
 
    void setPaused(const bool& flag);
+
+   void getNextEvent(int& eventType, char* userName, long& param1, long& param2);
+
+   //right now we support two params to the event
+   void addEvent(const AgoraEventType& eventType, 
+                  const std::string& userName,
+                  const long& param1=0, 
+                  const long& param2=0);
+
+   void setEventFunction(event_fn fn, void* userData);
 
 protected:
 
@@ -79,7 +93,8 @@ protected:
    void receiveVideoFrame(const uint userId, 
                            const uint8_t* buffer,
                            const size_t& length,
-                           const int& isKeyFrame);
+                           const int& isKeyFrame,
+                           const uint64_t& ts);
 
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,
@@ -92,6 +107,7 @@ protected:
     void unsubscribeAudioUser(const std::string& userId);
 
     void unsubscribeAllVideo();
+
 
  private:
 
@@ -140,6 +156,9 @@ protected:
     TimePoint                                       _lastVideoSendTime;
 
     bool                                             _isPaused;
+
+    event_fn                                         _eventfn;
+    void*                                            _userEventData;
  };
 
 #endif

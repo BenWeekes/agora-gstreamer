@@ -129,7 +129,7 @@ bool AgoraReceiverUser::connect()
     }
 
     // Register connection observer to monitor connection event
-    _connectionObserver = std::make_shared<ConnectionObserver>();
+    _connectionObserver = std::make_shared<ConnectionObserver>(nullptr);
     _connection->registerObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
@@ -168,7 +168,8 @@ bool AgoraReceiverUser::connect()
     h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
-                                                    const int& isKeyFrame){
+                                                    const int& isKeyFrame,
+                                                    const uint64_t& ts){
 
            receiveVideoFrame(userId, buffer, length, isKeyFrame);
 
