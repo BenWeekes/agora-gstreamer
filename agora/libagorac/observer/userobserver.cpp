@@ -152,7 +152,8 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
       states[11]=stats.frame_render_delay_ms;
 
 
-      _onTrackStates("", states);
+      std::string userId= std::to_string(stats.uid);
+      _onTrackStates(userId, states);
   }
 
   if(_verbose==false)  return;

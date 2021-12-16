@@ -80,7 +80,7 @@ void on_remote_track_state_fn(GstElement* object,
 
 					          gpointer user_data){
 
-     g_print("->Signal Test: remote stats: \n");
+     g_print("->Signal Test: remote stats for user %s: ", userName);
 	 g_print("receivedBitrate: %d,\
 decoderOutputFrameRate: %d,\
 rendererOutputFrameRate: %d,\
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
   pipeline = gst_parse_launch (
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 verbose=false ! fakesink"
+	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 inport=7374 verbose=false ! fakesink"
 
 	,NULL);
 
@@ -335,5 +335,3 @@ int main(int argc, char *argv[]) {
   return 0;
 
 }
-
-
