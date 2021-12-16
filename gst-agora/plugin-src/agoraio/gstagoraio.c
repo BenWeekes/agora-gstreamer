@@ -487,7 +487,9 @@ int init_agora(Gstagoraio *agoraIO){
                                  180,               /*dual video height*/
                                  12,                /*initial size of video buffer*/
                                  30,                 /*dual fps*/
-                                 agoraIO->verbose);               
+                                 agoraIO->verbose,
+                                 NULL,
+                                 NULL);               
 
    if(agoraIO->agora_ctx==NULL){
 

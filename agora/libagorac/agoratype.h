@@ -39,8 +39,9 @@ enum AgoraEventType{
    AGORA_EVENT_ON_RECONNECTING,
    AGORA_EVENT_ON_RECONNECTED,
 
-   AGORA_EVENT_ON_VIDEO_SUBSCRIBED
+   AGORA_EVENT_ON_VIDEO_SUBSCRIBED,
 
+   AGORA_EVENT_ON_REMOTE_TRACK_STATE_CHANGED
 };
 
 enum State{
@@ -57,6 +58,7 @@ typedef void (*event_fn)(void* userData,
                          int type, 
                          const char* userName,
                          long param1,
-                         long param2);
+                         long param2,
+                         long* states);
 
 #endif 

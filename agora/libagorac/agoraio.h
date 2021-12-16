@@ -21,7 +21,9 @@
 class AgoraIo{
 
   public:
-   AgoraIo(const bool& verbose);
+   AgoraIo(const bool& verbose, 
+           event_fn fn,
+			  void* userData);
 
    bool  init(char* in_app_id, 
                         char* in_ch_id,
@@ -56,13 +58,12 @@ class AgoraIo{
 
    void setPaused(const bool& flag);
 
-   void getNextEvent(int& eventType, char* userName, long& param1, long& param2);
-
    //right now we support two params to the event
    void addEvent(const AgoraEventType& eventType, 
                   const std::string& userName,
                   const long& param1=0, 
-                  const long& param2=0);
+                  const long& param2=0,
+                  long* states=nullptr);
 
    void setEventFunction(event_fn fn, void* userData);
 

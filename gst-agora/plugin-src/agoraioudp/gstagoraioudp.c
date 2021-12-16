@@ -89,6 +89,8 @@ enum
 
   ON_VIDEO_SUBSCRIBED_SIGNAL,
 
+  ON_REMOTE_TRACK_STATE_CHANGED,
+
   /* FILL ME */
   LAST_SIGNAL
 };
@@ -210,18 +212,20 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
                                  int eventType,
                                  const char* userName,
                                  long param1, 
-                                 long param2);
+                                 long param2,
+                                 long* states);
 
 static void handle_event_Signal(void* userData, 
                          int type, 
                          const char* userName,
                          long param1,
-                         long param2){
+                         long param2,
+                         long* states){
 
   
     Gstagoraioudp* agoraIO=(Gstagoraioudp*)(userData);
 
-    handle_agora_pending_events(agoraIO, type, userName,param1, param2);
+    handle_agora_pending_events(agoraIO, type, userName,param1, param2, states);
 
 }
 int init_agora(Gstagoraioudp *agoraIO){
@@ -248,7 +252,9 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  180,               /*dual video height*/
                                  12,                /*initial size of video buffer*/
                                  30,                 /*dual fps*/
-                                 agoraIO->verbose);               
+                                 agoraIO->verbose, 
+                                 handle_event_Signal,
+                                (void*)(agoraIO));               
 
    if(agoraIO->agora_ctx==NULL){
 
@@ -257,7 +263,7 @@ int init_agora(Gstagoraioudp *agoraIO){
    }
 
    //set event function
-   agoraio_set_event_handler(agoraIO->agora_ctx,handle_event_Signal, (void*)(agoraIO));
+  // agoraio_set_event_handler(agoraIO->agora_ctx,handle_event_Signal, (void*)(agoraIO));
 
    g_print("agora has been successfuly initialized\n");
 
@@ -360,7 +366,9 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
                                  int eventType,
                                  const char* userName,
                                  long param1, 
-                                 long param2){
+                                 long param2,
+                                 long* states){
+
        switch (eventType){
              case ON_IFRAME_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_IFRAME_SIGNAL], 0);
@@ -394,6 +402,14 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
                   break;
             case ON_VIDEO_SUBSCRIBED_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL], 0,userName);
+                  break;
+            case ON_REMOTE_TRACK_STATE_CHANGED: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_REMOTE_TRACK_STATE_CHANGED], 0, userName,
+                                 states[0], states[1], states[2],
+                                 states[3], states[4], states[5],
+                                 states[6], states[7], states[8],
+                                 states[9], states[10], states[11]);
+
                   break;
             default:
                  return; //may be there is no more signals 
@@ -708,6 +724,14 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
  agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL] =
       g_signal_new ("on-user-video-subscribed", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 1, G_TYPE_STRING);
+
+ agoraio_signals[ON_REMOTE_TRACK_STATE_CHANGED] =
+      g_signal_new ("on-remote-track-state", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 
+       12, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
 
 }
 

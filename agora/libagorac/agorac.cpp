@@ -756,14 +756,16 @@ AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
 										          unsigned short  dual_height,
 									             unsigned short  min_video_jb,
 										          unsigned short  dfps,
-                                        bool verbose){
+                                        bool verbose,
+                                        event_fn fn,
+										          void* userData){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
         return NULL;
     }
 
-    ctx->agoraIo=std::make_shared<AgoraIo>(verbose);
+    ctx->agoraIo=std::make_shared<AgoraIo>(verbose, fn, userData);
 
     ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,
@@ -805,21 +807,6 @@ void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag){
     }
 
     (ctx)->agoraIo->setPaused(flag);
-}
-
-//try to pull an event from the event queue 
- void  agoraio_get_next_event(AgoraIoContext_t* ctx,  
-                                     int* eventType,
-                                     char* userName,
-									          long* param1,
-									          long* param2){
-
-   if(ctx==nullptr){
-         *eventType=-1;
-         return;
-   }
-
-   ctx->agoraIo->getNextEvent(*eventType,userName, *param1, *param2);
 }
 
 void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData){

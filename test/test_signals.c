@@ -3,12 +3,12 @@
 
 void on_agora_iframe_request_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Endtest: iframe requested!\n");
+     g_print("->Signal Test: iframe requested!\n");
 }
 
 void on_agora_on_connecting_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Endtest: on connecting!\n");
+     g_print("->Signal Test: on connecting!\n");
 }
 
 void on_agora_on_connected_fn(GstElement* object,
@@ -16,7 +16,7 @@ void on_agora_on_connected_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Endtest: on connected: userid=%s, reason=%d\n", userName, reason);
+     g_print("->Signal Test: on connected: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_reconnecting_fn(GstElement* object,
@@ -24,7 +24,7 @@ void on_agora_on_reconnecting_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Endtest: on reconnecting: userid=%s, reason=%d\n", userName, reason);
+     g_print("->Signal Test: on reconnecting: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_reconnected_fn(GstElement* object,
@@ -32,7 +32,7 @@ void on_agora_on_reconnected_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Endtest: on reconnected: userid=%s, reason=%d\n", userName, reason);
+     g_print("->Signal Test: on reconnected: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_disconnected_fn(GstElement* object,
@@ -40,25 +40,75 @@ void on_agora_on_disconnected_fn(GstElement* object,
 							     gint reason,
                                  gpointer user_data){
 
-     g_print("->Endtest: on disconnected: userid=%s, reason=%d\n", userName, reason);
+     g_print("->Signal Test: on disconnected: userid=%s, reason=%d\n", userName, reason);
 }
 
 
 void on_agora_on_uplink_info_updated_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Endtest: uplink info updated!\n");
+     g_print("->Signal Test: uplink info updated!\n");
 }
 
 void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Endtest: connection lost!\n");
+     g_print("->Signal Test: connection lost!\n");
 }
 
 void on_agora_on_video_subscribed_fn(GstElement* object,
                                     gchararray userName,
 									gpointer user_data){
 
-     g_print("->Endtest: on video subscribed, userid: %s\n", userName);
+     g_print("->Signal Test: on video subscribed, userid: %s\n", userName);
+}
+
+void on_remote_track_state_fn(GstElement* object,
+                              gchararray userName,
+					          guint receivedBitrate,
+							  guint decoderOutputFrameRate,
+							  guint rendererOutputFrameRate,
+							  guint frameLossRate,
+							  guint packetLossRate,
+							  guint rxStreamType,
+
+							  guint totalFrozenTime,
+							  guint frozenRate,
+							  guint totalDecodedFrames,
+
+							  guint avSyncTimeMs,
+							  guint downlink_process_time_ms,
+							  guint frame_render_delay_ms,
+
+					          gpointer user_data){
+
+     g_print("->Signal Test: remote stats: \n");
+	 g_print("receivedBitrate: %d,\
+decoderOutputFrameRate: %d,\
+rendererOutputFrameRate: %d,\
+frameLossRate: %d,\
+packetLossRate: %d,\
+rxStreamType: %d,\
+totalFrozenTime: %d,\
+frozenRate: %d,\
+totalDecodedFrames: %d,\
+avSyncTimeMs: %d,\
+downlink_process_time_ms: %d,\
+frame_render_delay_ms: %d\
+ \n",
+	         receivedBitrate,
+			 decoderOutputFrameRate,
+			 rendererOutputFrameRate,
+			 frameLossRate,
+			 packetLossRate,
+			 rxStreamType,
+			 totalFrozenTime,
+			 frozenRate,
+			 totalDecodedFrames,
+			 avSyncTimeMs,
+			 downlink_process_time_ms,
+			 frame_render_delay_ms
+			 );
+	 
+	 
 }
 
 void on_agora_on_user_state_changed_fn(GstElement* object,
@@ -99,8 +149,16 @@ void on_agora_on_user_state_changed_fn(GstElement* object,
 	 }
 }
 
-
+void print_usage(char* name){
+	g_print("usage: %s appid channel\n", name);
+}
 int main(int argc, char *argv[]) {
+
+
+  /*if(argc<3){
+	  print_usage(argv[0]);
+	  return;
+  }*/
 
   GstElement *pipeline;
 
@@ -116,7 +174,7 @@ int main(int argc, char *argv[]) {
 
   pipeline = gst_parse_launch (
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xx channel=xxx userid=123 verbose=true ! fakesink sync=false"
+	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xxx channel=xxx userid=123 verbose=false ! fakesink"
 
 	,NULL);
 
@@ -167,6 +225,10 @@ int main(int argc, char *argv[]) {
 		//on video subscribed 
 		g_signal_connect (agoraioUdp, "on-user-video-subscribed",
                     G_CALLBACK (on_agora_on_video_subscribed_fn), NULL);
+
+		//on remote track state changed
+		g_signal_connect (agoraioUdp, "on-remote-track-state",
+                    G_CALLBACK (on_remote_track_state_fn), NULL);
 
   }
   

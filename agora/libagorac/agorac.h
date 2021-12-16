@@ -11,7 +11,8 @@ typedef void (*event_fn)(void* userData,
                          int type, 
                          const char* userName,
                          long param1,
-                         long param2);
+                         long param2,
+						 long* states);
 
  typedef  struct agora_context_t agora_context_t;
  typedef  void (*agora_log_func_t)(void*, const char*);
@@ -36,7 +37,9 @@ typedef void (*event_fn)(void* userData,
 										unsigned short  dual_height,
 									    unsigned short min_video_jb,
 										unsigned short dfps,
-										bool verbose);
+										bool verbose,
+										event_fn fn,
+										void* userData);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 
@@ -97,14 +100,6 @@ EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx,
                                      unsigned char* data, size_t max_buffer_size);
 
  EXTERNC void logText(const char* message);
-
-
- //try to pull an event from the event queue 
- EXTERNC void  agoraio_get_next_event(AgoraIoContext_t* ctx,  
-                                     int* eventType,
-									 char* userName,
-									 long* param1,
-									 long* param2);
 
 
 EXTERNC  void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData);

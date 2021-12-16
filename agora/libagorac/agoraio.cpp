@@ -30,14 +30,17 @@
 
 
 
-AgoraIo::AgoraIo(const bool& verbose):
+AgoraIo::AgoraIo(const bool& verbose,
+                event_fn fn,
+			    void* userData):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
  _lastVideoUserSwitchTime(Now()),
  _isRunning(false),
  _isPaused(true),
- _eventfn(nullptr){
+ _eventfn(fn),
+ _userEventData(userData){
 
    _activeUsers.clear();
 }
@@ -246,6 +249,12 @@ bool  AgoraIo::init(char* in_app_id,
     _userObserver->setOnIframeRequestFn([this](){
         addEvent(AGORA_EVENT_ON_IFRAME,"",0,0);
     });
+
+    _userObserver->setOnUserRemoteTrackStateFn([this](const std::string& userId,
+                                                      long* states){
+
+        addEvent(AGORA_EVENT_ON_REMOTE_TRACK_STATE_CHANGED,userId,0,0,states);
+     });
 
     _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){
 
@@ -617,36 +626,24 @@ void AgoraIo::setPaused(const bool& flag){
         unsubscribeAllVideo();
     }
     else{
+
        unsubscribeAllVideo();
-       subscribeToVideoUser(_currentVideoUser);
+       if(_currentVideoUser!=""){
+           subscribeToVideoUser(_currentVideoUser);
+       } 
     }
 }
 
 void AgoraIo::addEvent(const AgoraEventType& eventType, 
                        const std::string& userName,
                        const long& param1, 
-                       const long& param2){
+                       const long& param2,
+                       long* states){
 
     if(_eventfn!=nullptr){
-        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2);
+        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2, states);
     }
 }
-
- void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
-
-     /*if(_events.empty()){
-         eventType=-1;
-     }
-     else{
-         auto e=_events.front();
-        _events.pop();
-
-        std::strcpy(userName, e.userName.c_str());
-        eventType= e.type;
-        param1=e.params[0];
-        param2=e.params[1];
-     }*/
- }
 
  void AgoraIo::setEventFunction(event_fn fn, void* userData){
 
