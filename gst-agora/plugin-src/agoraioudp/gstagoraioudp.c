@@ -89,7 +89,8 @@ enum
 
   ON_VIDEO_SUBSCRIBED_SIGNAL,
 
-  ON_REMOTE_TRACK_STATE_CHANGED,
+  ON_REMOTE_TRACK_STATS_CHANGED,
+  ON_LOCAL_TRACK_STATS_CHANGED,
 
   /* FILL ME */
   LAST_SIGNAL
@@ -403,12 +404,21 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
             case ON_VIDEO_SUBSCRIBED_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_VIDEO_SUBSCRIBED_SIGNAL], 0,userName);
                   break;
-            case ON_REMOTE_TRACK_STATE_CHANGED: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_REMOTE_TRACK_STATE_CHANGED], 0, userName,
+            case ON_REMOTE_TRACK_STATS_CHANGED: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_REMOTE_TRACK_STATS_CHANGED], 0, userName,
                                  states[0], states[1], states[2],
                                  states[3], states[4], states[5],
                                  states[6], states[7], states[8],
                                  states[9], states[10], states[11]);
+
+                  break;
+             case ON_LOCAL_TRACK_STATS_CHANGED: 
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_LOCAL_TRACK_STATS_CHANGED], 0, userName,
+                                 states[0], states[1], states[2],
+                                 states[3], states[4], states[5],
+                                 states[6], states[7], states[8],
+                                 states[9], states[10], states[11],
+                                 states[12], states[13], states[14]);
 
                   break;
             default:
@@ -725,13 +735,23 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
       g_signal_new ("on-user-video-subscribed", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 1, G_TYPE_STRING);
 
- agoraio_signals[ON_REMOTE_TRACK_STATE_CHANGED] =
-      g_signal_new ("on-remote-track-state", G_TYPE_FROM_CLASS (klass),
+ agoraio_signals[ON_REMOTE_TRACK_STATS_CHANGED] =
+      g_signal_new ("on-remote-track-stats", G_TYPE_FROM_CLASS (klass),
       G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 
-       12, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+       13, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
                          G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
                          G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
                          G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
+
+
+  agoraio_signals[ON_LOCAL_TRACK_STATS_CHANGED] =
+      g_signal_new ("on-local-track-stats", G_TYPE_FROM_CLASS (klass),
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 
+       16, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                         G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT,
+                          G_TYPE_UINT, G_TYPE_UINT, G_TYPE_UINT);
 
 }
 

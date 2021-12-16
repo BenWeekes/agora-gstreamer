@@ -250,10 +250,16 @@ bool  AgoraIo::init(char* in_app_id,
         addEvent(AGORA_EVENT_ON_IFRAME,"",0,0);
     });
 
-    _userObserver->setOnUserRemoteTrackStateFn([this](const std::string& userId,
-                                                      long* states){
+    _userObserver->setOnUserRemoteTrackStatsFn([this](const std::string& userId,
+                                                      long* stats){
 
-        addEvent(AGORA_EVENT_ON_REMOTE_TRACK_STATE_CHANGED,userId,0,0,states);
+        addEvent(AGORA_EVENT_ON_REMOTE_TRACK_STATS_CHANGED,userId,0,0,stats);
+     });
+
+    _userObserver->setOnUserLocalTrackStatsFn([this](const std::string& userId,
+                                                      long* stats){
+
+        addEvent(AGORA_EVENT_ON_LOCAL_TRACK_STATS_CHANGED,userId,0,0,stats);
      });
 
     _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){

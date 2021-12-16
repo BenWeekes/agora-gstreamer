@@ -13,7 +13,8 @@ UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbo
     _onUserVolumeChanged(nullptr),
     _onIframeRequest(nullptr),
     _verbose(verbose),
-    _onTrackStates(nullptr){
+    _onRemoteTrackStats(nullptr),
+    _onLocalTrackStats(nullptr){
   local_user_->registerLocalUserObserver(this);
 }
 
@@ -130,30 +131,30 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
                                     const agora::rtc::RemoteVideoTrackStats& stats)
 {
 
-  if(_onTrackStates!=nullptr){
+  if(_onRemoteTrackStats!=nullptr){
 
       const int MAX_STATES=15;
-      long states[MAX_STATES];
+      long remoteStats[MAX_STATES];
 
-      states[0]=stats.receivedBitrate;
-      states[1]=stats.decoderOutputFrameRate;
-      states[2]=stats.rendererOutputFrameRate;
+      remoteStats[0]=stats.receivedBitrate;
+      remoteStats[1]=stats.decoderOutputFrameRate;
+      remoteStats[2]=stats.rendererOutputFrameRate;
 
-      states[3]=stats.frameLossRate;
-      states[4]=stats.packetLossRate;
-      states[5]=stats.rxStreamType;
+      remoteStats[3]=stats.frameLossRate;
+      remoteStats[4]=stats.packetLossRate;
+      remoteStats[5]=stats.rxStreamType;
 
-      states[6]=stats.totalFrozenTime;
-      states[7]=stats.frozenRate;
-      states[8]=stats.totalDecodedFrames;
+      remoteStats[6]=stats.totalFrozenTime;
+      remoteStats[7]=stats.frozenRate;
+      remoteStats[8]=stats.totalDecodedFrames;
 
-      states[9]=stats.avSyncTimeMs;
-      states[10]=stats.downlink_process_time_ms;
-      states[11]=stats.frame_render_delay_ms;
+      remoteStats[9]=stats.avSyncTimeMs;
+      remoteStats[10]=stats.downlink_process_time_ms;
+      remoteStats[11]=stats.frame_render_delay_ms;
 
 
       std::string userId= std::to_string(stats.uid);
-      _onTrackStates(userId, states);
+      _onRemoteTrackStats(userId, remoteStats);
   }
 
   if(_verbose==false)  return;
@@ -178,7 +179,33 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
 void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                    const agora::rtc::LocalVideoTrackStats& stats) 
 {
-     
+     if(_onRemoteTrackStats!=nullptr){
+
+      const int MAX_STATES=15;
+      long localStats[MAX_STATES];
+
+      localStats[0]=stats.number_of_streams;
+      localStats[1]=stats.bytes_major_stream;
+      localStats[2]=stats.bytes_minor_stream;
+
+      localStats[3]=stats.frames_encoded;
+      localStats[4]=stats.ssrc_major_stream;
+      localStats[5]=stats.ssrc_minor_stream;
+
+      localStats[6]=stats.input_frame_rate;
+      localStats[7]=stats.encode_frame_rate;
+      localStats[8]=stats.render_frame_rate;
+
+      localStats[9]=stats.target_media_bitrate_bps;
+      localStats[10]=stats.media_bitrate_bps;
+      localStats[11]=stats.total_bitrate_bps;
+
+      localStats[12]=stats.width;
+      localStats[13]=stats.height;
+      localStats[14]=stats.encoder_type;
+
+      _onLocalTrackStats("Local", localStats);
+     }
      if(_verbose==false)  return;
 
      std::cout<< "video stats (local): "
@@ -200,7 +227,11 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
             <<std::endl;
 }
 
-void UserObserver::setOnUserRemoteTrackStateFn(const OnUserRemoteTrackStateFn& fn){
+void UserObserver::setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
 
-    _onTrackStates=fn;
+    _onRemoteTrackStats=fn;
+}
+void UserObserver::setOnUserLocalTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
+
+    _onLocalTrackStats=fn;
 }

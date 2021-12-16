@@ -63,7 +63,7 @@ void on_agora_on_video_subscribed_fn(GstElement* object,
      g_print("->Signal Test: on video subscribed, userid: %s\n", userName);
 }
 
-void on_remote_track_state_fn(GstElement* object,
+void on_remote_track_stats_fn(GstElement* object,
                               gchararray userName,
 					          guint receivedBitrate,
 							  guint decoderOutputFrameRate,
@@ -111,6 +111,59 @@ frame_render_delay_ms: %d\
 			 );
 	 
 	 
+}
+
+void on_local_track_stats_fn(GstElement* object,
+                            gchararray userName,
+							guint number_of_streams,
+							guint bytes_major_stream,
+							guint bytes_minor_stream,
+							guint frames_encoded,
+							guint ssrc_major_stream,
+							guint ssrc_minor_stream,
+							guint input_frame_rate,
+							guint encode_frame_rate,
+							guint render_frame_rate,
+							guint target_media_bitrate_bps,
+							guint media_bitrate_bps,
+							guint total_bitrate_bps,
+							guint width,
+							guint height,
+							guint encoder_type,
+							gpointer user_data){
+
+	g_print("->Signal Test: local stats for user %s: \n", userName);
+	g_print("number_of_streams: %d, \
+bytes_major_stream: %d, \
+bytes_minor_stream: %d \
+frames_encoded: %d,  \
+input_frame_rate: %d, \
+encode_frame_rate: %d, \
+render_frame_rate: %d, \
+target_media_bitrate_bps: %d, \
+media_bitrate_bps: %d, \
+total_bitrate_bps: %d, \
+width: %d, \
+height: %d, \
+encoder_type: %d\
+	       \n",
+            number_of_streams,
+            bytes_major_stream,
+            bytes_minor_stream,
+			frames_encoded,
+	
+			input_frame_rate,
+			encode_frame_rate, 
+			render_frame_rate,
+
+			target_media_bitrate_bps,
+			media_bitrate_bps,
+			total_bitrate_bps,
+			width,
+			height,
+			encoder_type
+	);
+
 }
 
 void on_agora_on_user_state_changed_fn(GstElement* object,
@@ -233,9 +286,13 @@ int main(int argc, char *argv[]) {
 		g_signal_connect (agoraioUdp, "on-user-video-subscribed",
                     G_CALLBACK (on_agora_on_video_subscribed_fn), NULL);
 
-		//on remote track state changed
-		g_signal_connect (agoraioUdp, "on-remote-track-state",
-                    G_CALLBACK (on_remote_track_state_fn), NULL);
+		//on remote track stats changed
+		g_signal_connect (agoraioUdp, "on-remote-track-stats",
+                    G_CALLBACK (on_remote_track_stats_fn), NULL);
+
+		//on local track stats changed
+		g_signal_connect (agoraioUdp, "on-local-track-stats",
+                    G_CALLBACK (on_local_track_stats_fn), NULL);
 
   }
   

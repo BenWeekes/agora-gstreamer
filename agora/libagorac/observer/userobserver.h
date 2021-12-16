@@ -19,6 +19,9 @@ using OnUserVolumeChangedFn=std::function<void(const std::string& userId, const 
 using OnUserRemoteTrackStateFn=std::function<void(const std::string& userId,
                                                   long* states)>;
 
+using OnUserLocalTrackStateFn=std::function<void(const std::string& userId,
+                                                  long* states)>;
+
 using OnIframeRequestFn=std::function<void()>;
 
 class UserObserver : public agora::rtc::ILocalUserObserver {
@@ -38,7 +41,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
      _onIframeRequest=fn;
   }
 
-  void setOnUserRemoteTrackStateFn(const OnUserRemoteTrackStateFn& fn);
+  void setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn);
+  void setOnUserLocalTrackStatsFn(const OnUserRemoteTrackStateFn& fn);
 
  public:
   agora::rtc::ILocalUser* GetLocalUser();
@@ -186,7 +190,8 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   bool               _verbose;
 
-  OnUserRemoteTrackStateFn    _onTrackStates;
+  OnUserRemoteTrackStateFn    _onRemoteTrackStats;
+  OnUserLocalTrackStateFn     _onLocalTrackStats;
 };
 
 using UserObserver_ptr=std::shared_ptr<UserObserver>;
