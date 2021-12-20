@@ -317,7 +317,7 @@ int main(int argc, char *argv[]) {
 
 		static int secs = 1;
 
-		if (secs == 1000) {
+		if (secs == 20) {
 
 		        gst_element_set_state(pipeline, GST_STATE_PAUSED);
 
@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
 
 		}
 
-		if (secs == 2000) {
+		if (secs == 40) {
 
 		        gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
@@ -333,7 +333,7 @@ int main(int argc, char *argv[]) {
 
 		}
 
-		if (secs == 3000) {
+		if (secs == 60) {
 
 		        gst_element_send_event(pipeline, gst_event_new_eos());
 				

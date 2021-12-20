@@ -28,6 +28,7 @@
 #include "agorareceiver.h"
 #include "helpers/uidtofile.h"
 
+#include "jitterbuffer.h"
 
 
 AgoraIo::AgoraIo(const bool& verbose,
@@ -282,26 +283,33 @@ bool  AgoraIo::init(char* in_app_id,
         _lastVideoUserSwitchTime=Now();
     });
 
-  _videoJB=std::make_shared<WorkQueue <Work_ptr> >();
-  _audioJB=std::make_shared<WorkQueue <Work_ptr> >();
+  //create and prepare the out jitter buffer (source -> AG sdk)
+  _outJitterBuffer=std::make_shared<JitterBuffer>();
+  _outJitterBuffer->setVideoOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength,
+                                         const bool& isKeyFrame){
+
+        doSendHighVideo(buffer, bufferLength, isKeyFrame);
+
+    });
+
+    _outJitterBuffer->setAudioOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength){
+          doSendAudio(buffer, bufferLength);
+    });
+
+  _outJitterBuffer->start();
+
+
 
   _isRunning=true;
 
-    //start thread handlers
-  _videoThreadHigh=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerHigh, this);
-  _audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this);
 
   _connected = true;
 
   return _connected;
 }
 
-void AgoraIo::addAudioFrame(const Work_ptr& work){
-
-  if(_audioJB!=nullptr && _isRunning){
-     _audioJB->add(work);
-   }
-}
 
 void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
                                         const size_t& length,const int& isKeyFrame,
@@ -484,16 +492,27 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
-   if(_videoJB!=nullptr && _isRunning){
-      
-      Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
-      work->timestamp=timestamp;
-      _videoJB->add(work);
+   if(_outJitterBuffer!=nullptr && _isRunning){
+
+       _outJitterBuffer->addVideo(buffer, len, is_key_frame, timestamp);
 
      }
 
 
    return 0; //no errors
+}
+
+int AgoraIo::sendAudio(const uint8_t * buffer,  
+                       uint64_t len,
+                       long timestamp){
+
+    if(_outJitterBuffer!=nullptr && _isRunning){
+
+       _outJitterBuffer->addAudio(buffer, len, timestamp);
+
+     }
+
+    return 0;
 }
 
 /*
@@ -515,63 +534,13 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
 
 
  */
-
-void AgoraIo::VideoThreadHandlerHigh(){
-
-   _lastVideoSendTime=Now();
-   uint8_t currentFramePerSecond=0;
-
-   while(_isRunning==true){
-
-     _lastVideoSendTime=Now();
-
-     //wait untill work is available
-     _videoJB->waitForWork();	  
-     Work_ptr work=_videoJB->get();
-     
-     TimePoint  nextSample = Now()+std::chrono::milliseconds(30);
-
-     if(work==nullptr) continue;
-     if(work->is_finished==1) break;
-
-     doSendHighVideo(work->buffer, work->len, (bool)(work->is_key_frame));
-
-     //sleep until our next frame time
-     std::this_thread::sleep_until(nextSample);
-  }
-
-  logMessage("VideoThreadHandlerHigh ended");
-}
-
-void AgoraIo::AudioThreadHandler(){
-
-   const int waitTimeForBufferToBeFull=10;
-   
-   while(_isRunning==true){
-
-     //wait untill work is available
-     _audioJB->waitForWork();
-     Work_ptr work=_audioJB->get();
-     if(work==NULL) continue;
-
-     if(work->is_finished){
-        return;
-     }
-
-     doSendAudio(work->buffer, work->len);
-   }
-}
 void AgoraIo::disconnect(){
 
     logMessage("start agora disonnect ...");
 
    _isRunning=false;
    //tell the thread that we are finished
-    Work_ptr work=std::make_shared<Work>(nullptr,0, false);
-    work->is_finished=true;
-
-   _videoJB->add(work);
-   _audioJB->add(work);
+    _outJitterBuffer->stop();
 
    std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -592,20 +561,13 @@ void AgoraIo::disconnect(){
    _customVideoTrack = nullptr;
 
 
-   _videoJB=nullptr;;
-   _audioJB=nullptr;;
-
+   _outJitterBuffer=nullptr;
+   
    //delete context
    _connection=nullptr;
 
    _service->release();
    _service = nullptr;
-  
-   _videoThreadHigh->detach();
-   _audioThread->detach();
-
-   _videoThreadHigh=nullptr;;
-   _audioThread=nullptr; 
 
    h264FrameReceiver=nullptr;
 

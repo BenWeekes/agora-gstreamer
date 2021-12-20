@@ -195,12 +195,15 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
 
     gst_buffer_extract(in_buffer,0, data, data_size);
 
-    agoraio_send_audio(agora_ctx, data, data_size,0);
+    GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
+    /*if(agoraIO->verbose){
+         g_print("audio timestamp: %ld\n",(long)(in_buffer_pts/1000000));
+    }*/
+    
+    agoraio_send_audio(agora_ctx, data, data_size,(in_buffer_pts)/1000000);
 
     free(data);
 
-    //GstClockTime audio_pts=GST_BUFFER_CAST(in_buffer)->pts;
-    //g_print("audio timestamp: %ld\n", audio_pts);
 
     gst_sample_unref (sample);
     return GST_FLOW_OK;
@@ -457,10 +460,8 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      }
 
      if(agoraIO->audio==FALSE){
-        agoraio_send_video(agoraIO->agora_ctx, data, data_size,is_key_frame, agoraIO->ts);
-      }
-     else{
-        //agoraio_send_audio(agoraIO->agora_ctx, data, data_size, agoraIO->ts);
+        unsigned long ts=(unsigned long)(in_buffer_pts/1000000); //in ms
+        agoraio_send_video(agoraIO->agora_ctx, data, data_size,is_key_frame,ts);
       }
  
      /*if (agoraIO->verbose == true){
@@ -511,9 +512,11 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
      GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
 
      if(agoraIO->verbose){
-       g_print("Duration: %ld\n", in_buffer_duration);
-       g_print("Timestamp: %ld\n", in_buffer_pts);
+       g_print("Video Duration: %ld\n", (long)(in_buffer_duration/1000000));
+       g_print("VIDEO timestamp: %ld\n",(long)(in_buffer_pts/1000000));
      }
+
+     
      
      free(recvData);
 

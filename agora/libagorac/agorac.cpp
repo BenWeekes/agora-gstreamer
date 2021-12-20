@@ -460,11 +460,8 @@ int agoraio_send_audio(AgoraIoContext_t* ctx,
                      unsigned long len,
                      long timestamp){
 
-    Work_ptr work=std::make_shared<Work>(buffer,len, 0);
-    work->timestamp=timestamp;
-
     if(ctx->agoraIo!=nullptr){
-       ctx->agoraIo->addAudioFrame(work);
+       ctx->agoraIo->sendAudio(buffer, len, timestamp);
      }
 
     return 0;

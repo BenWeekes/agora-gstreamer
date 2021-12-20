@@ -42,6 +42,10 @@ class AgoraIo{
                         int is_key_frame,
                         long timestamp);
 
+   int sendAudio(const uint8_t * buffer,  
+                        uint64_t len,
+                        long timestamp);
+
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
@@ -51,8 +55,6 @@ class AgoraIo{
                              uint64_t* ts);
                              
     size_t getNextAudioFrame(uint8_t* data, size_t max_buffer_size);
-
-    void addAudioFrame(const Work_ptr& work);
 
    void disconnect();
 
@@ -84,9 +86,6 @@ protected:
   bool doSendAudio( const uint8_t* buffer,  uint64_t len);
 
   void UpdatePredictedFps(const long& timestamp);
-
-   void VideoThreadHandlerHigh();
-   void AudioThreadHandler();
 
    //receiver events
    void subscribeToVideoUser(const std::string& userId);
@@ -142,13 +141,6 @@ protected:
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
     agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
-    std::shared_ptr<std::thread>                    _videoThreadHigh;
-    std::shared_ptr<std::thread>                    _videoThreadLow;
-
-    std::shared_ptr<std::thread>                    _audioThread;
-
-    WorkQueue_ptr                                   _videoJB;
-    WorkQueue_ptr                                   _audioJB;
 
     TimePoint                                       _lastVideoUserSwitchTime;
 
@@ -160,6 +152,8 @@ protected:
 
     event_fn                                         _eventfn;
     void*                                            _userEventData;
+
+    JitterBuffer_ptr                                 _outJitterBuffer;
  };
 
 #endif
