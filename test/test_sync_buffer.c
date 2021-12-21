@@ -5,12 +5,12 @@
 
 void on_agora_iframe_request_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Signal Test: iframe requested!\n");
+    g_print("->Signal Test: iframe requested!\n");
 }
 
 void on_agora_on_connecting_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Signal Test: on connecting!\n");
+    g_print("->Signal Test: on connecting!\n");
 }
 
 void on_agora_on_connected_fn(GstElement* object,
@@ -18,7 +18,7 @@ void on_agora_on_connected_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Signal Test: on connected: userid=%s, reason=%d\n", userName, reason);
+    g_print("->Signal Test: on connected: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_reconnecting_fn(GstElement* object,
@@ -26,7 +26,7 @@ void on_agora_on_reconnecting_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Signal Test: on reconnecting: userid=%s, reason=%d\n", userName, reason);
+    g_print("->Signal Test: on reconnecting: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_reconnected_fn(GstElement* object,
@@ -34,7 +34,7 @@ void on_agora_on_reconnected_fn(GstElement* object,
 							  gint reason,
                               gpointer user_data){
 
-     g_print("->Signal Test: on reconnected: userid=%s, reason=%d\n", userName, reason);
+    g_print("->Signal Test: on reconnected: userid=%s, reason=%d\n", userName, reason);
 }
 
 void on_agora_on_disconnected_fn(GstElement* object,
@@ -42,25 +42,25 @@ void on_agora_on_disconnected_fn(GstElement* object,
 							     gint reason,
                                  gpointer user_data){
 
-     g_print("->Signal Test: on disconnected: userid=%s, reason=%d\n", userName, reason);
+    g_print("->Signal Test: on disconnected: userid=%s, reason=%d\n", userName, reason);
 }
 
 
 void on_agora_on_uplink_info_updated_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Signal Test: uplink info updated!\n");
+    g_print("->Signal Test: uplink info updated!\n");
 }
 
 void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){
 
-     g_print("->Signal Test: connection lost!\n");
+    g_print("->Signal Test: connection lost!\n");
 }
 
 void on_agora_on_video_subscribed_fn(GstElement* object,
                                     gchararray userName,
 									gpointer user_data){
 
-     g_print("->Signal Test: on video subscribed, userid: %s\n", userName);
+    g_print("->Signal Test: on video subscribed, userid: %s\n", userName);
 }
 
 void on_remote_track_stats_fn(GstElement* object,
@@ -82,35 +82,19 @@ void on_remote_track_stats_fn(GstElement* object,
 
 					          gpointer user_data){
 
-     g_print("->Signal Test: remote stats for user %s: ", userName);
-	 g_print("receivedBitrate: %d,\
-decoderOutputFrameRate: %d,\
-rendererOutputFrameRate: %d,\
-frameLossRate: %d,\
-packetLossRate: %d,\
-rxStreamType: %d,\
-totalFrozenTime: %d,\
-frozenRate: %d,\
-totalDecodedFrames: %d,\
-avSyncTimeMs: %d,\
-downlink_process_time_ms: %d,\
-frame_render_delay_ms: %d\
- \n",
-	         receivedBitrate,
-			 decoderOutputFrameRate,
-			 rendererOutputFrameRate,
-			 frameLossRate,
-			 packetLossRate,
-			 rxStreamType,
-			 totalFrozenTime,
-			 frozenRate,
-			 totalDecodedFrames,
-			 avSyncTimeMs,
-			 downlink_process_time_ms,
-			 frame_render_delay_ms
-			 );
-	 
-	 
+    g_print("->Signal Test: remote stats for user %s: ", userName);
+	g_print("receivedBitrate: %d, ", receivedBitrate);
+	g_print("decoderOutputFrameRate: %d, ", decoderOutputFrameRate);
+	g_print("rendererOutputFrameRate: %d, ",rendererOutputFrameRate);
+	g_print("frameLossRate: %d, ", frameLossRate);
+	g_print("packetLossRate: %d, ",packetLossRate);
+	g_print("rxStreamType: %d, ",rxStreamType);
+	g_print("totalFrozenTime: %d, ",totalFrozenTime);
+	g_print("frozenRate: %d, ",frozenRate);
+	g_print("totalDecodedFrames: %d, ",totalDecodedFrames);
+	g_print("avSyncTimeMs: %d, ", avSyncTimeMs);
+	g_print("downlink_process_time_ms: %d, ", downlink_process_time_ms);
+	g_print("frame_render_delay_ms: %d\n",frame_render_delay_ms);
 }
 
 void on_local_track_stats_fn(GstElement* object,
@@ -133,37 +117,19 @@ void on_local_track_stats_fn(GstElement* object,
 							gpointer user_data){
 
 	g_print("->Signal Test: local stats for user %s: \n", userName);
-	g_print("number_of_streams: %d, \
-bytes_major_stream: %d, \
-bytes_minor_stream: %d \
-frames_encoded: %d,  \
-input_frame_rate: %d, \
-encode_frame_rate: %d, \
-render_frame_rate: %d, \
-target_media_bitrate_bps: %d, \
-media_bitrate_bps: %d, \
-total_bitrate_bps: %d, \
-width: %d, \
-height: %d, \
-encoder_type: %d\
-	       \n",
-            number_of_streams,
-            bytes_major_stream,
-            bytes_minor_stream,
-			frames_encoded,
-	
-			input_frame_rate,
-			encode_frame_rate, 
-			render_frame_rate,
-
-			target_media_bitrate_bps,
-			media_bitrate_bps,
-			total_bitrate_bps,
-			width,
-			height,
-			encoder_type
-	);
-
+	g_print("number_of_streams: %d, ", number_of_streams);	
+	g_print("bytes_major_stream: %d, ",bytes_major_stream);
+    g_print("bytes_minor_stream: %d, ",bytes_minor_stream);
+	g_print("frames_encoded: %d, ", frames_encoded);
+	g_print("input_frame_rate: %d, ",input_frame_rate);
+	g_print("encode_frame_rate: %d, ",encode_frame_rate);
+	g_print("render_frame_rate: %d, ",render_frame_rate);
+	g_print("target_media_bitrate_bps: %d, ",target_media_bitrate_bps);
+	g_print("media_bitrate_bps: %d, ",media_bitrate_bps);
+	g_print("total_bitrate_bps: %d, ",total_bitrate_bps);
+	g_print("width: %d, ", width);
+	g_print("height: %d, ",height);
+	g_print("encoder_type: %d, \n", encoder_type);
 }
 
 void on_agora_on_user_state_changed_fn(GstElement* object,
@@ -171,17 +137,18 @@ void on_agora_on_user_state_changed_fn(GstElement* object,
 							           gint newState,
                                        gpointer user_data){
 
- enum State{
+	enum State{
 
-   USER_STATE_JOIN=1,
-   USER_STATE_LEAVE,
-   USER_STATE_CAM_ON,
-   USER_STATE_CAM_OFF,
-   USER_STATE_MIC_ON,
-   USER_STATE_MIC_OFF
-};
-     switch (newState){
-		 case USER_STATE_JOIN:
+		USER_STATE_JOIN=1,
+		USER_STATE_LEAVE,
+		USER_STATE_CAM_ON,
+		USER_STATE_CAM_OFF,
+		USER_STATE_MIC_ON,
+		USER_STATE_MIC_OFF
+	};
+
+    switch (newState){
+		case USER_STATE_JOIN:
 		      g_print("->Endtest: on user state changed: userid=%s, state: join\n", userName);
 		      break;
 		case USER_STATE_LEAVE:
