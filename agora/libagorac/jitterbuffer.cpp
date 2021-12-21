@@ -29,10 +29,9 @@ void JitterBuffer::addVideo(const uint8_t* buffer,
                             const int& isKeyFrame,
                             const uint64_t& ts){
 
-    /*if(_videoBuffer->size()>MAX_BUFFER_SIZE){
-        std::cout<<_videoBuffer->size()<<"\n";
-        return;
-    }*/
+    if(_videoBuffer->size()>MAX_BUFFER_SIZE){
+        std::cout<<"warning: sync buffer (video) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
+    }
 
     auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
     frame->timestamp=ts;
@@ -44,9 +43,9 @@ void JitterBuffer::addAudio(const uint8_t* buffer,
                             const size_t& length,
                             const uint64_t& ts){
 
-    /*if(_audioBuffer->size()>MAX_BUFFER_SIZE){
-        return;
-    }*/
+    if(_audioBuffer->size()>MAX_BUFFER_SIZE){
+        std::cout<<"warning: sync buffer (audio) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
+    }
     
     auto frame=std::make_shared<Work>(buffer, length, false);
     frame->timestamp=ts;
