@@ -91,7 +91,7 @@ bool PcmFrameObserver::onMixedAudioFrame(AudioFrame& audioFrame){
 
    if(_onAudioFrameReceived!=nullptr){
 
-        //std::cout<<"AUDIO timestampe: "<<audioFrame.renderTimeMs<<std::endl;
+        //std::cout<<"AUDIO sample rate: "<<audioFrame.samplesPerSec<<std::endl;
         _onAudioFrameReceived(0, 
                               (const unsigned char*)audioFrame.buffer,
                                audioFrame.samplesPerChannel*2,

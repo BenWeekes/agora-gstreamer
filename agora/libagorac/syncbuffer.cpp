@@ -30,6 +30,11 @@ _syncAudioVideo(syncAudioVideo)
 
   _objId=g_id++;
 
+  std::cout<<"SyncBuffer#"<<_objId
+            <<": videoDelayOffset="<<_videoDelayOffset
+            <<", audioDelayOffset="<<_audioDelayOffset
+            <<", syncAudioVideo="<<_syncAudioVideo
+            <<std::endl;
 }
 
 void SyncBuffer::addVideo(const uint8_t* buffer,
@@ -41,10 +46,29 @@ void SyncBuffer::addVideo(const uint8_t* buffer,
         std::cout<<"JB#"<<_objId<<": warning: sync buffer (video) exceeded max buffer: "<<_videoBuffer->size()<<std::endl;
     }
 
-    auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
-    frame->timestamp=ts;
-    _videoBuffer->add(frame);
+    //if we need to sync or delay video, we add the frame to the queue
+    if(_syncAudioVideo==true || _videoDelayOffset>0){
 
+        auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+        frame->timestamp=ts;
+        _videoBuffer->add(frame);
+
+        //in this case, we do not have threads to dispatch audio
+        if(_syncAudioVideo==false && _videoBuffer->size()*30>=_videoDelayOffset){
+
+            Work_ptr work=_videoBuffer->get();
+            if(_videoOutFn!=nullptr){
+                _videoOutFn(work->buffer, work->len, (bool)(work->is_key_frame));  
+            }
+        }
+    }
+    //if we do not need to sync and no delay, we will pass this frame directly
+    else if(_syncAudioVideo ==false && _videoDelayOffset==0){
+       
+       if(_videoOutFn!=nullptr){
+            _videoOutFn(buffer, length, isKeyFrame);         
+       }
+    }
 }
 
 void SyncBuffer::addAudio(const uint8_t* buffer,
@@ -54,11 +78,30 @@ void SyncBuffer::addAudio(const uint8_t* buffer,
     if(_audioBuffer->size()>MAX_BUFFER_SIZE){
         std::cout<<"JB#"<<_objId<<": warning: sync buffer (audio) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
     }
-    
-    auto frame=std::make_shared<Work>(buffer, length, false);
-    frame->timestamp=ts;
-    _audioBuffer->add(frame);
 
+    //if we need to sync or delay video, we add the frame to the queue
+    if(_syncAudioVideo ==true || _audioDelayOffset>0){
+
+         auto frame=std::make_shared<Work>(buffer, length, false);
+        frame->timestamp=ts;
+        _audioBuffer->add(frame);
+
+         //in this case, we do not have threads to dispatch audio
+        if(_syncAudioVideo==false && _audioBuffer->size()*10>=_audioDelayOffset){
+
+            Work_ptr work=_audioBuffer->get();
+            if(_audioOutFn!=nullptr){
+                _audioOutFn(work->buffer, work->len);
+            }
+        }
+    }
+    //if we do not need to sync and no delay, we will pass this frame directly
+    else if(_syncAudioVideo ==false && _audioDelayOffset==0){
+       
+       if(_audioOutFn!=nullptr){
+             _audioOutFn(buffer, length);
+        }
+    }
 }
 
 void SyncBuffer::videoThread(){
@@ -143,20 +186,27 @@ void SyncBuffer::audioThread(){
 void SyncBuffer::start(){
     _isRunning=true;
 
-    _videoSendThread=std::make_shared<std::thread>(&SyncBuffer::videoThread,this);
-    _audioSendThread=std::make_shared<std::thread>(&SyncBuffer::audioThread,this);
+    if(_syncAudioVideo==true){
 
-    _videoSendThread->detach();
-    _audioSendThread->detach();
+        _videoSendThread=std::make_shared<std::thread>(&SyncBuffer::videoThread,this);
+        _audioSendThread=std::make_shared<std::thread>(&SyncBuffer::audioThread,this);
+
+        _videoSendThread->detach();
+        _audioSendThread->detach();
+    }
+    
 }
 void SyncBuffer::stop(){
      _isRunning=false;
 
-     Work_ptr work=std::make_shared<Work>(nullptr,0, false);
-     work->is_finished=true;
+    if(_syncAudioVideo==true){
 
-     _videoBuffer->add(work);
-     _audioBuffer->add(work);
+        Work_ptr work=std::make_shared<Work>(nullptr,0, false);
+        work->is_finished=true;
+
+        _videoBuffer->add(work);
+        _audioBuffer->add(work);
+    }
 }
 
 void SyncBuffer::setVideoOutFn(const videoOutFn_t& fn){

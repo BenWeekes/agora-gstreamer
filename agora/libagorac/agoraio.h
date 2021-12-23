@@ -163,6 +163,7 @@ protected:
 
     //from the app to agora sdk
     SyncBuffer_ptr                                   _outSyncBuffer;
+    SyncBuffer_ptr                                   _inSyncBuffer;
 
     int                                              _in_audio_delay;
     int                                              _in_video_delay;

@@ -50,7 +50,7 @@ void on_agora_on_uplink_info_updated_fn(GstElement* object,
 										guint video_encoder_target_bitrate_bps,
 										gpointer user_data){
 
-    g_print("->Signal Test: uplink info updated: target bps %d\n", video_encoder_target_bitrate_bps);
+    //g_print("->Signal Test: uplink info updated: target bps %d\n", video_encoder_target_bitrate_bps);
 }
 
 void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){
@@ -84,7 +84,7 @@ void on_remote_track_stats_fn(GstElement* object,
 
 					          gpointer user_data){
 
-    g_print("->Signal Test: remote stats for user %s: ", userName);
+    /*g_print("->Signal Test: remote stats for user %s: ", userName);
 	g_print("receivedBitrate: %d, ", receivedBitrate);
 	g_print("decoderOutputFrameRate: %d, ", decoderOutputFrameRate);
 	g_print("rendererOutputFrameRate: %d, ",rendererOutputFrameRate);
@@ -96,7 +96,7 @@ void on_remote_track_stats_fn(GstElement* object,
 	g_print("totalDecodedFrames: %d, ",totalDecodedFrames);
 	g_print("avSyncTimeMs: %d, ", avSyncTimeMs);
 	g_print("downlink_process_time_ms: %d, ", downlink_process_time_ms);
-	g_print("frame_render_delay_ms: %d\n",frame_render_delay_ms);
+	g_print("frame_render_delay_ms: %d\n",frame_render_delay_ms);*/
 }
 
 void on_local_track_stats_fn(GstElement* object,
@@ -118,7 +118,7 @@ void on_local_track_stats_fn(GstElement* object,
 							guint encoder_type,
 							gpointer user_data){
 
-	g_print("->Signal Test: local stats for user %s: \n", userName);
+	/*g_print("->Signal Test: local stats for user %s: \n", userName);
 	g_print("number_of_streams: %d, ", number_of_streams);	
 	g_print("bytes_major_stream: %d, ",bytes_major_stream);
     g_print("bytes_minor_stream: %d, ",bytes_minor_stream);
@@ -131,7 +131,7 @@ void on_local_track_stats_fn(GstElement* object,
 	g_print("total_bitrate_bps: %d, ",total_bitrate_bps);
 	g_print("width: %d, ", width);
 	g_print("height: %d, ",height);
-	g_print("encoder_type: %d \n", encoder_type);
+	g_print("encoder_type: %d \n", encoder_type);*/
 }
 
 void on_agora_on_user_state_changed_fn(GstElement* object,
@@ -212,9 +212,9 @@ int main(int argc, char *argv[]) {
   char* appid=argv[1];
   char* channel=argv[2];
 
-  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 in-audio-dealy=30 in-video-dealy=100 verbose=false ! queue ! decodebin ! queue ! glimagesink", appid, channel);
+  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue  ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 in-audio-delay=30 in-video-delay=100 verbose=false ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel);
 
-  snprintf (audio_out_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink volume=1.0 name=incaudsink");
+  snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
 
   snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
 

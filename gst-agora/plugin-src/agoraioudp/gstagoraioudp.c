@@ -270,7 +270,8 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  agoraIO->in_audio_delay,
                                  agoraIO->in_video_delay,
                                  agoraIO->out_audio_delay,
-                                 agoraIO->out_video_delay);             
+                                 agoraIO->out_video_delay);  
+         
 
    if(agoraIO->agora_ctx==NULL){
 
@@ -280,7 +281,7 @@ int init_agora(Gstagoraioudp *agoraIO){
 
    //this function will be called whenever there is a video frame ready 
    agoraio_set_video_out_handler(agoraIO->agora_ctx, handle_video_out_fn, (void*)(agoraIO));
-   agoraio_set_video_out_handler(agoraIO->agora_ctx, handle_audio_out_fn, (void*)(agoraIO));
+   agoraio_set_audio_out_handler(agoraIO->agora_ctx, handle_audio_out_fn, (void*)(agoraIO));
 
    //initialize timestamps to zero
    agoraIO->video_ts=0;
@@ -453,7 +454,8 @@ static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* use
 
     GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
     if(peer==NULL){
-         return;
+        g_print("handle_video_out_fn: unexpected error. Cannot reach peer pad\n");
+        return;
     }
 
      GstBuffer * out_buffer=gst_buffer_new_allocate (NULL, len, NULL);
@@ -464,7 +466,7 @@ static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* use
 
      //GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
      //GST_BUFFER_CAST(out_buffer)->dts=30000000//in_buffer_dts;
-     //GST_BUFFER_CAST(out_buffer)->duration=30000000;
+     GST_BUFFER_CAST(out_buffer)->duration=30000000;
 
      GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
      if(retCode!=GST_FLOW_OK){
