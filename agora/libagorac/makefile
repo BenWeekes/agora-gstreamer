@@ -14,7 +14,7 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 			  helpers/localconfig.cpp \
 			  helpers/utilities.cpp\
 			  helpers/uidtofile.cpp\
-			  jitterbuffer.cpp
+			  syncbuffer.cpp
 
 AGORA_RECEIVER =agorareceiver.cpp \
                 observer/pcmframeobserver.cpp \

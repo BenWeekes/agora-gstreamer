@@ -159,7 +159,7 @@ protected:
     void*                                            _userEventData;
 
     //from the app to agora sdk
-    JitterBuffer_ptr                                 _outSyncBuffer;
+    SyncBuffer_ptr                                   _outSyncBuffer;
 
     int                                              _in_audio_delay;
     int                                              _in_video_delay;

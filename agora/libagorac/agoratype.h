@@ -18,8 +18,8 @@ using AgoraEncoder_ptr=std::shared_ptr<AgoraEncoder>;
 class LocalConfig;
 using LocalConfig_ptr=std::shared_ptr<LocalConfig>;
 
-class JitterBuffer;
-using JitterBuffer_ptr=std::shared_ptr<JitterBuffer>;
+class SyncBuffer;
+using SyncBuffer_ptr=std::shared_ptr<SyncBuffer>;
 
 
 using TimePoint=std::chrono::steady_clock::time_point;

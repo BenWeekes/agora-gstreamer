@@ -1,4 +1,4 @@
-#include "jitterbuffer.h"
+#include "syncbuffer.h"
 #include "helpers/context.h"
 #include "helpers/utilities.h"
 #include <iostream>
@@ -8,7 +8,7 @@
 const size_t MAX_BUFFER_SIZE=200;
 
 static int g_id=0;
-JitterBuffer::JitterBuffer(const uint16_t& videoDelayOffset,
+SyncBuffer::SyncBuffer(const uint16_t& videoDelayOffset,
                            const uint16_t& audioDelayOffset,
                            const bool& syncAudioVideo):
 _videoBuffer(nullptr),
@@ -32,7 +32,7 @@ _syncAudioVideo(syncAudioVideo)
 
 }
 
-void JitterBuffer::addVideo(const uint8_t* buffer,
+void SyncBuffer::addVideo(const uint8_t* buffer,
                             const size_t& length,
                             const int& isKeyFrame,
                             const uint64_t& ts){
@@ -47,7 +47,7 @@ void JitterBuffer::addVideo(const uint8_t* buffer,
 
 }
 
-void JitterBuffer::addAudio(const uint8_t* buffer,
+void SyncBuffer::addAudio(const uint8_t* buffer,
                             const size_t& length,
                             const uint64_t& ts){
 
@@ -61,7 +61,7 @@ void JitterBuffer::addAudio(const uint8_t* buffer,
 
 }
 
-void JitterBuffer::videoThread(){
+void SyncBuffer::videoThread(){
 
    uint8_t currentFramePerSecond=0;
 
@@ -102,7 +102,7 @@ void JitterBuffer::videoThread(){
   }
 
 }
-void JitterBuffer::audioThread(){
+void SyncBuffer::audioThread(){
 
     const int waitTimeForBufferToBeFull=10;
     unsigned long lastTimestamp=0;
@@ -140,16 +140,16 @@ void JitterBuffer::audioThread(){
    }
 }
 
-void JitterBuffer::start(){
+void SyncBuffer::start(){
     _isRunning=true;
 
-    _videoSendThread=std::make_shared<std::thread>(&JitterBuffer::videoThread,this);
-    _audioSendThread=std::make_shared<std::thread>(&JitterBuffer::audioThread,this);
+    _videoSendThread=std::make_shared<std::thread>(&SyncBuffer::videoThread,this);
+    _audioSendThread=std::make_shared<std::thread>(&SyncBuffer::audioThread,this);
 
     _videoSendThread->detach();
     _audioSendThread->detach();
 }
-void JitterBuffer::stop(){
+void SyncBuffer::stop(){
      _isRunning=false;
 
      Work_ptr work=std::make_shared<Work>(nullptr,0, false);
@@ -159,14 +159,14 @@ void JitterBuffer::stop(){
      _audioBuffer->add(work);
 }
 
-void JitterBuffer::setVideoOutFn(const videoOutFn_t& fn){
+void SyncBuffer::setVideoOutFn(const videoOutFn_t& fn){
     _videoOutFn=fn;
 }
-void JitterBuffer::setAudioOutFn(const audioOutFn_t& fn){
+void SyncBuffer::setAudioOutFn(const audioOutFn_t& fn){
     _audioOutFn=fn;
 }
 
-TimePoint JitterBuffer::getNextSamplingPoint(const WorkQueue_ptr& q, 
+TimePoint SyncBuffer::getNextSamplingPoint(const WorkQueue_ptr& q, 
                                              const long& currentTimestamp,
                                              const long& lastTimestamp){
 
@@ -198,7 +198,7 @@ TimePoint JitterBuffer::getNextSamplingPoint(const WorkQueue_ptr& q,
      return nextSample;
 }
 
-void JitterBuffer::checkAndFillInVideoJb(const TimePoint& lastSendTime){
+void SyncBuffer::checkAndFillInVideoJb(const TimePoint& lastSendTime){
 
  bool  waitForBufferToBeFull=false;
  int fps=30;
@@ -217,7 +217,7 @@ void JitterBuffer::checkAndFillInVideoJb(const TimePoint& lastSendTime){
   }
 }
 
-void JitterBuffer::WaitForBuffering(){
+void SyncBuffer::WaitForBuffering(){
 
   int fps=30;
   const uint8_t MAX_ITERATIONS=200;

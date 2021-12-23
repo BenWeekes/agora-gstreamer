@@ -28,7 +28,7 @@
 #include "agorareceiver.h"
 #include "helpers/uidtofile.h"
 
-#include "jitterbuffer.h"
+#include "syncbuffer.h"
 
 
 AgoraIo::AgoraIo(const bool& verbose,
@@ -293,7 +293,7 @@ bool  AgoraIo::init(char* in_app_id,
     });
 
   //setup the out sync buffer (source -> AG sdk)
-  _outSyncBuffer=std::make_shared<JitterBuffer>();
+  _outSyncBuffer=std::make_shared<SyncBuffer>();
   _outSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength,
                                          const bool& isKeyFrame){

@@ -12,9 +12,9 @@ using audioOutFn_t=std::function<void (const uint8_t* buffer,
                                        const int& isKeyFrame)>;
 
 //a jitter buffer that sync audio and video 
-class JitterBuffer{
+class SyncBuffer{
 public:
-  JitterBuffer(const uint16_t& videoDelayOffset=0,
+  SyncBuffer(const uint16_t& videoDelayOffset=0,
                const uint16_t& audioDelayOffset=0,
                const bool& syncAudioVideo=false);
 
