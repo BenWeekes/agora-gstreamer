@@ -143,8 +143,12 @@ static void gst_agoraioudp_set_property (GObject * object, guint prop_id,
 static void gst_agoraioudp_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
+static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data );
 
-static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
+static void handle_audio_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data );
+
+
+/*static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
                            gpointer    user_data)
 {   
     static GstClockTime timestamp = 0;
@@ -170,9 +174,9 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
 
     if (ret != GST_FLOW_OK) {
        // g_print("not able to push audio data\n");
-        /* something wrong, stop pushing */
+         something wrong, stop pushing 
     }
-}
+}*/
 
 /* The appsink has received a buffer */
 static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
@@ -274,9 +278,15 @@ int init_agora(Gstagoraioudp *agoraIO){
       return FALSE;   
    }
 
-   //set event function
-  // agoraio_set_event_handler(agoraIO->agora_ctx,handle_event_Signal, (void*)(agoraIO));
+   //this function will be called whenever there is a video frame ready 
+   agoraio_set_video_out_handler(agoraIO->agora_ctx, handle_video_out_fn, (void*)(agoraIO));
+   agoraio_set_video_out_handler(agoraIO->agora_ctx, handle_audio_out_fn, (void*)(agoraIO));
 
+   //initialize timestamps to zero
+   agoraIO->video_ts=0;
+   agoraIO->audio_ts=0;
+
+  
    g_print("agora has been successfuly initialized\n");
 
    agoraIO->appAudioSrc= gst_element_factory_make ("appsrc", "source");
@@ -344,10 +354,9 @@ int init_agora(Gstagoraioudp *agoraIO){
              "port", agoraIO->in_port,
               NULL);
 
-    agoraIO->cbs.need_data = on_request_audio_data;
-    
-    gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
-                                 &agoraIO->cbs, agoraIO->agora_ctx, NULL);
+    //agoraIO->cbs.need_data = on_request_audio_data;
+    //gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
+    //                             &agoraIO->cbs, agoraIO->agora_ctx, NULL);
 
     //set the pipeline in playing mode
     gst_element_set_state (agoraIO->out_pipeline, GST_STATE_PLAYING);
@@ -395,7 +404,7 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_DISCONNECTED_SIGNAL], 0, userName,param1);
                   break;
              case ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL: 
-                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL], 0);
+                  g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL], 0, param1);
                   break;
              case ON_CONNECTION_LOST_SIGNAL: 
                   g_signal_emit (G_OBJECT (agoraIO),agoraio_signals[ON_CONNECTION_LOST_SIGNAL], 0);
@@ -437,6 +446,60 @@ void handle_agora_pending_events(Gstagoraioudp *agoraIO,
        }
 }
 
+//handle video out from agora to the plugin
+static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data ){
+
+    Gstagoraioudp* agoraIO=(Gstagoraioudp*)(user_data);
+
+    GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
+    if(peer==NULL){
+         return;
+    }
+
+     GstBuffer * out_buffer=gst_buffer_new_allocate (NULL, len, NULL);
+
+     gst_buffer_fill(out_buffer, 0, buffer, len);
+     gst_buffer_set_size(out_buffer, len);
+
+
+     //GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
+     //GST_BUFFER_CAST(out_buffer)->dts=30000000//in_buffer_dts;
+     //GST_BUFFER_CAST(out_buffer)->duration=30000000;
+
+     GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
+     if(retCode!=GST_FLOW_OK){
+         g_print("cannot push video to sync\n");
+     }
+
+     gst_object_unref(peer);
+
+}
+
+static void handle_audio_out_fn(const u_int8_t* data_buffer, u_int64_t len, void* user_data ){
+
+    GstBuffer *buffer;
+    GstFlowReturn ret;
+    
+    Gstagoraioudp* agoraIO=(Gstagoraioudp*)(user_data);
+
+    buffer = gst_buffer_new_allocate (NULL, len, NULL);
+    gst_buffer_fill(buffer, 0, data_buffer, len);
+    gst_buffer_set_size(buffer, len);
+
+    GST_BUFFER_CAST(buffer)->pts=agoraIO->audio_ts;
+    GST_BUFFER_CAST(buffer)->dts=agoraIO->audio_ts;
+    GST_BUFFER_CAST(buffer)->duration=GST_BUFFER_DURATION (buffer);
+
+    agoraIO->audio_ts += GST_BUFFER_DURATION (buffer);
+    
+
+    ret = gst_app_src_push_buffer(GST_APP_SRC_CAST(agoraIO->appAudioSrc), buffer);
+    if (ret != GST_FLOW_OK) {
+        g_print("handle_audio_out_fn: not able to push audio data\n");
+        /* something wrong, stop pushing */
+    }
+}
+
 static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer){
 
     
@@ -452,8 +515,6 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
 
     data_size=gst_buffer_get_size (in_buffer);
     GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
-    GstClockTime in_buffer_dts= GST_BUFFER_CAST(in_buffer)->dts;
-    GstClockTime in_buffer_duration=GST_BUFFER_CAST(in_buffer)->duration;
   
     gpointer data=malloc(data_size);
     if(data==NULL){
@@ -471,68 +532,11 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
         unsigned long ts=(unsigned long)(in_buffer_pts/1000000); //in ms
         agoraio_send_video(agoraIO->agora_ctx, data, data_size,is_key_frame,ts);
       }
- 
-     /*if (agoraIO->verbose == true){
-        g_print ("agorasink: received %" G_GSIZE_FORMAT" bytes!\n",data_size);
-        print_packet(data, 10);
-        g_print("agorasink: is key frame: %d\n", is_key_frame);
-     }*/
 
      free(data); 
      gst_buffer_unref (in_buffer);
-     agoraIO->ts+=30;
 
-    
-     GstPad * peer=gst_pad_get_peer(agoraIO->srcpad);
-     if(peer==NULL){
-         return GST_FLOW_OK;
-     }
-
-
-     //receive data
-     const size_t  max_size=4*1024*1024;
-     unsigned char* recvData=malloc(max_size);
-     if(recvData==NULL){
-        g_print("cannot allocate memory\n");
-        return GST_FLOW_ERROR;
-     }
-
-     u_int64_t frame_ts=0;
-     data_size=agoraio_read_video(agoraIO->agora_ctx, 
-                                  recvData,
-                                  max_size,
-                                  &is_key_frame,
-                                  &frame_ts);
-     if(data_size==0){
-         gst_object_unref(peer);
-         free(recvData);
-         return GST_FLOW_OK;
-     }
-
-     GstBuffer * out_buffer=gst_buffer_new_allocate (NULL, data_size, NULL);
-
-     gst_buffer_fill(out_buffer, 0, recvData, data_size);
-     gst_buffer_set_size(out_buffer, data_size);
-
-
-     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_pts;
-     GST_BUFFER_CAST(out_buffer)->pts=in_buffer_dts;
-     GST_BUFFER_CAST(out_buffer)->duration=in_buffer_duration;
-
-     if(agoraIO->verbose){
-       g_print("Video Duration: %ld\n", (long)(in_buffer_duration/1000000));
-       g_print("VIDEO timestamp: %ld\n",(long)(in_buffer_pts/1000000));
-     }
-
-     
-     
-     free(recvData);
-
-    GstFlowReturn retCode=gst_pad_push (agoraIO->srcpad, out_buffer);
-
-    gst_object_unref(peer);
-
-    return retCode;
+    return GST_FLOW_OK;
 }
 
 
@@ -739,7 +743,7 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
  agoraio_signals[ON_UPLINK_NETWORK_INFO_UPDATED_SIGNAL] =
       g_signal_new ("on-uplink-network-changed", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 0);
+      G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,G_TYPE_NONE, 1, G_TYPE_INT);
 
  agoraio_signals[ON_CONNECTION_LOST_SIGNAL] =
       g_signal_new ("on-connection-lost", G_TYPE_FROM_CLASS (klass),

@@ -49,7 +49,9 @@ AgoraIo::AgoraIo(const bool& verbose,
  _in_audio_delay(in_audio_delay),
  _in_video_delay(in_video_delay),
  _out_audio_delay(out_audio_delay),
- _out_video_delay(out_video_delay){
+ _out_video_delay(out_video_delay),
+ _videoOutFn(nullptr),
+ _audioOutFn(nullptr){
 
    _activeUsers.clear();
 }
@@ -161,6 +163,7 @@ bool  AgoraIo::init(char* in_app_id,
     // Register connection observer to monitor connection event
     _connectionObserver = std::make_shared<ConnectionObserver>(this);
     _connection->registerObserver(_connectionObserver.get());
+    _connection->registerNetworkObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     auto res = _connection->connect(in_app_id, in_ch_id, in_user_id);
@@ -323,7 +326,7 @@ void AgoraIo::receiveVideoFrame(const uint userId,
                                 const uint64_t& ts){
 
 
-    if(_receivedVideoFrames->size()>1 && _verbose){
+    /*if(_receivedVideoFrames->size()>1 && _verbose){
         std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
     }
 
@@ -344,6 +347,10 @@ void AgoraIo::receiveVideoFrame(const uint userId,
     }
     else if(_verbose){
         std::cout<<"video buffer reached max size"<<std::endl;
+    }*/
+
+    if(_videoOutFn!=nullptr){
+        _videoOutFn(buffer, length, _videoOutUserData);
     }
 }
 
@@ -357,7 +364,7 @@ void AgoraIo::receiveAudioFrame(const uint userId,
         
     //TODO: we may send directly to GST by calling a driver function instead of 
     //queueing again
-    const size_t MAX_BUFFER_SIZE=200;
+   /* const size_t MAX_BUFFER_SIZE=200;
     if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
 
         auto frame=std::make_shared<Work>(buffer, length,false);
@@ -365,6 +372,10 @@ void AgoraIo::receiveAudioFrame(const uint userId,
     }
     else if(_verbose){
         std::cout<<"audio buffer reached max size"<<std::endl;
+    } */
+
+    if(_audioOutFn!=nullptr){
+        _audioOutFn(buffer, length, _audioOutUserData); 
     }  
 }
 
@@ -439,13 +450,13 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
     const int MS_PER_VIDEO_FRAME=10;
 
     //impose imposed audio delay first
-    if(_in_video_delay!=0 && 
+    /*if(_in_video_delay!=0 && 
        _receivedVideoFrames->size()*MS_PER_VIDEO_FRAME<_in_video_delay){
 
         std::cout<<"delaying video\n";
 
         return 0;
-    }
+    }*/
 
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
@@ -463,12 +474,12 @@ size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
     const int MS_PER_AUDIO_PACKET=10;
 
     //impose imposed audio delay first
-    if(_in_audio_delay!=0 && 
+    /*if(_in_audio_delay!=0 && 
        _receivedAudioFrames->size()*MS_PER_AUDIO_PACKET<_in_audio_delay){
 
         std::cout<<"delaying audio\n";
         return 0;
-    }
+    }*/
 
     _receivedAudioFrames->waitForWork();
     Work_ptr work=_receivedAudioFrames->get();
@@ -525,6 +536,8 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               uint64_t len,
                               int is_key_frame,
                               long timestamp){
+
+    //logMessage("video timestamp: "+std::to_string(timestamp));
 
     if(_outSyncBuffer!=nullptr && _isRunning){
 
@@ -629,6 +642,16 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
 
      _userEventData=userData;
      _eventfn=fn;
+ }
+
+ void AgoraIo::setVideoOutFn(agora_media_out_fn videoOutFn, void* userData){
+     _videoOutFn=videoOutFn;
+     _videoOutUserData=userData;
+ }
+
+void AgoraIo::setAudioOutFn(agora_media_out_fn videoOutFn, void* userData){
+     _audioOutFn=videoOutFn;
+     _audioOutUserData=userData;
  }
 
 

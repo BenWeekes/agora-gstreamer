@@ -73,16 +73,19 @@ class AgoraIo{
 
    void setEventFunction(event_fn fn, void* userData);
 
+   void setVideoOutFn(agora_media_out_fn videoOutFn, void* userData);
+   void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
+   
 protected:
 
   bool doConnect(const std::string& appid);
 
   agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
-                                                      bool enableAudioProcessor,
-						                                          bool enableVideo,
-						                                          bool stringUserid,
-						                                          bool enableEncryption,
-                                                      const char* appid);
+                                                        bool enableAudioProcessor,
+						                                      bool enableVideo,
+						                                      bool stringUserid,
+						                                      bool enableEncryption,
+                                                        const char* appid);
 
   bool doSendHighVideo(const uint8_t* buffer,
                        uint64_t len,int is_key_frame);
@@ -167,6 +170,11 @@ protected:
     int                                              _out_audio_delay;
     int                                              _out_video_delay;
 
+    agora_media_out_fn                                _videoOutFn;
+    void*                                             _videoOutUserData;
+
+    agora_media_out_fn                                _audioOutFn;
+    void*                                             _audioOutUserData;
  };
 
 #endif

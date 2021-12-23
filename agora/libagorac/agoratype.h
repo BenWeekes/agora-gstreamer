@@ -66,4 +66,7 @@ typedef void (*event_fn)(void* userData,
                          long param2,
                          long* states);
 
+typedef  void (*agora_media_out_fn)(const uint8_t* buffer,
+                                    uint64_t len,
+										      void* user_data);
 #endif 

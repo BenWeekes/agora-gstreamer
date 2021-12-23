@@ -17,6 +17,10 @@ typedef void (*event_fn)(void* userData,
  typedef  struct agora_context_t agora_context_t;
  typedef  void (*agora_log_func_t)(void*, const char*);
 
+ typedef  void (*agora_media_out_fn)(const u_int8_t* buffer,
+                                     u_int64_t len,
+									 void* user_data);
+
  typedef struct agora_receive_context_t agora_receive_context_t;
 
  typedef struct AgoraIoContext_t  AgoraIoContext_t;
@@ -107,6 +111,12 @@ EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx,
 
 
 EXTERNC  void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData);
+
+EXTERNC  void agoraio_set_video_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData);
+
+EXTERNC  void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData);
+
+
 
  #undef EXTERNC
 

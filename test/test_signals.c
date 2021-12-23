@@ -46,9 +46,11 @@ void on_agora_on_disconnected_fn(GstElement* object,
 }
 
 
-void on_agora_on_uplink_info_updated_fn(GstElement* object,gpointer user_data){
+void on_agora_on_uplink_info_updated_fn(GstElement* object,
+										guint video_encoder_target_bitrate_bps,
+                                        gpointer user_data){
 
-    g_print("->Signal Test: uplink info updated!\n");
+    g_print("->Signal Test: uplink info updated: target bps %d\n", video_encoder_target_bitrate_bps);
 }
 
 void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){

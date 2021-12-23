@@ -823,4 +823,20 @@ void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userDat
     ctx->agoraIo->setEventFunction(fn, userData);
 }
 
+void agoraio_set_video_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData){
+   
+   if(ctx==nullptr)  return;
+
+   ctx->agoraIo->setVideoOutFn(fn, userData);
+}
+
+void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData){
+
+   if(ctx==nullptr)  return;
+
+   ctx->agoraIo->setAudioOutFn(fn, userData);
+}
+
+
+
 
