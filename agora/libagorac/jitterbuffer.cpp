@@ -7,7 +7,10 @@
 
 const size_t MAX_BUFFER_SIZE=200;
 
-JitterBuffer::JitterBuffer():
+static int g_id=0;
+JitterBuffer::JitterBuffer(const uint16_t& videoDelayOffset,
+                           const uint16_t& audioDelayOffset,
+                           const bool& syncAudioVideo):
 _videoBuffer(nullptr),
 _audioBuffer(nullptr),
 _videoSendThread(nullptr),
@@ -16,11 +19,16 @@ _isRunning(false),
 _videoOutFn(nullptr),
 _audioOutFn(nullptr),
 _maxBufferSize(300),  //in ms
-_isJbBuffering(false)
+_isJbBuffering(false),
+_videoDelayOffset(videoDelayOffset),
+_audioDelayOffset(audioDelayOffset),
+_syncAudioVideo(syncAudioVideo)
 {
 
   _videoBuffer=std::make_shared<WorkQueue <Work_ptr> >();
   _audioBuffer=std::make_shared<WorkQueue <Work_ptr> >();
+
+  _objId=g_id++;
 
 }
 
@@ -30,7 +38,7 @@ void JitterBuffer::addVideo(const uint8_t* buffer,
                             const uint64_t& ts){
 
     if(_videoBuffer->size()>MAX_BUFFER_SIZE){
-        std::cout<<"warning: sync buffer (video) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
+        std::cout<<"JB#"<<_objId<<": warning: sync buffer (video) exceeded max buffer: "<<_videoBuffer->size()<<std::endl;
     }
 
     auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
@@ -44,7 +52,7 @@ void JitterBuffer::addAudio(const uint8_t* buffer,
                             const uint64_t& ts){
 
     if(_audioBuffer->size()>MAX_BUFFER_SIZE){
-        std::cout<<"warning: sync buffer (audio) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
+        std::cout<<"JB#"<<_objId<<": warning: sync buffer (audio) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
     }
     
     auto frame=std::make_shared<Work>(buffer, length, false);
@@ -86,6 +94,9 @@ void JitterBuffer::videoThread(){
 
      lastSendTime=Now();
 
+    /*if(_objId==1)
+     std::cout<<this<<"VIDEO ts: "<<work->timestamp<<std::endl;*/
+
      //sleep until our next frame time
      std::this_thread::sleep_until(nextSample);
   }
@@ -122,6 +133,8 @@ void JitterBuffer::audioThread(){
      if(_audioOutFn!=nullptr){
          _audioOutFn(work->buffer, work->len);
      }
+    /*if(_objId==1)
+     std::cout<<this<<"audio ts: "<<work->timestamp<<std::endl;*/
 
      std::this_thread::sleep_until(nextSample);
    }
@@ -169,6 +182,14 @@ TimePoint JitterBuffer::getNextSamplingPoint(const WorkQueue_ptr& q,
      auto bufferSizeMs=q->size()*threadsleepTime;
      if(bufferSizeMs>_maxBufferSize){
         threadsleepTime=(long)(threadsleepTime*0.95);
+     }
+
+     if(threadsleepTime>100){
+         std::cout<<"currentTimestamp: "<<currentTimestamp<<std::endl;
+         std::cout<<"lastTimestamp: "<<lastTimestamp<<std::endl;
+         std::cout<<"threadsleepTime: "<<threadsleepTime<<std::endl;
+         threadsleepTime=30;
+        // exit(0);
      }
 
 

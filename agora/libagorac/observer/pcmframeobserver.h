@@ -10,7 +10,8 @@
 
 using OnNewAudioFrame_fn=std::function<void(const uint userId, 
                                         const uint8_t* buffer,
-                                        const size_t& size)>;
+                                        const size_t& size,
+                                        const uint64_t& ts)>;
 
 using OnUserSpeakingFn=std::function<void(const std::string& userId, const int& volume)>;
 

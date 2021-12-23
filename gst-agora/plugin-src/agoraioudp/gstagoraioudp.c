@@ -106,7 +106,11 @@ enum
   IN_PORT,
   OUT_PORT,
   HOST,
-  AUDIO
+  AUDIO,
+  IN_AUDIO_DELAY,
+  IN_VIDEO_DELAY,
+  OUT_AUDIO_DELAY,
+  OUT_VIDEO_DELAY
 };
 
 
@@ -248,17 +252,21 @@ int init_agora(Gstagoraioudp *agoraIO){
    agoraIO->agora_ctx=agoraio_init2(agoraIO->app_id,  /*appid*/
                                 agoraIO->channel_id, /*channel*/
                                 agoraIO->user_id,    /*user id*/
-                                 FALSE,      /*is audio user*/
+                                 FALSE,             /*is audio user*/
                                  0,                 /*enable encryption */
                                  0,                 /*enable dual */
                                  500000,            /*dual video bitrate*/
                                  320,               /*dual video width*/
                                  180,               /*dual video height*/
                                  12,                /*initial size of video buffer*/
-                                 30,                 /*dual fps*/
-                                 agoraIO->verbose, 
-                                 handle_event_Signal,
-                                (void*)(agoraIO));               
+                                 30,                /*dual fps*/
+                                 agoraIO->verbose,  /*log level*/
+                                 handle_event_Signal, /*signal function to call*/
+                                (void*)(agoraIO),      /*additional params to the signal function*/ 
+                                 agoraIO->in_audio_delay,
+                                 agoraIO->in_video_delay,
+                                 agoraIO->out_audio_delay,
+                                 agoraIO->out_video_delay);             
 
    if(agoraIO->agora_ctx==NULL){
 
@@ -678,6 +686,25 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
       g_param_spec_string ("host", "host", "udp host that we send audio to it",
           FALSE, G_PARAM_READWRITE));
 
+  /*in audio delay*/
+  g_object_class_install_property (gobject_class, IN_AUDIO_DELAY,
+      g_param_spec_int ("in-audio-delay", "in-audio-delay", "amount of delay (ms) for audio from agora SDK -> gst", 0, G_MAXUINT16,
+          0, G_PARAM_READWRITE));
+
+  /*in video delay*/
+  g_object_class_install_property (gobject_class, IN_VIDEO_DELAY,
+      g_param_spec_int ("in-video-delay", "in-video-delay", "amount of delay (ms) for video from agora SDK -> gst", 0, G_MAXUINT16,
+          0, G_PARAM_READWRITE));
+     
+  /*in audio delay*/
+  g_object_class_install_property (gobject_class, OUT_AUDIO_DELAY,
+      g_param_spec_int ("out-audio-delay", "out-audio-delay", "amount of delay (ms) for audio from gst -> agora SDK", 0, G_MAXUINT16,
+          0, G_PARAM_READWRITE));
+
+   /*in video delay*/
+  g_object_class_install_property (gobject_class, OUT_VIDEO_DELAY,
+      g_param_spec_int ("out-video-delay", "out-video-delay", "amount of delay (ms) for video from gst -> agora SDK ", 0, G_MAXUINT16,
+          0, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -839,6 +866,18 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
        str=g_value_get_string (value);
        g_strlcpy(agoraIO->host, str, MAX_STRING_LEN);
        break;
+    case IN_AUDIO_DELAY: 
+       agoraIO->in_audio_delay=g_value_get_int (value);
+       break;
+    case IN_VIDEO_DELAY: 
+       agoraIO->in_video_delay=g_value_get_int (value);
+       break;
+    case OUT_AUDIO_DELAY: 
+       agoraIO->out_audio_delay=g_value_get_int (value);
+       break;
+    case OUT_VIDEO_DELAY: 
+       agoraIO->out_video_delay=g_value_get_int (value);
+       break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -876,6 +915,18 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
     case HOST:
         g_value_set_string (value, agoraIO->host);
         break;
+    case IN_AUDIO_DELAY: 
+        g_value_set_int(value, agoraIO->in_audio_delay);
+        break;
+    case IN_VIDEO_DELAY: 
+        g_value_set_int(value, agoraIO->in_video_delay);
+        break;
+    case OUT_AUDIO_DELAY: 
+        g_value_set_int(value, agoraIO->out_audio_delay);
+        break;
+    case OUT_VIDEO_DELAY: 
+        g_value_set_int(value, agoraIO->out_video_delay);
+       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;

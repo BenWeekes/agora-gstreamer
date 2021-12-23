@@ -26,5 +26,7 @@ bool isNumber(const std::string& userIdString);
 int getVideoSyncBytesPos(const uint8_t* buffer);
 
 TimePoint Now();
+
+uint64_t GetCurrentTimestamp();
  
 #endif

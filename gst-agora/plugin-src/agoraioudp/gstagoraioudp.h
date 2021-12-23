@@ -102,6 +102,12 @@ struct _Gstagoraioudp
   gint out_port;
   gint in_port;
 
+  gint  in_audio_delay;
+  gint  in_video_delay;
+
+  gint  out_audio_delay;
+  gint  out_video_delay;
+
   size_t                 ts;
 
   enum State      state;

@@ -33,7 +33,11 @@
 
 AgoraIo::AgoraIo(const bool& verbose,
                 event_fn fn,
-			    void* userData):
+			    void* userData,
+                const int& in_audio_delay,
+                const int& in_video_delay,
+                const int& out_audio_delay,
+                const int& out_video_delay):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
@@ -41,7 +45,11 @@ AgoraIo::AgoraIo(const bool& verbose,
  _isRunning(false),
  _isPaused(true),
  _eventfn(fn),
- _userEventData(userData){
+ _userEventData(userData),
+ _in_audio_delay(in_audio_delay),
+ _in_video_delay(in_video_delay),
+ _out_audio_delay(out_audio_delay),
+ _out_video_delay(out_video_delay){
 
    _activeUsers.clear();
 }
@@ -211,13 +219,14 @@ bool  AgoraIo::init(char* in_app_id,
 
     });
 
-   //audio
+    //audio
      _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
     _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
-                                                    const uint8_t* buffer,
-                                                    const size_t& length){
+                                                        const uint8_t* buffer,
+                                                        const size_t& length,
+                                                        const uint64_t& ts){
 
-          receiveAudioFrame(userId, buffer, length);
+          receiveAudioFrame(userId, buffer, length,ts);
     });
 
     //connection observer: handles user join and leave
@@ -283,9 +292,9 @@ bool  AgoraIo::init(char* in_app_id,
         _lastVideoUserSwitchTime=Now();
     });
 
-  //create and prepare the out jitter buffer (source -> AG sdk)
-  _outJitterBuffer=std::make_shared<JitterBuffer>();
-  _outJitterBuffer->setVideoOutFn([this](const uint8_t* buffer,
+  //setup the out sync buffer (source -> AG sdk)
+  _outSyncBuffer=std::make_shared<JitterBuffer>();
+  _outSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength,
                                          const bool& isKeyFrame){
 
@@ -293,65 +302,70 @@ bool  AgoraIo::init(char* in_app_id,
 
     });
 
-    _outJitterBuffer->setAudioOutFn([this](const uint8_t* buffer,
+    _outSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength){
           doSendAudio(buffer, bufferLength);
     });
 
-  _outJitterBuffer->start();
+    _outSyncBuffer->start();
 
+    _isRunning=true;
+    _connected = true;
 
-
-  _isRunning=true;
-
-
-  _connected = true;
-
-  return _connected;
+    return _connected;
 }
 
 
-void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
-                                        const size_t& length,const int& isKeyFrame,
-                                        const uint64_t& ts){
+void AgoraIo::receiveVideoFrame(const uint userId, 
+                                const uint8_t* buffer,
+                                const size_t& length,
+                                const int& isKeyFrame,
+                                const uint64_t& ts){
 
 
-      if(_receivedVideoFrames->size()>1 && _verbose){
+    if(_receivedVideoFrames->size()>1 && _verbose){
         std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
-      }
+    }
 
-      _lastReceivedFrameTime=Now();
+    //std::cout<<"video timestamp: "<<ts<<std::endl;
 
-      //do not read video if the pipeline is in pause state
-      if(_isPaused) return;
+    _lastReceivedFrameTime=Now();
 
-      const size_t MAX_BUFFER_SIZE=200;
-      if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
+    //do not read video if the pipeline is in pause state
+    if(_isPaused) return;
 
-             auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
-             frame->timestamp=ts;
-             _receivedVideoFrames->add(frame);
-       }
-       else if(_verbose){
-             std::cout<<"video buffer reached max size"<<std::endl;
-      }
+    //TODO: we may send directly to GST by calling a driver function instead of 
+    //queueing again
+    const size_t MAX_BUFFER_SIZE=200;
+    if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
+
+            auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
+            _receivedVideoFrames->add(frame);
+    }
+    else if(_verbose){
+        std::cout<<"video buffer reached max size"<<std::endl;
+    }
 }
 
-void AgoraIo::receiveAudioFrame(const uint userId, const uint8_t* buffer,
-                                          const size_t& length){
+void AgoraIo::receiveAudioFrame(const uint userId, 
+                                const uint8_t* buffer,
+                                const size_t& length,
+                                const uint64_t& ts){
 
-         //do not read audio if the pipeline is in pause state
-         if(_isPaused) return;
+    //do not read audio if the pipeline is in pause state
+    if(_isPaused ) return;
+        
+    //TODO: we may send directly to GST by calling a driver function instead of 
+    //queueing again
+    const size_t MAX_BUFFER_SIZE=200;
+    if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
 
-         const size_t MAX_BUFFER_SIZE=200;
-         if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
-
-             auto frame=std::make_shared<Work>(buffer, length,false);
-             _receivedAudioFrames->add(frame);
-         }
-         else if(_verbose){
-             std::cout<<"audio buffer reached max size"<<std::endl;
-         }
+        auto frame=std::make_shared<Work>(buffer, length,false);
+        _receivedAudioFrames->add(frame);
+    }
+    else if(_verbose){
+        std::cout<<"audio buffer reached max size"<<std::endl;
+    }  
 }
 
 void AgoraIo::handleUserStateChange(const std::string& userId, 
@@ -422,6 +436,16 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
     if(_receivedVideoFrames->isEmpty()){
         return 0;
     }
+    const int MS_PER_VIDEO_FRAME=10;
+
+    //impose imposed audio delay first
+    if(_in_video_delay!=0 && 
+       _receivedVideoFrames->size()*MS_PER_VIDEO_FRAME<_in_video_delay){
+
+        std::cout<<"delaying video\n";
+
+        return 0;
+    }
 
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
@@ -436,6 +460,16 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
 
 size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
    
+    const int MS_PER_AUDIO_PACKET=10;
+
+    //impose imposed audio delay first
+    if(_in_audio_delay!=0 && 
+       _receivedAudioFrames->size()*MS_PER_AUDIO_PACKET<_in_audio_delay){
+
+        std::cout<<"delaying audio\n";
+        return 0;
+    }
+
     _receivedAudioFrames->waitForWork();
     Work_ptr work=_receivedAudioFrames->get();
 
@@ -492,11 +526,10 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
-   if(_outJitterBuffer!=nullptr && _isRunning){
+    if(_outSyncBuffer!=nullptr && _isRunning){
 
-       _outJitterBuffer->addVideo(buffer, len, is_key_frame, timestamp);
-
-     }
+        _outSyncBuffer->addVideo(buffer, len, is_key_frame, timestamp);
+    }
 
 
    return 0; //no errors
@@ -506,41 +539,20 @@ int AgoraIo::sendAudio(const uint8_t * buffer,
                        uint64_t len,
                        long timestamp){
 
-    if(_outJitterBuffer!=nullptr && _isRunning){
-
-       _outJitterBuffer->addAudio(buffer, len, timestamp);
-
+    if(_outSyncBuffer!=nullptr && _isRunning){
+        _outSyncBuffer->addAudio(buffer, len, timestamp);
      }
 
     return 0;
 }
-
-/*
- * buffer size doubling logic;
-     input: jb-initial-size-ms -- intial buffer size in ms
-            jb-max-size-ms     -- max buffer size in ms
-            Jb-max-doubles-if-emptied-within-seconds 
-                 -- time limit where buffer size is doupled if it becomes empty within it
-      logic:
-            jb-size=jb-initial-size-ms
-            while (running)
-               if no frames arrived withing the last 3 seconds and the buffer is empty
-                  set require-buffering=true
-                if require-buffering 
-                   wait for the buffer to be filled up for max 200 iterations 
-                   if last-buffering-time < Jb-max-doubles-if-emptied-within-seconds 
-                                               AND jb-size <jb-max-size-ms
-                       jb-size =jb-size*2
-
-
- */
 void AgoraIo::disconnect(){
 
     logMessage("start agora disonnect ...");
 
    _isRunning=false;
+
    //tell the thread that we are finished
-    _outJitterBuffer->stop();
+    _outSyncBuffer->stop();
 
    std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -561,7 +573,7 @@ void AgoraIo::disconnect(){
    _customVideoTrack = nullptr;
 
 
-   _outJitterBuffer=nullptr;
+   _outSyncBuffer=nullptr;
    
    //delete context
    _connection=nullptr;

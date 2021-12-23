@@ -755,14 +755,24 @@ AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
 										          unsigned short  dfps,
                                         bool verbose,
                                         event_fn fn,
-										          void* userData){
+										          void* userData,
+                                        int in_audio_delay,
+										          int in_video_delay,
+										          int out_audio_delay,
+										          int out_video_delay){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
         return NULL;
     }
 
-    ctx->agoraIo=std::make_shared<AgoraIo>(verbose, fn, userData);
+    ctx->agoraIo=std::make_shared<AgoraIo>(verbose,
+                                           fn,
+                                           userData, 
+                                           in_audio_delay,
+                                           in_video_delay,
+                                           out_audio_delay,
+                                           out_video_delay);
 
     ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,

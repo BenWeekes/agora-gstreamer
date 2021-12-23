@@ -153,4 +153,13 @@ int getVideoSyncBytesPos(const uint8_t* buffer){
   return 0;
 }
 
+std::mutex g_timer_mutex;
+uint64_t GetCurrentTimestamp(){
+  
+  std::lock_guard<std::mutex> guard(g_timer_mutex);
+
+  return  std::chrono::duration_cast<std::chrono::milliseconds>
+          (std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
 

@@ -489,7 +489,11 @@ int init_agora(Gstagoraio *agoraIO){
                                  30,                 /*dual fps*/
                                  agoraIO->verbose,
                                  NULL,
-                                 NULL);               
+                                 NULL,
+                                 0,
+                                 0,
+                                 0,
+                                 0);               
 
    if(agoraIO->agora_ctx==NULL){
 

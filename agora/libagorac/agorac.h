@@ -39,7 +39,11 @@ typedef void (*event_fn)(void* userData,
 										unsigned short dfps,
 										bool verbose,
 										event_fn fn,
-										void* userData);
+										void* userData,
+										int in_audio_delay,
+										int in_video_delay,
+										int out_audio_delay,
+										int out_video_delay);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 

@@ -173,7 +173,8 @@ bool AgoraReceiverUser::connect()
      _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
     _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
-                                                    const size_t& length){
+                                                    const size_t& length,
+                                                    const uint64_t& ts){
 
           //this check will be every second
           auto sinkUid=_sinkUidMonitor.checkAndReadUid();

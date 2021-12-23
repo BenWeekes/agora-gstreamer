@@ -23,7 +23,11 @@ class AgoraIo{
   public:
    AgoraIo(const bool& verbose, 
            event_fn fn,
-			  void* userData);
+			  void* userData,
+           const int& in_audio_delay,
+           const int& in_video_delay,
+           const int& out_audio_delay,
+           const int& out_video_delay);
 
    bool  init(char* in_app_id, 
                         char* in_ch_id,
@@ -98,7 +102,8 @@ protected:
 
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,
-                           const size_t& length);
+                           const size_t& length,
+                           const uint64_t& ts);
 
    void handleUserStateChange(const std::string& userId, 
                               const UserState& newState);
@@ -153,7 +158,15 @@ protected:
     event_fn                                         _eventfn;
     void*                                            _userEventData;
 
-    JitterBuffer_ptr                                 _outJitterBuffer;
+    //from the app to agora sdk
+    JitterBuffer_ptr                                 _outSyncBuffer;
+
+    int                                              _in_audio_delay;
+    int                                              _in_video_delay;
+
+    int                                              _out_audio_delay;
+    int                                              _out_video_delay;
+
  };
 
 #endif

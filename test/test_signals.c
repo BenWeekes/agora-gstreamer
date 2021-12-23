@@ -129,7 +129,7 @@ void on_local_track_stats_fn(GstElement* object,
 	g_print("total_bitrate_bps: %d, ",total_bitrate_bps);
 	g_print("width: %d, ", width);
 	g_print("height: %d, ",height);
-	g_print("encoder_type: %d, \n", encoder_type);
+	g_print("encoder_type: %d \n", encoder_type);
 }
 void on_agora_on_user_state_changed_fn(GstElement* object,
                                        gchararray userName,

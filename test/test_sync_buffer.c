@@ -129,7 +129,7 @@ void on_local_track_stats_fn(GstElement* object,
 	g_print("total_bitrate_bps: %d, ",total_bitrate_bps);
 	g_print("width: %d, ", width);
 	g_print("height: %d, ",height);
-	g_print("encoder_type: %d, \n", encoder_type);
+	g_print("encoder_type: %d \n", encoder_type);
 }
 
 void on_agora_on_user_state_changed_fn(GstElement* object,
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
   char* appid=argv[1];
   char* channel=argv[2];
 
-  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 verbose=false ! queue ! decodebin ! queue ! glimagesink", appid, channel);
+  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 in-audio-dealy=30 in-video-dealy=100 verbose=false ! queue ! decodebin ! queue ! glimagesink", appid, channel);
 
   snprintf (audio_out_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink volume=1.0 name=incaudsink");
 
