@@ -116,6 +116,13 @@ protected:
 
     void unsubscribeAllVideo();
 
+    void publishUnpublishThreadFn();
+
+    void startPublishAudio();
+    void startPublishVideo();
+
+    void stopPublishAudio();
+    void stopPublishVideo();
 
  private:
 
@@ -176,6 +183,14 @@ protected:
 
     agora_media_out_fn                                _audioOutFn;
     void*                                             _audioOutUserData;
+
+    TimePoint                                         _lastTimeAudioReceived;
+    TimePoint                                         _lastTimeVideoReceived;
+
+    std::shared_ptr<std::thread>                      _publishUnpublishCheckThread;
+
+    bool                                              _isPublishingAudio;
+    bool                                              _isPublishingVideo;
  };
 
 #endif
