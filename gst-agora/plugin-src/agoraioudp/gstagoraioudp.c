@@ -692,22 +692,22 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   /*in audio delay*/
   g_object_class_install_property (gobject_class, IN_AUDIO_DELAY,
-      g_param_spec_int ("in-audio-delay", "in-audio-delay", "amount of delay (ms) for audio from agora SDK -> gst", 0, G_MAXUINT16,
+      g_param_spec_int ("in-audio-delay", "in-audio-delay", "amount of delay (ms) for audio gst -> agora SDK", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE));
 
   /*in video delay*/
   g_object_class_install_property (gobject_class, IN_VIDEO_DELAY,
-      g_param_spec_int ("in-video-delay", "in-video-delay", "amount of delay (ms) for video from agora SDK -> gst", 0, G_MAXUINT16,
+      g_param_spec_int ("in-video-delay", "in-video-delay", "amount of delay (ms) for video from gst -> agora SDK ", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE));
      
   /*in audio delay*/
   g_object_class_install_property (gobject_class, OUT_AUDIO_DELAY,
-      g_param_spec_int ("out-audio-delay", "out-audio-delay", "amount of delay (ms) for audio from gst -> agora SDK", 0, G_MAXUINT16,
+      g_param_spec_int ("out-audio-delay", "out-audio-delay", "amount of delay (ms) for audio from agora SDK -> gst ", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE));
 
    /*in video delay*/
   g_object_class_install_property (gobject_class, OUT_VIDEO_DELAY,
-      g_param_spec_int ("out-video-delay", "out-video-delay", "amount of delay (ms) for video from gst -> agora SDK ", 0, G_MAXUINT16,
+      g_param_spec_int ("out-video-delay", "out-video-delay", "amount of delay (ms) for video from agora SDK -> gst ", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
