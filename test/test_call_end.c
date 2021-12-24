@@ -1,18 +1,46 @@
 #include <gst/gst.h> 
 
+#include <stdio.h>
+
+#define MAX_BUFFER 1024*5
+
+void print_usage(char* name){
+	g_print("usage: %s appid channel\n", name);
+}
+
 int main(int argc, char *argv[]) {
   GstElement *pipeline;
   GstBus *bus;
   GstMessage *msg;
 
+   if(argc<3){
+	  print_usage(argv[0]);
+	  return 0;
+  }
+
+  //signal(SIGINT, on_exit_signal);
+
+  char video_pipe_str[MAX_BUFFER/4];
+  char audio_out_pipe_str[MAX_BUFFER/4];
+  char audio_in_pipe_str[MAX_BUFFER/4];
+  char complete_pipe_str[MAX_BUFFER];
+
   /* Initialize GStreamer */
   gst_init (&argc, &argv);
 
-  /* Build the pipeline */
-  pipeline = gst_parse_launch (
+  char* appid=argv[1];
+  char* channel=argv[2];
 
-	"videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=xx channel=xx userid=123 verbose=true ! fakesink sync=false"
-	//"videotestsrc pattern=ball is-live=true ! fakesink sync=false"
+  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue  ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 in-audio-delay=30 in-video-delay=100 verbose=false ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel);
+
+  snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
+
+  snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
+
+  snprintf (complete_pipe_str, MAX_BUFFER,"%s %s %s",video_pipe_str, audio_out_pipe_str, audio_in_pipe_str);
+
+  pipeline = gst_parse_launch (
+     complete_pipe_str
 	,NULL);
 
   /* Start playing */

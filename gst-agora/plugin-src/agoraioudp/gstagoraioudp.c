@@ -550,6 +550,7 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
 
   Gstagoraioudp *agoraIO=GST_AGORAIOUDP (element);
 
+  g_print("AgoraIO: state change request from the plugin: \n");
   switch (transition) {
        case GST_STATE_CHANGE_NULL_TO_READY:
             g_print("AgoraIO: state change: NULL to READY \n");   
@@ -595,10 +596,7 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
 {
   Gstagoraioudp *agoraIO;
 
-  char buffer[100];
-
-  sprintf(buffer, "received event: %d",  GST_EVENT_TYPE (event));
-  logText(buffer);
+  g_print("AgoraIO: received an event from the pipe: %d \n", GST_EVENT_TYPE (event));
 
   agoraIO = GST_AGORAIOUDP (parent);
 
