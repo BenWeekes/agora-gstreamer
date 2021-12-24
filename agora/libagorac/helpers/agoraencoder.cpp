@@ -23,7 +23,7 @@ _fps(fps){
 }
 
 AgoraEncoder::~AgoraEncoder(){
-  if(m_avCodec){
+  /*if(m_avCodec){
      
      const int strideCount=3;
      for (int i = 0; i < strideCount; i++) {
@@ -33,11 +33,11 @@ AgoraEncoder::~AgoraEncoder(){
      
      x264_encoder_close(m_avCodec);
      sws_freeContext(m_scaleContext);
-   }     
+   } */    
 }
 bool AgoraEncoder::init(){
 
-  x264_param_t param;
+  /*x264_param_t param;
   initParams(param);
 
   //create the encoder
@@ -51,14 +51,14 @@ bool AgoraEncoder::init(){
   x264_picture_alloc(&m_avInputFrame, X264_CSP_I420, 0, 0); 
 
   //create scaling context
-  createVideoScaleContext();
+  createVideoScaleContext();*/
 
   return true;
 }
 
 bool AgoraEncoder::encode(AVFrame* frame,uint8_t* out, uint32_t& outSize, bool requestKeyFrame){
 
-  int nalCount;
+  /*int nalCount;
   x264_nal_t* nals;
   int encodedBytes=0;
 
@@ -106,7 +106,7 @@ bool AgoraEncoder::encode(AVFrame* frame,uint8_t* out, uint32_t& outSize, bool r
  //free up scaled frame
  av_freep(&scaledFrame->data[0]);
  av_frame_free(&scaledFrame);
-  
+  */
 
   return true;
 }
@@ -117,7 +117,7 @@ static void  X264LogFunc( void *, int i_level, const char *psz, va_list ){
 
 void AgoraEncoder::initParams(x264_param_t& param){
 
-  const int PACKET_SIZE=60000;
+  /*const int PACKET_SIZE=60000;
 
   x264_param_default_preset(&param, "veryfast", "zerolatency");
   param.i_csp = X264_CSP_I420;
@@ -163,7 +163,7 @@ void AgoraEncoder::initParams(x264_param_t& param){
   logMessage("**** qMin="+std::to_string(_qMin)+", qMax="+std::to_string(_qMax)+"****");
 
   param.i_level_idc = 31;
-  x264_param_apply_profile(&param, "baseline");
+  x264_param_apply_profile(&param, "baseline");*/
 }
 
 int AgoraEncoder::handlePostEncoding(uint8_t* out, 
@@ -176,7 +176,7 @@ int AgoraEncoder::handlePostEncoding(uint8_t* out,
      logMessage("key frame is produced");
   }*/
   
-  int totalBytes=0;
+  /*int totalBytes=0;
   for(int i=0;i<nalCount;i++){
 
     int iNalSize = nals[i].i_payload;
@@ -185,12 +185,13 @@ int AgoraEncoder::handlePostEncoding(uint8_t* out,
     totalBytes +=iNalSize;
   }
 
-  return totalBytes;
+  return totalBytes;*/
+  return 0;
 }
 
 bool AgoraEncoder::createVideoScaleContext(){
 
-  AVPixelFormat sourceFormat=AV_PIX_FMT_YUV420P;
+ /* AVPixelFormat sourceFormat=AV_PIX_FMT_YUV420P;
   AVPixelFormat targetFormat=AV_PIX_FMT_YUV420P;
   
   if (m_scaleContext!=nullptr) sws_freeContext(m_scaleContext);	
@@ -203,7 +204,7 @@ bool AgoraEncoder::createVideoScaleContext(){
 
       logMessage("cannot create scale context for video encoder");
       return false;
-   }
+   }*/
 
    return true;
 }
@@ -219,7 +220,7 @@ void AgoraEncoder::onResolutionChange(const uint16_t& newWidth, const uint16_t& 
 
 AVFrame* AgoraEncoder::scaleFrame(AVFrame* inFrame){
 
-  AVFrame *outFrame;
+  /*AVFrame *outFrame;
 
   outFrame=av_frame_alloc();
   if(outFrame==nullptr){
@@ -242,6 +243,7 @@ AVFrame* AgoraEncoder::scaleFrame(AVFrame* inFrame){
      return nullptr;
   }
 
-  return outFrame;
+  return outFrame;*/
+  return nullptr;
 }
 

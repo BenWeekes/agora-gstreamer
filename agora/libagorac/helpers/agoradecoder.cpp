@@ -6,7 +6,7 @@ AgoraDecoder::AgoraDecoder(){
 }
 AgoraDecoder::~AgoraDecoder(){
 
-  avcodec_close(m_avContext);
+  /*avcodec_close(m_avContext);
 
   if (m_avContext != nullptr){
     avcodec_free_context(&m_avContext);
@@ -20,12 +20,12 @@ AgoraDecoder::~AgoraDecoder(){
 #else
     av_frame_free(&m_avOutFrame);
 #endif
-  }
+  }*/
 }
 
 bool AgoraDecoder::init(){
 
-  avcodec_register_all();
+  /*avcodec_register_all();
   if ((m_avCodec = avcodec_find_decoder(AV_CODEC_ID_H264)) == nullptr) {
 
     logMessage("Agora video decoder: H264 Codec not found!");
@@ -80,7 +80,7 @@ bool AgoraDecoder::init(){
   m_avOutFrame->format = m_avContext->pix_fmt = AV_PIX_FMT_YUV420P;
   m_avOutFrame->quality = -1;
 
-  logMessage("Agora video decoder: initialized correctly");
+  logMessage("Agora video decoder: initialized correctly");*/
 
   return true;
 }
@@ -89,7 +89,7 @@ bool AgoraDecoder::decode(const uint8_t* in, const uint32_t& inSize){
 
   //logMessage("start decoding a frame");
 
-  m_inputPacket.data = ( uint8_t*)in;
+  /*m_inputPacket.data = ( uint8_t*)in;
   m_inputPacket.size = inSize;
 
   auto ret=avcodec_send_packet(m_avContext, &m_inputPacket);
@@ -102,7 +102,7 @@ bool AgoraDecoder::decode(const uint8_t* in, const uint32_t& inSize){
   if(ret!=0){
     logMessage("Agora video decoder: failed");
     return false;
-  }
+  }*/
 
   //logMessage("end  decoding a frame: "+std::to_string(m_avOutFrame->width)+"x"+std::to_string(m_avOutFrame->height));
 
@@ -112,7 +112,7 @@ bool AgoraDecoder::decode(const uint8_t* in, const uint32_t& inSize){
 //TODO: we do not copy in this version, we pass output frame directly to the encoder
 uint32_t  AgoraDecoder::copyDeocodedFrame(AVFrame *frame, uint8_t* buffer){
 
-  uint32_t pitchY = frame->linesize[0];
+  /*uint32_t pitchY = frame->linesize[0];
   uint32_t pitchU = frame->linesize[1];
   uint32_t pitchV = frame->linesize[2];
 
@@ -144,5 +144,6 @@ uint32_t  AgoraDecoder::copyDeocodedFrame(AVFrame *frame, uint8_t* buffer){
   }
 
 
-  return totalBytes;
+  return totalBytes;*/
+  return 0;
 }
