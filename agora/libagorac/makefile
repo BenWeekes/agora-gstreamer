@@ -8,9 +8,7 @@ LDFLAGS      = -shared
 TARGET_LIB = libagorac.so
 DESTDIR?=/usr/local/lib
 
-HELPER_FILES=helpers/agoradecoder.cpp \
-              helpers/agoraencoder.cpp \
-			  helpers/agoralog.cpp \
+HELPER_FILES=helpers/agoralog.cpp \
 			  helpers/localconfig.cpp \
 			  helpers/utilities.cpp\
 			  helpers/uidtofile.cpp\
