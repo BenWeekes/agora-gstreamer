@@ -298,7 +298,7 @@ bool  AgoraIo::init(char* in_app_id,
     });
 
   //setup the out sync buffer (source -> AG sdk)
-  _outSyncBuffer=std::make_shared<SyncBuffer>(_out_video_delay, _out_audio_delay, true);
+  _outSyncBuffer=std::make_shared<SyncBuffer>(_in_video_delay, _in_audio_delay, true);
   _outSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength,
                                          const bool& isKeyFrame){
@@ -315,7 +315,7 @@ bool  AgoraIo::init(char* in_app_id,
     _outSyncBuffer->start();
 
     //setup the in sync buffer ( AG sdk -> source)
-    _inSyncBuffer=std::make_shared<SyncBuffer>(_in_video_delay, _in_audio_delay, false);
+    _inSyncBuffer=std::make_shared<SyncBuffer>(_out_video_delay, _out_audio_delay, false);
     _inSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength,
                                          const bool& isKeyFrame){
