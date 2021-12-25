@@ -182,6 +182,8 @@ int main(int argc, char *argv[]) {
 	  return 0;
   }
 
+  setenv("GST_PLUGIN_PATH","/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0",1);
+
   char buffer[MAX_BUFFER];
 
   GstElement *pipeline;

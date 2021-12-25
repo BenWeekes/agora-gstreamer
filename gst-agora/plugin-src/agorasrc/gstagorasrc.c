@@ -106,6 +106,56 @@ static void gst_agorasrc_set_property (GObject * object, guint prop_id,
 static void gst_agorasrc_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
+typedef struct{
+
+   u_int8_t* data;
+   size_t    len;
+
+}Frame;
+
+Frame* copy_frame(const u_int8_t* buffer, u_int64_t len){
+
+     Frame* f=(Frame*)malloc(sizeof(Frame));
+     if(f==NULL) return NULL;
+
+     f->len=len;
+     f->data=(u_int8_t*)malloc(sizeof(len));
+     
+     if(f->data==NULL) {
+       free(f);
+       return NULL;
+     } 
+
+     memcpy(f->data, buffer, len);
+     return f;
+}
+
+void destory_frame(Frame** f){
+
+   free((*f)->data);
+
+   free(*f);
+}
+
+//handle video out from agora to the plugin
+static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data ){
+
+    Gstagorasrc* agoraSrc=(Gstagorasrc*)(user_data);
+    if(!agoraSrc->audio){
+
+        Frame* f=copy_frame(buffer, len);
+        g_queue_push_tail(agoraSrc->media_queue, f);
+    }
+}
+
+static void handle_audio_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data ){
+
+    Gstagorasrc* agoraSrc=(Gstagorasrc*)(user_data);
+    if(agoraSrc->audio){
+        Frame* f=copy_frame(buffer, len);
+        g_queue_push_tail(agoraSrc->media_queue, f);
+    }
+}
 
 int init_agora(Gstagorasrc * src){
 
@@ -120,24 +170,37 @@ int init_agora(Gstagorasrc * src){
    }
 
     /*initialize agora*/
-   if(src->audio==TRUE){
-       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                        src->user_id, TRUE, FALSE,
-                                        src->verbose,
-                                        "");
-   }
-   else{
-       src->agora_ctx=agora_receive_init(src->app_id,src->channel_id,
-                                           src->user_id, FALSE, TRUE, 
-                                           src->verbose,
-                                           "");
-   }
+    src->agora_ctx=agoraio_init2(src->app_id,  /*appid*/
+                                src->channel_id, /*channel*/
+                                src->user_id,    /*user id*/
+                                 FALSE,             /*is audio user*/
+                                 0,                 /*enable encryption */
+                                 0,                 /*enable dual */
+                                 500000,            /*dual video bitrate*/
+                                 320,               /*dual video width*/
+                                 180,               /*dual video height*/
+                                 12,                /*initial size of video buffer*/
+                                 30,                /*dual fps*/
+                                 src->verbose,  /*log level*/
+                                 NULL, /*signal function to call*/
+                                (void*)(src),      /*additional params to the signal function*/ 
+                                 0,
+                                 0,
+                                 0,
+                                 0); 
   
    if(src->agora_ctx==NULL){
 
       g_print("agora COULD NOT  be initialized\n");
       return -1;   
    }
+
+   //this function will be called whenever there is a video frame ready 
+   agoraio_set_video_out_handler(src->agora_ctx, handle_video_out_fn, (void*)(src));
+   agoraio_set_audio_out_handler(src->agora_ctx, handle_audio_out_fn, (void*)(src));
+
+   //create a media queue
+   src->media_queue=g_queue_new();
 
    g_print("agora has been successfuly initialized\n");
   
@@ -148,11 +211,11 @@ int init_agora(Gstagorasrc * src){
 static GstFlowReturn
 gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
    
-  const size_t  max_size=4*1024*1024;
-  int is_key_frame=0;
+  //int is_key_frame=0;
   size_t data_size=0;
+  GstMemory *memory=NULL;
+
   size_t in_buffer_size=0;
-   GstMemory *memory=NULL;
 
   Gstagorasrc *agoraSrc = GST_AGORASRC (psrc);
   if(agoraSrc->agora_ctx==NULL && init_agora(agoraSrc)!=0){
@@ -160,32 +223,24 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      return GST_FLOW_ERROR;
    }
 
-  unsigned char* data=malloc(max_size);
-  if(data==NULL){
-     g_print("cannot allocate memory\n");
-     return GST_FLOW_ERROR;
+  Frame* f=g_queue_pop_head (agoraSrc->media_queue);
+  if(f==NULL){
+      return GST_FLOW_OK;
   }
-
-
-  if(agoraSrc->audio==FALSE){
-     data_size=get_next_video_frame(agoraSrc->agora_ctx, data, max_size, &is_key_frame);
-  }
-  else{
-    data_size=get_next_audio_frame(agoraSrc->agora_ctx, data, max_size);
-  }
+  data_size=f->len;
 
   in_buffer_size=gst_buffer_get_size (buffer);
 
-  /*increase the buffer if it is less than the frame data size*/
+  //increase the buffer if it is less than the frame data size
   if(data_size>in_buffer_size){
     memory = gst_allocator_alloc (NULL, (data_size-in_buffer_size), NULL);
     gst_buffer_insert_memory (buffer, -1, memory);
   }
 
-  gst_buffer_fill(buffer, 0, data, data_size);
+  gst_buffer_fill(buffer, 0, f->data, data_size);
   gst_buffer_set_size(buffer, data_size);
 
-  free(data);
+  destory_frame(&f);
 
   if (agoraSrc->verbose == true){
      g_print ("agorasrc: sending %" G_GSIZE_FORMAT" bytes!\n",data_size);

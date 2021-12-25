@@ -78,7 +78,7 @@ void SyncBuffer::addAudio(const uint8_t* buffer,
     if(_audioBuffer->size()>MAX_BUFFER_SIZE){
         std::cout<<"JB#"<<_objId<<": warning: sync buffer (audio) exceeded max buffer: "<<_audioBuffer->size()<<std::endl;
     }
-
+    
     //if we need to sync or delay video, we add the frame to the queue
     if(_syncAudioVideo ==true || _audioDelayOffset>0){
 
@@ -137,9 +137,6 @@ void SyncBuffer::videoThread(){
 
      lastSendTime=Now();
 
-    /*if(_objId==1)
-     std::cout<<this<<"VIDEO ts: "<<work->timestamp<<std::endl;*/
-
      //sleep until our next frame time
      std::this_thread::sleep_until(nextSample);
   }
@@ -176,8 +173,8 @@ void SyncBuffer::audioThread(){
      if(_audioOutFn!=nullptr){
          _audioOutFn(work->buffer, work->len);
      }
-    /*if(_objId==1)
-     std::cout<<this<<"audio ts: "<<work->timestamp<<std::endl;*/
+    
+     //std::cout<<this<<"audio ts: "<<work->timestamp<<std::endl;
 
      std::this_thread::sleep_until(nextSample);
    }
@@ -233,6 +230,8 @@ TimePoint SyncBuffer::getNextSamplingPoint(const WorkQueue_ptr& q,
      if(bufferSizeMs>_maxBufferSize){
         threadsleepTime=(long)(threadsleepTime*0.95);
      }
+
+     //std::cout<<"threadsleepTime: "<<threadsleepTime<<std::endl;
 
      const int MAX_SLEEP=300;
      if(threadsleepTime>MAX_SLEEP){

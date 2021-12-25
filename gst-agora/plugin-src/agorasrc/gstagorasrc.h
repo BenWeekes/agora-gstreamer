@@ -81,7 +81,9 @@ struct _Gstagorasrc
   gboolean verbose;
   gboolean audio;
 
-  agora_receive_context_t* agora_ctx;
+  AgoraIoContext_t* agora_ctx;
+
+  GQueue*      media_queue;
 
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];

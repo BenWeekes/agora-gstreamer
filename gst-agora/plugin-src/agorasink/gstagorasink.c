@@ -209,18 +209,25 @@ int init_agora(Gstagorasink * filter){
        return -1;
    }
 
-    /*initialize agora*/
-   filter->agora_ctx=agora_init(filter->app_id,  /*appid*/
+   /*initialize agora*/
+   filter->agora_ctx=agoraio_init2(filter->app_id,  /*appid*/
                                 filter->channel_id, /*channel*/
                                 filter->user_id,    /*user id*/
-                                filter->audio,      /*is audio user*/
+                                 FALSE,             /*is audio user*/
                                  0,                 /*enable encryption */
                                  0,                 /*enable dual */
                                  500000,            /*dual video bitrate*/
                                  320,               /*dual video width*/
                                  180,               /*dual video height*/
                                  12,                /*initial size of video buffer*/
-                                 30);               /*dual fps*/
+                                 30,                /*dual fps*/
+                                 filter->verbose,  /*log level*/
+                                 NULL, /*signal function to call*/
+                                (void*)(filter),      /*additional params to the signal function*/ 
+                                 0,
+                                 0,
+                                 0,
+                                 0); 
 
    if(filter->agora_ctx==NULL){
 
@@ -377,7 +384,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   }
 
   data_size=gst_buffer_get_size (in_buffer);
-   
+  
   gpointer data=malloc(data_size);
   if(data==NULL){
      g_print("cannot allocate memory!\n");
@@ -389,12 +396,17 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
       is_key_frame=1;
   }
 
+   GstClock* clock = gst_element_get_clock (GST_ELEMENT_CAST (filter));
+   GstClockTime in_buffer_pts= gst_clock_get_time (clock); //GST_BUFFER_CAST(in_buffer)->pts;
+   in_buffer_pts /=1000000;
+
+   //g_print("clock=%ld, %ld\n", in_buffer_pts, GST_BUFFER_CAST(in_buffer)->pts);
 
   if(filter->audio==FALSE){
-      agora_send_video(filter->agora_ctx, data, data_size,is_key_frame, filter->ts);
+      agoraio_send_video(filter->agora_ctx, data, data_size,is_key_frame, in_buffer_pts);
   }
   else{
-      agora_send_audio(filter->agora_ctx, data, data_size, filter->ts);
+      agoraio_send_audio(filter->agora_ctx, data, data_size, in_buffer_pts);
   }
  
     

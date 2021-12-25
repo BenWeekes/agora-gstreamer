@@ -25,7 +25,6 @@
 #include "agoratype.h"
 #include "helpers/agoraconstants.h"
 
-#include "agorareceiver.h"
 #include "helpers/uidtofile.h"
 
 #include "syncbuffer.h"

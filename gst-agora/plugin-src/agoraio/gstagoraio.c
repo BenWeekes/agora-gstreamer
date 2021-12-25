@@ -401,10 +401,10 @@ static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
 
     size_t  max_data_size=960*2*2;  //two channels of 48000 sample rate
 
-    AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
+    //AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
 
     gpointer recv_data=malloc(max_data_size);
-    data_size=agoraio_read_audio(agora_ctx, recv_data, max_data_size);
+    //data_size=agoraio_read_audio(agora_ctx, recv_data, max_data_size);
 
     buffer = gst_buffer_new_allocate (NULL, data_size, NULL);
     gst_buffer_fill(buffer, 0, recv_data, data_size);

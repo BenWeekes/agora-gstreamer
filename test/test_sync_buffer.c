@@ -190,6 +190,8 @@ int main(int argc, char *argv[]) {
 	  return 0;
   }
 
+  setenv("GST_PLUGIN_PATH","/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0",1);
+
   //signal(SIGINT, on_exit_signal);
 
   char video_pipe_str[MAX_BUFFER/4];
