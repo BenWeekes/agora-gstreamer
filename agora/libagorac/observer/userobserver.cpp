@@ -157,7 +157,7 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
       _onRemoteTrackStats(userId, remoteStats);
   }
 
-  if(_verbose==false)  return;
+  /*if(_verbose==false)  return;
 
    std::cout<< "video stats (remote): "
             <<" receivedBitrate "<<stats.receivedBitrate
@@ -172,7 +172,7 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
             <<", avSyncTimeMs "<<stats.avSyncTimeMs
             <<", downlink_process_time_ms "<<stats.downlink_process_time_ms
             <<", frame_render_delay_ms "<<stats.frame_render_delay_ms
-            <<std::endl;
+            <<std::endl;*/
 
 }
 
@@ -206,8 +206,8 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
 
       _onLocalTrackStats("Local", localStats);
      }
-     if(_verbose==false)  return;
 
+     /*if(_verbose==false)  return;
      std::cout<< "video stats (local): "
             <<" number_of_streams "<<stats.number_of_streams
             <<", bytes_major_stream "<<stats.bytes_major_stream
@@ -224,7 +224,7 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
             <<", width "<<stats.width
             <<", height "<<stats.height
             <<", encoder_type "<<stats.encoder_type
-            <<std::endl;
+            <<std::endl;*/
 }
 
 void UserObserver::setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn){

@@ -217,7 +217,6 @@ int main(int argc, char *argv[]) {
   snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue  ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 out-audio-delay=0 out-video-delay=70 verbose=false ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel);
 
   snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
-
   snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
 
   snprintf (complete_pipe_str, MAX_BUFFER,"%s %s %s",video_pipe_str, audio_out_pipe_str, audio_in_pipe_str);

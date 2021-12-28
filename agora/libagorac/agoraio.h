@@ -191,6 +191,10 @@ protected:
 
     bool                                              _isPublishingAudio;
     bool                                              _isPublishingVideo;
+
+    int                                               _videoOutFps;
+    int                                               _videoInFps;
+    TimePoint                                         _lastFpsPrintTime;
  };
 
 #endif

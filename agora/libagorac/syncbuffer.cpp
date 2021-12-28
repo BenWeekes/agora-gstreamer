@@ -235,9 +235,9 @@ TimePoint SyncBuffer::getNextSamplingPoint(const WorkQueue_ptr& q,
 
      const int MAX_SLEEP=300;
      if(threadsleepTime>MAX_SLEEP){
-         std::cout<<"currentTimestamp: "<<currentTimestamp<<std::endl;
-         std::cout<<"lastTimestamp: "<<lastTimestamp<<std::endl;
-         std::cout<<"threadsleepTime: "<<threadsleepTime<<std::endl;
+         //std::cout<<"currentTimestamp: "<<currentTimestamp<<std::endl;
+         //std::cout<<"lastTimestamp: "<<lastTimestamp<<std::endl;
+         //std::cout<<"threadsleepTime: "<<threadsleepTime<<std::endl;
          threadsleepTime=30;
      }
 

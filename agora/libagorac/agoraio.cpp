@@ -56,7 +56,10 @@ AgoraIo::AgoraIo(const bool& verbose,
  _lastTimeAudioReceived(Now()),
  _lastTimeVideoReceived(Now()),
  _isPublishingAudio(false),
- _isPublishingVideo(false){
+ _isPublishingVideo(false),
+ _videoOutFps(0),
+ _videoInFps(0),
+ _lastFpsPrintTime(Now()){
 
    _activeUsers.clear();
 }
@@ -325,6 +328,7 @@ bool  AgoraIo::init(char* in_app_id,
   
         if(_videoOutFn!=nullptr){
             _videoOutFn(buffer, bufferLength, _videoOutUserData);
+            _videoInFps++;
         }
 
     });
@@ -333,7 +337,6 @@ bool  AgoraIo::init(char* in_app_id,
                                          const size_t& bufferLength){
 
         if(_audioOutFn!=nullptr){
-
             _audioOutFn(buffer, bufferLength, _audioOutUserData); 
         } 
           
@@ -477,8 +480,6 @@ void AgoraIo::subscribeAudioUser(const std::string& userId){
 
     _connection->getLocalUser()->subscribeAudio(userId.c_str());
     std::cout<<"subscribed to audio user "<<userId<<std::endl;
-
-    //_subscribedAudioUsers.emplace_back(userId);
 }
 void AgoraIo::unsubscribeAudioUser(const std::string& userId){
 
@@ -528,6 +529,20 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
     }
 
     _lastTimeVideoReceived=Now();
+
+    if(_verbose){
+        _videoOutFps++;
+        if(_lastFpsPrintTime+std::chrono::milliseconds(1000)<=Now()){
+
+            std::cout<<"Out video fps: "<<_videoOutFps<<std::endl;
+            std::cout<<"In video fps: "<<_videoInFps<<std::endl;
+
+            _videoInFps=0;
+            _videoOutFps=0;
+
+            _lastFpsPrintTime=Now();
+        }
+    }
 
    return 0; //no errors
 }
