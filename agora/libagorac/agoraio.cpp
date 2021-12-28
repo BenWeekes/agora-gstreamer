@@ -301,7 +301,7 @@ bool  AgoraIo::init(char* in_app_id,
     });
 
   //setup the out sync buffer (source -> AG sdk)
-  _outSyncBuffer=std::make_shared<SyncBuffer>(_in_video_delay, _in_audio_delay, true);
+  _outSyncBuffer=std::make_shared<SyncBuffer>(_in_video_delay, _in_audio_delay, false);
   _outSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength,
                                          const bool& isKeyFrame){
@@ -383,6 +383,7 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     if(newState==USER_JOIN){
         subscribeAudioUser(userId);
+        _pcmFrameObserver->setUserJoined(true);
     }  
 
     //we monitor user volumes only for those who have camera events

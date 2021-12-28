@@ -67,6 +67,15 @@ protected:
      int _volBelowThresholdCount;
 };
 
+PcmFrameObserver::PcmFrameObserver():
+ _onAudioFrameReceived(nullptr),
+_onUserSpeaking(nullptr),
+_isUserJoined(false){
+
+    _pcmUsers.clear();
+
+}
+
 bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) {
    
   auto iter=_pcmUsers.find(std::to_string(uid));
@@ -89,7 +98,7 @@ bool PcmFrameObserver::onMixedAudioFrame(AudioFrame& audioFrame){
 
  bool PcmFrameObserver::onPlaybackAudioFrame(AudioFrame& audioFrame){
 
-   if(_onAudioFrameReceived!=nullptr && audioFrame.renderTimeMs>0){
+   if(_onAudioFrameReceived!=nullptr && _isUserJoined){
 
         //std::cout<<"AUDIO sample rate: "<<audioFrame.samplesPerSec<<std::endl;
         _onAudioFrameReceived(0, 
@@ -119,4 +128,8 @@ void PcmFrameObserver::onUserLeft(const std::string& userId){
       _pcmUsers.erase(iter);
    }
 
+}
+
+void PcmFrameObserver::setUserJoined(const bool& flag){
+   _isUserJoined=flag;
 }
