@@ -124,6 +124,8 @@ protected:
     void stopPublishAudio();
     void stopPublishVideo();
 
+    void showFps();
+
  private:
 
     WorkQueue_ptr                                 _receivedVideoFrames;

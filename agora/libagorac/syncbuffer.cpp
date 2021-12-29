@@ -294,3 +294,10 @@ void SyncBuffer::WaitForBuffering(){
 
   _isJbBuffering=false;
 }
+
+void SyncBuffer::clear(){
+
+    _videoBuffer->clear();
+    _audioBuffer->clear();
+
+}

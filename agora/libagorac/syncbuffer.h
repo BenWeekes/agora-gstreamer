@@ -37,6 +37,8 @@ public:
   //there is an audio packet available 
   void setAudioOutFn(const audioOutFn_t& fn);
 
+  void clear();
+
   //start running the jitter buffer thread
   void start();
 

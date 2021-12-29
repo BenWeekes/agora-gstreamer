@@ -522,6 +522,10 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
+    //do nothing if we are in pause state
+    if(_isPaused==true){
+        return 0;
+    }
 
     if(_outSyncBuffer!=nullptr && _isRunning){
          startPublishVideo();
@@ -530,7 +534,14 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
 
     _lastTimeVideoReceived=Now();
 
-    if(_verbose){
+    showFps();
+
+   return 0; //no errors
+}
+
+void AgoraIo::showFps(){
+
+   if(_verbose){
         _videoOutFps++;
         if(_lastFpsPrintTime+std::chrono::milliseconds(1000)<=Now()){
 
@@ -543,13 +554,16 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
             _lastFpsPrintTime=Now();
         }
     }
-
-   return 0; //no errors
 }
 
 int AgoraIo::sendAudio(const uint8_t * buffer,  
                        uint64_t len,
                        long timestamp){
+
+    //do nothing if we are in pause state
+    if(_isPaused==true){
+        return 0;
+    }
 
     if(_outSyncBuffer!=nullptr && _isRunning){
 
@@ -623,8 +637,18 @@ void AgoraIo::setPaused(const bool& flag){
     _isPaused=flag;
     if(_isPaused==true){
         unsubscribeAllVideo();
+
+        stopPublishVideo();
+        stopPublishAudio();
     }
     else{
+
+      //clear any buffering 
+      _inSyncBuffer->clear();
+      _outSyncBuffer->clear();
+
+      startPublishVideo();
+      startPublishAudio();
 
        unsubscribeAllVideo();
        if(_currentVideoUser!=""){

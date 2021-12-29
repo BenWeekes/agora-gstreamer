@@ -4,4 +4,6 @@ cc test_sync_buffer.c `pkg-config --cflags --libs gstreamer-1.0` -o test_sync_bu
 cc test_publish_unpublish.c `pkg-config --cflags --libs gstreamer-1.0` -o test_publish_unpublish
 
 cc test_agora_sink.c `pkg-config --cflags --libs gstreamer-1.0` -o test_agora_sink
+cc test_pause_resume.c `pkg-config --cflags --libs gstreamer-1.0` -o test_pause_resume
+
 
