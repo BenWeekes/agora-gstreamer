@@ -11,21 +11,20 @@ typedef void (*event_fn)(void* userData,
                          int type, 
                          const char* userName,
                          long param1,
-                         long param2);
+                         long param2,
+						 long* states);
 
  typedef  struct agora_context_t agora_context_t;
  typedef  void (*agora_log_func_t)(void*, const char*);
+
+ typedef  void (*agora_media_out_fn)(const u_int8_t* buffer,
+                                     u_int64_t len,
+									 void* user_data);
 
  typedef struct agora_receive_context_t agora_receive_context_t;
 
  typedef struct AgoraIoContext_t  AgoraIoContext_t;
 
- EXTERNC agora_context_t*  agora_init(char* app_id, char* ch_id, char* user_id,
-                                    bool is_audiouser,
-                                    bool enc_enable,
-		                            short enable_dual, unsigned int  dual_vbr, 
-				                    unsigned short  dual_width,  unsigned short  dual_height,
-									unsigned short min_video_jb, unsigned short dfps);
 
  EXTERNC AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
                                         bool is_audiouser,
@@ -36,17 +35,16 @@ typedef void (*event_fn)(void* userData,
 										unsigned short  dual_height,
 									    unsigned short min_video_jb,
 										unsigned short dfps,
-										bool verbose);
+										bool verbose,
+										event_fn fn,
+										void* userData,
+										int in_audio_delay,
+										int in_video_delay,
+										int out_audio_delay,
+										int out_video_delay);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 
- EXTERNC agora_receive_context_t* agora_receive_init(char* app_id,
-                                                     char* ch_id, 
-													 char* user_id,
-													 int receiveAudio,
-													 int receiveVideo,
-													 int verbose,
-													 char* filePath);
 
  EXTERNC int  agora_send_video(agora_context_t* ctx,  
                                const unsigned char* buffer,  
@@ -62,17 +60,11 @@ EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 
  EXTERNC void  agoraio_set_paused(AgoraIoContext_t* ctx, int flag);
 								
- EXTERNC int  agora_send_audio(agora_context_t* ctx,  
-                               const unsigned char* buffer,  
-							   unsigned long len,
-							   long timestamp);
 
 EXTERNC int  agoraio_send_audio(AgoraIoContext_t* ctx,  
                                const unsigned char* buffer,  
 							   unsigned long len,
 							   long timestamp);
-
- EXTERNC void agora_disconnect(agora_context_t** ctx);
 
  EXTERNC void agora_set_log_function(agora_context_t* ctx, agora_log_func_t f, void* log_ctx);
 
@@ -80,34 +72,16 @@ EXTERNC int  agoraio_send_audio(AgoraIoContext_t* ctx,
 
  EXTERNC void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short sampleCount);
 
- EXTERNC size_t get_next_video_frame(agora_receive_context_t* context, 
-                                     unsigned char* data, size_t max_buffer_size,
-									 int* is_key_frame);
-
-EXTERNC size_t agoraio_read_video(AgoraIoContext_t* ctx, 
-                                   unsigned char* data, 
-								   size_t max_buffer_size,
-								   int* is_key_frame,
-								   u_int64_t* ts);
-
-EXTERNC size_t agoraio_read_audio(AgoraIoContext_t* ctx, 
-                                  unsigned char* data, size_t max_buffer_size);
-
- EXTERNC size_t get_next_audio_frame(agora_receive_context_t* context, 
-                                     unsigned char* data, size_t max_buffer_size);
 
  EXTERNC void logText(const char* message);
 
 
- //try to pull an event from the event queue 
- EXTERNC void  agoraio_get_next_event(AgoraIoContext_t* ctx,  
-                                     int* eventType,
-									 char* userName,
-									 long* param1,
-									 long* param2);
-
-
 EXTERNC  void agoraio_set_event_handler(AgoraIoContext_t* ctx, event_fn fn, void* userData);
+
+EXTERNC  void agoraio_set_video_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData);
+
+EXTERNC  void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData);
+
 
  #undef EXTERNC
 

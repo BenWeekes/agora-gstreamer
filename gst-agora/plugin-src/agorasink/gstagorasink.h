@@ -85,7 +85,7 @@ struct _Gstagorasink
   gboolean audio;
 
   /*agora context for sending audio and video */
-  agora_context_t        *agora_ctx;
+  AgoraIoContext_t* agora_ctx;
 
   size_t                 ts;
 };

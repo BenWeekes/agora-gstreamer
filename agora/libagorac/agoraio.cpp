@@ -25,19 +25,41 @@
 #include "agoratype.h"
 #include "helpers/agoraconstants.h"
 
-#include "agorareceiver.h"
 #include "helpers/uidtofile.h"
 
+#include "syncbuffer.h"
 
 
-AgoraIo::AgoraIo(const bool& verbose):
+AgoraIo::AgoraIo(const bool& verbose,
+                event_fn fn,
+			    void* userData,
+                const int& in_audio_delay,
+                const int& in_video_delay,
+                const int& out_audio_delay,
+                const int& out_video_delay):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
  _lastVideoUserSwitchTime(Now()),
  _isRunning(false),
  _isPaused(true),
- _eventfn(nullptr){
+ _eventfn(fn),
+ _outSyncBuffer(nullptr),
+ _inSyncBuffer(nullptr),
+ _userEventData(userData),
+ _in_audio_delay(in_audio_delay),
+ _in_video_delay(in_video_delay),
+ _out_audio_delay(out_audio_delay),
+ _out_video_delay(out_video_delay),
+ _videoOutFn(nullptr),
+ _audioOutFn(nullptr),
+ _lastTimeAudioReceived(Now()),
+ _lastTimeVideoReceived(Now()),
+ _isPublishingAudio(false),
+ _isPublishingVideo(false),
+ _videoOutFps(0),
+ _videoInFps(0),
+ _lastFpsPrintTime(Now()){
 
    _activeUsers.clear();
 }
@@ -153,6 +175,7 @@ bool  AgoraIo::init(char* in_app_id,
     // Register connection observer to monitor connection event
     _connectionObserver = std::make_shared<ConnectionObserver>(this);
     _connection->registerObserver(_connectionObserver.get());
+    _connection->registerNetworkObserver(_connectionObserver.get());
 
     _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     auto res = _connection->connect(in_app_id, in_ch_id, in_user_id);
@@ -191,9 +214,9 @@ bool  AgoraIo::init(char* in_app_id,
         return false;
      }
 
-    // Publish  video track
-    _connection->getLocalUser()->publishVideo(_customVideoTrack);
-    _connection->getLocalUser()->publishAudio(_customAudioTrack);
+    // Publish  video and audio tracks
+    startPublishAudio();
+    startPublishVideo();
 
 
     h264FrameReceiver = std::make_shared<H264FrameReceiver>();
@@ -211,13 +234,14 @@ bool  AgoraIo::init(char* in_app_id,
 
     });
 
-   //audio
+    //audio
      _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
     _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
-                                                    const uint8_t* buffer,
-                                                    const size_t& length){
+                                                        const uint8_t* buffer,
+                                                        const size_t& length,
+                                                        const uint64_t& ts){
 
-          receiveAudioFrame(userId, buffer, length);
+          receiveAudioFrame(userId, buffer, length,ts);
     });
 
     //connection observer: handles user join and leave
@@ -251,6 +275,18 @@ bool  AgoraIo::init(char* in_app_id,
         addEvent(AGORA_EVENT_ON_IFRAME,"",0,0);
     });
 
+    _userObserver->setOnUserRemoteTrackStatsFn([this](const std::string& userId,
+                                                      long* stats){
+
+        addEvent(AGORA_EVENT_ON_REMOTE_TRACK_STATS_CHANGED,userId,0,0,stats);
+     });
+
+    _userObserver->setOnUserLocalTrackStatsFn([this](const std::string& userId,
+                                                      long* stats){
+
+        addEvent(AGORA_EVENT_ON_LOCAL_TRACK_STATS_CHANGED,userId,0,0,stats);
+     });
+
     _pcmFrameObserver->setOnUserSpeakingFn([this](const std::string& userId, const int& volume){
 
         //no switching is needed if current user is already shown 
@@ -271,68 +307,82 @@ bool  AgoraIo::init(char* in_app_id,
         _lastVideoUserSwitchTime=Now();
     });
 
-  _videoJB=std::make_shared<WorkQueue <Work_ptr> >();
-  _audioJB=std::make_shared<WorkQueue <Work_ptr> >();
+  //setup the out sync buffer (source -> AG sdk)
+  _outSyncBuffer=std::make_shared<SyncBuffer>(_in_video_delay, _in_audio_delay, false);
+  _outSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength,
+                                         const bool& isKeyFrame){
 
-  _isRunning=true;
+        doSendHighVideo(buffer, bufferLength, isKeyFrame);
 
-    //start thread handlers
-  _videoThreadHigh=std::make_shared<std::thread>(&AgoraIo::VideoThreadHandlerHigh, this);
-  _audioThread=std::make_shared<std::thread>(&AgoraIo::AudioThreadHandler,this);
+    });
 
-  _connected = true;
+    _outSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength){
+          doSendAudio(buffer, bufferLength);
+    });
 
-  return _connected;
+    _outSyncBuffer->start();
+
+    //setup the in sync buffer ( AG sdk -> source)
+    _inSyncBuffer=std::make_shared<SyncBuffer>(_out_video_delay, _out_audio_delay, false);
+    _inSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength,
+                                         const bool& isKeyFrame){
+  
+        if(_videoOutFn!=nullptr){
+            _videoOutFn(buffer, bufferLength, _videoOutUserData);
+            _videoInFps++;
+        }
+
+    });
+
+    _inSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
+                                         const size_t& bufferLength){
+
+        if(_audioOutFn!=nullptr){
+            _audioOutFn(buffer, bufferLength, _audioOutUserData); 
+        } 
+          
+    });
+
+    _inSyncBuffer->start();
+
+    _isRunning=true;
+    _connected = true;
+
+    _publishUnpublishCheckThread=std::make_shared<std::thread>(&AgoraIo::publishUnpublishThreadFn,this);
+    _publishUnpublishCheckThread->detach();
+
+    return _connected;
 }
 
-void AgoraIo::addAudioFrame(const Work_ptr& work){
 
-  if(_audioJB!=nullptr && _isRunning){
-     _audioJB->add(work);
-   }
+void AgoraIo::receiveVideoFrame(const uint userId, 
+                                const uint8_t* buffer,
+                                const size_t& length,
+                                const int& isKeyFrame,
+                                const uint64_t& ts){
+
+    //do not read video if the pipeline is in pause state
+    if(_isPaused) return;
+
+    if(_inSyncBuffer!=nullptr && _isRunning){
+        _inSyncBuffer->addVideo(buffer, length, isKeyFrame, ts);
+    }
 }
 
-void AgoraIo::receiveVideoFrame(const uint userId, const uint8_t* buffer,
-                                        const size_t& length,const int& isKeyFrame,
-                                        const uint64_t& ts){
+void AgoraIo::receiveAudioFrame(const uint userId, 
+                                const uint8_t* buffer,
+                                const size_t& length,
+                                const uint64_t& ts){
 
+    //do not read audio if the pipeline is in pause state
+    if(_isPaused ) return;
 
-      if(_receivedVideoFrames->size()>1 && _verbose){
-        std::cout<<"video buffer size: "<<_receivedVideoFrames->size()<<std::endl;
-      }
-
-      _lastReceivedFrameTime=Now();
-
-      //do not read video if the pipeline is in pause state
-      if(_isPaused) return;
-
-      const size_t MAX_BUFFER_SIZE=200;
-      if(_receivedVideoFrames->size()<MAX_BUFFER_SIZE){
-
-             auto frame=std::make_shared<Work>(buffer, length,isKeyFrame);
-             frame->timestamp=ts;
-             _receivedVideoFrames->add(frame);
-       }
-       else if(_verbose){
-             std::cout<<"video buffer reached max size"<<std::endl;
-      }
-}
-
-void AgoraIo::receiveAudioFrame(const uint userId, const uint8_t* buffer,
-                                          const size_t& length){
-
-         //do not read audio if the pipeline is in pause state
-         if(_isPaused) return;
-
-         const size_t MAX_BUFFER_SIZE=200;
-         if(_receivedAudioFrames->size()<MAX_BUFFER_SIZE){
-
-             auto frame=std::make_shared<Work>(buffer, length,false);
-             _receivedAudioFrames->add(frame);
-         }
-         else if(_verbose){
-             std::cout<<"audio buffer reached max size"<<std::endl;
-         }
+     if(_inSyncBuffer!=nullptr && _isRunning){
+        _inSyncBuffer->addAudio(buffer, length, ts);
+     } 
 }
 
 void AgoraIo::handleUserStateChange(const std::string& userId, 
@@ -340,6 +390,7 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     if(newState==USER_JOIN){
         subscribeAudioUser(userId);
+        _pcmFrameObserver->setUserJoined(true);
     }  
 
     //we monitor user volumes only for those who have camera events
@@ -403,6 +454,7 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
     if(_receivedVideoFrames->isEmpty()){
         return 0;
     }
+    const int MS_PER_VIDEO_FRAME=10;
 
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
@@ -417,6 +469,9 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
 
 size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
    
+    const int MS_PER_AUDIO_PACKET=10;
+
+
     _receivedAudioFrames->waitForWork();
     Work_ptr work=_receivedAudioFrames->get();
 
@@ -429,8 +484,6 @@ void AgoraIo::subscribeAudioUser(const std::string& userId){
 
     _connection->getLocalUser()->subscribeAudio(userId.c_str());
     std::cout<<"subscribed to audio user "<<userId<<std::endl;
-
-    //_subscribedAudioUsers.emplace_back(userId);
 }
 void AgoraIo::unsubscribeAudioUser(const std::string& userId){
 
@@ -473,94 +526,68 @@ int AgoraIo::sendVideo(const uint8_t * buffer,
                               int is_key_frame,
                               long timestamp){
 
-   if(_videoJB!=nullptr && _isRunning){
-      
-      Work_ptr work=std::make_shared<Work>(buffer,len, is_key_frame);
-      work->timestamp=timestamp;
-      _videoJB->add(work);
+    //do nothing if we are in pause state
+    if(_isPaused==true){
+        return 0;
+    }
 
-     }
+    if(_outSyncBuffer!=nullptr && _isRunning){
+         startPublishVideo();
+        _outSyncBuffer->addVideo(buffer, len, is_key_frame, timestamp);
+    }
 
+    _lastTimeVideoReceived=Now();
+
+    showFps();
 
    return 0; //no errors
 }
 
-/*
- * buffer size doubling logic;
-     input: jb-initial-size-ms -- intial buffer size in ms
-            jb-max-size-ms     -- max buffer size in ms
-            Jb-max-doubles-if-emptied-within-seconds 
-                 -- time limit where buffer size is doupled if it becomes empty within it
-      logic:
-            jb-size=jb-initial-size-ms
-            while (running)
-               if no frames arrived withing the last 3 seconds and the buffer is empty
-                  set require-buffering=true
-                if require-buffering 
-                   wait for the buffer to be filled up for max 200 iterations 
-                   if last-buffering-time < Jb-max-doubles-if-emptied-within-seconds 
-                                               AND jb-size <jb-max-size-ms
-                       jb-size =jb-size*2
+void AgoraIo::showFps(){
 
+   if(_verbose){
+        _videoOutFps++;
+        if(_lastFpsPrintTime+std::chrono::milliseconds(1000)<=Now()){
 
- */
+            std::cout<<"Out video fps: "<<_videoOutFps<<std::endl;
+            std::cout<<"In video fps: "<<_videoInFps<<std::endl;
 
-void AgoraIo::VideoThreadHandlerHigh(){
+            _videoInFps=0;
+            _videoOutFps=0;
 
-   _lastVideoSendTime=Now();
-   uint8_t currentFramePerSecond=0;
-
-   while(_isRunning==true){
-
-     _lastVideoSendTime=Now();
-
-     //wait untill work is available
-     _videoJB->waitForWork();	  
-     Work_ptr work=_videoJB->get();
-     
-     TimePoint  nextSample = Now()+std::chrono::milliseconds(30);
-
-     if(work==nullptr) continue;
-     if(work->is_finished==1) break;
-
-     doSendHighVideo(work->buffer, work->len, (bool)(work->is_key_frame));
-
-     //sleep until our next frame time
-     std::this_thread::sleep_until(nextSample);
-  }
-
-  logMessage("VideoThreadHandlerHigh ended");
+            _lastFpsPrintTime=Now();
+        }
+    }
 }
 
-void AgoraIo::AudioThreadHandler(){
+int AgoraIo::sendAudio(const uint8_t * buffer,  
+                       uint64_t len,
+                       long timestamp){
 
-   const int waitTimeForBufferToBeFull=10;
-   
-   while(_isRunning==true){
+    //do nothing if we are in pause state
+    if(_isPaused==true){
+        return 0;
+    }
 
-     //wait untill work is available
-     _audioJB->waitForWork();
-     Work_ptr work=_audioJB->get();
-     if(work==NULL) continue;
+    if(_outSyncBuffer!=nullptr && _isRunning){
 
-     if(work->is_finished){
-        return;
+        startPublishAudio();
+        _outSyncBuffer->addAudio(buffer, len, timestamp);
      }
 
-     doSendAudio(work->buffer, work->len);
-   }
+    _lastTimeAudioReceived=Now();
+
+    return 0;
 }
 void AgoraIo::disconnect(){
 
     logMessage("start agora disonnect ...");
 
    _isRunning=false;
-   //tell the thread that we are finished
-    Work_ptr work=std::make_shared<Work>(nullptr,0, false);
-    work->is_finished=true;
 
-   _videoJB->add(work);
-   _audioJB->add(work);
+   //tell the thread that we are finished
+    _outSyncBuffer->stop();
+    _inSyncBuffer->stop();
 
    std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -581,20 +608,15 @@ void AgoraIo::disconnect(){
    _customVideoTrack = nullptr;
 
 
-   _videoJB=nullptr;;
-   _audioJB=nullptr;;
-
+   _outSyncBuffer=nullptr;
+   _inSyncBuffer=nullptr;
+   
+   
    //delete context
    _connection=nullptr;
 
    _service->release();
    _service = nullptr;
-  
-   _videoThreadHigh->detach();
-   _audioThread->detach();
-
-   _videoThreadHigh=nullptr;;
-   _audioThread=nullptr; 
 
    h264FrameReceiver=nullptr;
 
@@ -619,43 +641,117 @@ void AgoraIo::setPaused(const bool& flag){
     _isPaused=flag;
     if(_isPaused==true){
         unsubscribeAllVideo();
+
+        stopPublishVideo();
+        stopPublishAudio();
     }
     else{
+
+      //clear any buffering 
+      _inSyncBuffer->clear();
+      _outSyncBuffer->clear();
+
+      startPublishVideo();
+      startPublishAudio();
+
        unsubscribeAllVideo();
-       subscribeToVideoUser(_currentVideoUser);
+       if(_currentVideoUser!=""){
+           subscribeToVideoUser(_currentVideoUser);
+       } 
     }
 }
 
 void AgoraIo::addEvent(const AgoraEventType& eventType, 
                        const std::string& userName,
                        const long& param1, 
-                       const long& param2){
+                       const long& param2,
+                       long* states){
 
     if(_eventfn!=nullptr){
-        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2);
+        _eventfn(_userEventData, eventType, userName.c_str(), param1, param2, states);
     }
 }
-
- void AgoraIo::getNextEvent(int& eventType, char* userName, long& param1, long& param2){
-
-     /*if(_events.empty()){
-         eventType=-1;
-     }
-     else{
-         auto e=_events.front();
-        _events.pop();
-
-        std::strcpy(userName, e.userName.c_str());
-        eventType= e.type;
-        param1=e.params[0];
-        param2=e.params[1];
-     }*/
- }
 
  void AgoraIo::setEventFunction(event_fn fn, void* userData){
 
      _userEventData=userData;
      _eventfn=fn;
  }
+
+ void AgoraIo::setVideoOutFn(agora_media_out_fn videoOutFn, void* userData){
+     _videoOutFn=videoOutFn;
+     _videoOutUserData=userData;
+ }
+
+void AgoraIo::setAudioOutFn(agora_media_out_fn videoOutFn, void* userData){
+     _audioOutFn=videoOutFn;
+     _audioOutUserData=userData;
+ }
+
+ void AgoraIo::publishUnpublishThreadFn(){
+
+     std::cout<<"Agoraio: publish/unpublish thread started\n";
+
+     long checkTimeMs=500;
+      while(_isRunning){
+
+         long allowedUnpublishedTime=1000; //ms
+         if((_lastTimeAudioReceived+std::chrono::milliseconds(allowedUnpublishedTime))<Now()){
+              stopPublishAudio();
+          }
+
+         if((_lastTimeVideoReceived+std::chrono::milliseconds(allowedUnpublishedTime))<Now()){
+            stopPublishVideo();
+         }
+
+         TimePoint  nextCheckTime = Now()+std::chrono::milliseconds(checkTimeMs);
+         std::this_thread::sleep_until(nextCheckTime);
+
+     }
+ }
+
+void AgoraIo::startPublishAudio(){
+
+    if(_isPublishingAudio==true){
+        return;
+    }
+    _connection->getLocalUser()->publishAudio(_customAudioTrack);
+    _isPublishingAudio=true;
+
+    std::cout<<"Agoraio: published Audio\n";
+
+ }
+void AgoraIo::startPublishVideo(){
+
+    if(_isPublishingVideo==true){
+        return;
+    }
+     _connection->getLocalUser()->publishVideo(_customVideoTrack);
+    _isPublishingVideo=true;
+
+    std::cout<<"Agoraio: published Audio\n";
+}
+
+void AgoraIo::stopPublishAudio(){
+
+    if(_isPublishingAudio==false){
+        return;
+    }
+    _connection->getLocalUser()->unpublishAudio(_customAudioTrack);
+    _isPublishingAudio=false;
+
+    std::cout<<"Agoraio: unpublished Audio\n";
+}
+void AgoraIo::stopPublishVideo(){
+
+    if(_isPublishingVideo==false){
+        return;
+    }
+
+     _connection->getLocalUser()->unpublishVideo(_customVideoTrack);
+    _isPublishingVideo=false;
+
+    std::cout<<"Agoraio: unpublished video\n";
+}
 
 

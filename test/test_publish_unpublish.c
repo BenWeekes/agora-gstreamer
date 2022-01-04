@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 
   snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
 
-  snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,format=S16LE,channels=1,rate=48000 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
+  snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
 
   snprintf (complete_pipe_str, MAX_BUFFER,"%s %s %s",video_pipe_str, audio_out_pipe_str, audio_in_pipe_str);
 
@@ -59,26 +59,29 @@ int main(int argc, char *argv[]) {
 	if (msg == NULL) {
 		// Send an EOS after N secs to end the call
 		static int secs = 1;
-		if (secs == 5) {
-		        gst_element_send_event(pipeline, gst_event_new_eos());
-			g_print("EOS sent\n");
+		if (secs %10==0) {
+
+		    gst_element_set_state(pipeline, GST_STATE_PAUSED);
+
+			g_print("Pause pipe\n");
+
+		}
+
+		if (secs % 12==0) {
+
+		    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+			  g_print("Resume pipe\n");
+
 		}
 
 		g_print("time - %d\n",secs++);
 		continue;
 	}
-
-  GError *err;
-	gchar *d;
 	
 	// Handle valid exit messages
 	switch (GST_MESSAGE_TYPE(msg)) {
 		case GST_MESSAGE_ERROR:
 			g_print("msg: error\n");
-      gst_message_parse_error(msg, &err, &d);
-      g_print("Error: %d message=%s\n", err->code, err->message);
-      g_print("Debug: %s\n", d);
-      g_free(d);
 			exit = 1;
 			break;
 		case GST_MESSAGE_EOS:

@@ -57,13 +57,22 @@ int main(int argc, char *argv[]) {
 	msg = gst_bus_timed_pop_filtered (bus, 1000*1000*1000, GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
 
 	if (msg == NULL) {
-		// Send an EOS after N secs to end the call
 		static int secs = 1;
-		if (secs == 5) {
-		        gst_element_send_event(pipeline, gst_event_new_eos());
-			g_print("EOS sent\n");
+
+		if (secs == 20) {
+		  gst_element_set_state(pipeline, GST_STATE_PAUSED);
+			g_print("Pause pipe\n");
 		}
 
+		if (secs == 30) {
+		  gst_element_set_state(pipeline, GST_STATE_PLAYING);
+			g_print("Resume pipe\n");
+		}
+
+		if (secs == 40) {
+		  gst_element_send_event(pipeline, gst_event_new_eos());
+			g_print("EOS sent\n");
+		}
 		g_print("time - %d\n",secs++);
 		continue;
 	}
@@ -101,7 +110,7 @@ int main(int argc, char *argv[]) {
 
   gst_deinit();
 
-  system("sleep 5");
+  system("sleep 1");
   g_print("----- Open files after gst deinit\n");
   system("lsof | grep video0");
 

@@ -21,7 +21,13 @@
 class AgoraIo{
 
   public:
-   AgoraIo(const bool& verbose);
+   AgoraIo(const bool& verbose, 
+           event_fn fn,
+			  void* userData,
+           const int& in_audio_delay,
+           const int& in_video_delay,
+           const int& out_audio_delay,
+           const int& out_video_delay);
 
    bool  init(char* in_app_id, 
                         char* in_ch_id,
@@ -40,6 +46,10 @@ class AgoraIo{
                         int is_key_frame,
                         long timestamp);
 
+   int sendAudio(const uint8_t * buffer,  
+                        uint64_t len,
+                        long timestamp);
+
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
@@ -50,32 +60,32 @@ class AgoraIo{
                              
     size_t getNextAudioFrame(uint8_t* data, size_t max_buffer_size);
 
-    void addAudioFrame(const Work_ptr& work);
-
    void disconnect();
 
    void setPaused(const bool& flag);
-
-   void getNextEvent(int& eventType, char* userName, long& param1, long& param2);
 
    //right now we support two params to the event
    void addEvent(const AgoraEventType& eventType, 
                   const std::string& userName,
                   const long& param1=0, 
-                  const long& param2=0);
+                  const long& param2=0,
+                  long* states=nullptr);
 
    void setEventFunction(event_fn fn, void* userData);
 
+   void setVideoOutFn(agora_media_out_fn videoOutFn, void* userData);
+   void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
+   
 protected:
 
   bool doConnect(const std::string& appid);
 
   agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
-                                                      bool enableAudioProcessor,
-						                                          bool enableVideo,
-						                                          bool stringUserid,
-						                                          bool enableEncryption,
-                                                      const char* appid);
+                                                        bool enableAudioProcessor,
+						                                      bool enableVideo,
+						                                      bool stringUserid,
+						                                      bool enableEncryption,
+                                                        const char* appid);
 
   bool doSendHighVideo(const uint8_t* buffer,
                        uint64_t len,int is_key_frame);
@@ -83,9 +93,6 @@ protected:
   bool doSendAudio( const uint8_t* buffer,  uint64_t len);
 
   void UpdatePredictedFps(const long& timestamp);
-
-   void VideoThreadHandlerHigh();
-   void AudioThreadHandler();
 
    //receiver events
    void subscribeToVideoUser(const std::string& userId);
@@ -98,7 +105,8 @@ protected:
 
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,
-                           const size_t& length);
+                           const size_t& length,
+                           const uint64_t& ts);
 
    void handleUserStateChange(const std::string& userId, 
                               const UserState& newState);
@@ -108,6 +116,15 @@ protected:
 
     void unsubscribeAllVideo();
 
+    void publishUnpublishThreadFn();
+
+    void startPublishAudio();
+    void startPublishVideo();
+
+    void stopPublishAudio();
+    void stopPublishVideo();
+
+    void showFps();
 
  private:
 
@@ -141,13 +158,6 @@ protected:
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
     agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
-    std::shared_ptr<std::thread>                    _videoThreadHigh;
-    std::shared_ptr<std::thread>                    _videoThreadLow;
-
-    std::shared_ptr<std::thread>                    _audioThread;
-
-    WorkQueue_ptr                                   _videoJB;
-    WorkQueue_ptr                                   _audioJB;
 
     TimePoint                                       _lastVideoUserSwitchTime;
 
@@ -159,6 +169,34 @@ protected:
 
     event_fn                                         _eventfn;
     void*                                            _userEventData;
+
+    //from the app to agora sdk
+    SyncBuffer_ptr                                   _outSyncBuffer;
+    SyncBuffer_ptr                                   _inSyncBuffer;
+
+    int                                              _in_audio_delay;
+    int                                              _in_video_delay;
+
+    int                                              _out_audio_delay;
+    int                                              _out_video_delay;
+
+    agora_media_out_fn                                _videoOutFn;
+    void*                                             _videoOutUserData;
+
+    agora_media_out_fn                                _audioOutFn;
+    void*                                             _audioOutUserData;
+
+    TimePoint                                         _lastTimeAudioReceived;
+    TimePoint                                         _lastTimeVideoReceived;
+
+    std::shared_ptr<std::thread>                      _publishUnpublishCheckThread;
+
+    bool                                              _isPublishingAudio;
+    bool                                              _isPublishingVideo;
+
+    int                                               _videoOutFps;
+    int                                               _videoInFps;
+    TimePoint                                         _lastFpsPrintTime;
  };
 
 #endif

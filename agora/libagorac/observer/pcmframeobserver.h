@@ -10,7 +10,8 @@
 
 using OnNewAudioFrame_fn=std::function<void(const uint userId, 
                                         const uint8_t* buffer,
-                                        const size_t& size)>;
+                                        const size_t& size,
+                                        const uint64_t& ts)>;
 
 using OnUserSpeakingFn=std::function<void(const std::string& userId, const int& volume)>;
 
@@ -19,10 +20,8 @@ using OnUserSpeakingFn=std::function<void(const std::string& userId, const int& 
 
 class PcmFrameObserver : public agora::media::IAudioFrameObserver {
  public:
-  PcmFrameObserver(): _onAudioFrameReceived(nullptr),
-                    _onUserSpeaking(nullptr){
-    _pcmUsers.clear();
-  }
+
+  PcmFrameObserver();
 
   void onUserJoined(const std::string& userId);
   void onUserLeft(const std::string& userId);
@@ -41,6 +40,8 @@ class PcmFrameObserver : public agora::media::IAudioFrameObserver {
 
   void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
 
+  void setUserJoined(const bool& flag);
+
 protected:
 
 private:
@@ -50,6 +51,7 @@ private:
   std::map<std::string, AudioUser_ptr>   _pcmUsers;
 
   OnUserSpeakingFn                       _onUserSpeaking;
+  bool                                   _isUserJoined;
 };
 
 using PcmFrameObserver_ptr=std::shared_ptr<PcmFrameObserver>;

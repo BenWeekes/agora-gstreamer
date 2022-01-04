@@ -48,9 +48,9 @@ void on_agora_on_disconnected_fn(GstElement* object,
 
 void on_agora_on_uplink_info_updated_fn(GstElement* object,
 										guint video_encoder_target_bitrate_bps,
-                                        gpointer user_data){
+										gpointer user_data){
 
-    g_print("->Signal Test: uplink info updated: target bps %d\n", video_encoder_target_bitrate_bps);
+    //g_print("->Signal Test: uplink info updated: target bps %d\n", video_encoder_target_bitrate_bps);
 }
 
 void on_agora_on_connection_lost_fn(GstElement* object,gpointer user_data){
@@ -84,7 +84,7 @@ void on_remote_track_stats_fn(GstElement* object,
 
 					          gpointer user_data){
 
-    g_print("->Signal Test: remote stats for user %s: ", userName);
+    /*g_print("->Signal Test: remote stats for user %s: ", userName);
 	g_print("receivedBitrate: %d, ", receivedBitrate);
 	g_print("decoderOutputFrameRate: %d, ", decoderOutputFrameRate);
 	g_print("rendererOutputFrameRate: %d, ",rendererOutputFrameRate);
@@ -96,7 +96,7 @@ void on_remote_track_stats_fn(GstElement* object,
 	g_print("totalDecodedFrames: %d, ",totalDecodedFrames);
 	g_print("avSyncTimeMs: %d, ", avSyncTimeMs);
 	g_print("downlink_process_time_ms: %d, ", downlink_process_time_ms);
-	g_print("frame_render_delay_ms: %d\n",frame_render_delay_ms);
+	g_print("frame_render_delay_ms: %d\n",frame_render_delay_ms);*/
 }
 
 void on_local_track_stats_fn(GstElement* object,
@@ -118,7 +118,7 @@ void on_local_track_stats_fn(GstElement* object,
 							guint encoder_type,
 							gpointer user_data){
 
-	g_print("->Signal Test: local stats for user %s: \n", userName);
+	/*g_print("->Signal Test: local stats for user %s: \n", userName);
 	g_print("number_of_streams: %d, ", number_of_streams);	
 	g_print("bytes_major_stream: %d, ",bytes_major_stream);
     g_print("bytes_minor_stream: %d, ",bytes_minor_stream);
@@ -131,24 +131,26 @@ void on_local_track_stats_fn(GstElement* object,
 	g_print("total_bitrate_bps: %d, ",total_bitrate_bps);
 	g_print("width: %d, ", width);
 	g_print("height: %d, ",height);
-	g_print("encoder_type: %d \n", encoder_type);
+	g_print("encoder_type: %d \n", encoder_type);*/
 }
+
 void on_agora_on_user_state_changed_fn(GstElement* object,
                                        gchararray userName,
 							           gint newState,
                                        gpointer user_data){
 
- enum State{
+	enum State{
 
-   USER_STATE_JOIN=1,
-   USER_STATE_LEAVE,
-   USER_STATE_CAM_ON,
-   USER_STATE_CAM_OFF,
-   USER_STATE_MIC_ON,
-   USER_STATE_MIC_OFF
-};
-     switch (newState){
-		 case USER_STATE_JOIN:
+		USER_STATE_JOIN=1,
+		USER_STATE_LEAVE,
+		USER_STATE_CAM_ON,
+		USER_STATE_CAM_OFF,
+		USER_STATE_MIC_ON,
+		USER_STATE_MIC_OFF
+	};
+
+    switch (newState){
+		case USER_STATE_JOIN:
 		      g_print("->Endtest: on user state changed: userid=%s, state: join\n", userName);
 		      break;
 		case USER_STATE_LEAVE:
@@ -174,6 +176,12 @@ void on_agora_on_user_state_changed_fn(GstElement* object,
 void print_usage(char* name){
 	g_print("usage: %s appid channel\n", name);
 }
+
+int should_exit=0;
+void on_exit_signal(int signal){
+    should_exit=1;
+}
+
 int main(int argc, char *argv[]) {
 
 
@@ -184,7 +192,12 @@ int main(int argc, char *argv[]) {
 
   setenv("GST_PLUGIN_PATH","/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0",1);
 
-  char buffer[MAX_BUFFER];
+  //signal(SIGINT, on_exit_signal);
+
+  char video_pipe_str[MAX_BUFFER/4];
+  char audio_out_pipe_str[MAX_BUFFER/4];
+  char audio_in_pipe_str[MAX_BUFFER/4];
+  char complete_pipe_str[MAX_BUFFER];
 
   GstElement *pipeline;
 
@@ -201,10 +214,15 @@ int main(int argc, char *argv[]) {
   char* appid=argv[1];
   char* channel=argv[2];
 
-  snprintf (buffer, MAX_BUFFER, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=%s channel=%s userid=123 inport=7374 verbose=false ! fakesink", appid, channel);
+  snprintf (video_pipe_str, MAX_BUFFER/4, "v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue  ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 out-audio-delay=0 out-video-delay=70 verbose=false ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel);
+
+  snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
+  snprintf (audio_out_pipe_str, MAX_BUFFER/4,"alsasrc ! audio/x-raw,width=16,depth=16,rate=44100,channel=1 ! queue leaky=2 max-size-time=100000000 ! audioconvert ! audioresample quality=8 ! opusenc ! audio/x-opus,rate=48000,channels=1 ! udpsink host=127.0.0.1 port=7373");
+
+  snprintf (complete_pipe_str, MAX_BUFFER,"%s %s %s",video_pipe_str, audio_out_pipe_str, audio_in_pipe_str);
 
   pipeline = gst_parse_launch (
-     buffer
+     complete_pipe_str
 	,NULL);
 
   /* Start playing */
@@ -280,45 +298,15 @@ int main(int argc, char *argv[]) {
 
 	msg = gst_bus_timed_pop_filtered (bus, 1000*1000*1000, GST_MESSAGE_INFO|GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
 
-	if (msg == NULL) {
-
-		// Timed out. Send an EOS after N secs to end the call
-
-		static int secs = 1;
-
-		if (secs == 20) {
-
-		        gst_element_set_state(pipeline, GST_STATE_PAUSED);
-
-			g_print("Pause pipe\n");
-
-		}
-
-		if (secs == 40) {
-
-		        gst_element_set_state(pipeline, GST_STATE_PLAYING);
-
-			g_print("Resume pipe\n");
-
-		}
-
-		if (secs == 60) {
-
-		        gst_element_send_event(pipeline, gst_event_new_eos());
-				
-
-			g_print("EOS sent\n");
-
-		}
-
-		g_print("time - %d\n",secs++);
-
-		continue;
-
+    if(msg==NULL){
+       continue;
 	}
 
+    //send eos on exit (e.g., when user type ctrl +c)
+	if(should_exit){
+		gst_element_send_event(pipeline, gst_event_new_eos());
+	}
 	// Handle valid exit messages
-
 	switch (GST_MESSAGE_TYPE(msg)) {
 
 		case GST_MESSAGE_ERROR:

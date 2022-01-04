@@ -106,16 +106,12 @@ void ConnectionObserver::onConnectionLost(const agora::rtc::TConnectionInfo &con
 
 void ConnectionObserver::onUplinkNetworkInfoUpdated(const agora::rtc::UplinkNetworkInfo &info)
 {
-    //TODO:
-	/*AG_LOG(INFO, "onBandwidthEstimationUpdated: video_encoder_target_bitrate_bps %d\n",
-		   info.video_encoder_target_bitrate_bps);*/
-
-    std::cout<<"onUplinkNetworkInfoUpdated\n";
 
     if(_parent!=nullptr){
-         _parent->addEvent(AGORA_EVENT_ON_UPLINK_NETWORK_INFO_UPDATED,"",0,0);
+         _parent->addEvent(AGORA_EVENT_ON_UPLINK_NETWORK_INFO_UPDATED,"",info.video_encoder_target_bitrate_bps,0);
     }
 }
+
 
 void ConnectionObserver::onUserJoined(agora::user_id_t userId)
 {

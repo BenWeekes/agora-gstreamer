@@ -27,6 +27,6 @@ int getVideoSyncBytesPos(const uint8_t* buffer);
 
 TimePoint Now();
 
-int verifyLicense();
+uint64_t GetCurrentTimestamp();
  
 #endif
