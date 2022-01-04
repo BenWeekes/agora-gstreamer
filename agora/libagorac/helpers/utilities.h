@@ -29,4 +29,6 @@ TimePoint Now();
 
 uint64_t GetCurrentTimestamp();
  
+int verifyLicense();
+
 #endif

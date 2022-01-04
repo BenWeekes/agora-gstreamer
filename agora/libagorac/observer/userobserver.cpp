@@ -148,9 +148,9 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
       remoteStats[7]=stats.frozenRate;
       remoteStats[8]=stats.totalDecodedFrames;
 
-      remoteStats[9]=stats.avSyncTimeMs;
-      remoteStats[10]=stats.downlink_process_time_ms;
-      remoteStats[11]=stats.frame_render_delay_ms;
+      //remoteStats[9]=stats.avSyncTimeMs;
+      //remoteStats[10]=stats.downlink_process_time_ms;
+      //remoteStats[11]=stats.frame_render_delay_ms;
 
 
       std::string userId= std::to_string(stats.uid);
