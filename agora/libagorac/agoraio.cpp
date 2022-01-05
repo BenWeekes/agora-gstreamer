@@ -725,7 +725,7 @@ void AgoraIo::startPublishVideo(){
      _connection->getLocalUser()->publishVideo(_customVideoTrack);
     _isPublishingVideo=true;
 
-    std::cout<<"Agoraio: published Audio\n";
+    std::cout<<"Agoraio: published video\n";
 }
 
 void AgoraIo::stopPublishAudio(){
