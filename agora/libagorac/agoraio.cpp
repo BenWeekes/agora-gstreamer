@@ -259,10 +259,10 @@ bool  AgoraIo::init(char* in_app_id,
             addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_CAM_ON,0);
         }
         else if(messsage==0 && value==1){
-            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_ON,0);
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_OFF,0);
         }
         else if(messsage==0 && value==0){
-            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_OFF,0);
+            addEvent(AGORA_EVENT_ON_USER_STATE_CHANED,userId,USER_STATE_MIC_ON,0);
         }
 
     });
