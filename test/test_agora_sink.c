@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   char* appid=argv[1];
   char* channel=argv[2];
 
-  snprintf (complete_pipe_str, MAX_BUFFER/4, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink appid=%s channel=%s userid=123", appid, channel);
+  snprintf (complete_pipe_str, MAX_BUFFER/4, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink  appid=%s channel=%s userid=123", appid, channel);
   //snprintf (complete_pipe_str, MAX_BUFFER/4, " audiotestsrc wave=ticks apply-tick-ramp=true tick-interval=100000000 freq=10000 volume=0.4 marker-tick-period=10 sine-periods-per-tick=20  ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! audioconvert ! opusenc ! agorasink appid=%s channel=%s userid=123 audio=true", appid, channel);
 
 
