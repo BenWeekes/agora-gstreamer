@@ -52,6 +52,10 @@ cd release
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    
+## Test GStreamer
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! glimagesink
+
+   
  ## agoraioudp
 
 <ins>Video in/out from webcam</ins>     
