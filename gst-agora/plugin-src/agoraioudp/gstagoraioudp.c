@@ -253,7 +253,7 @@ int init_agora(Gstagoraioudp *agoraIO){
    }
 
     /*initialize agora*/
-   agoraIO->agora_ctx=agoraio_init2(agoraIO->app_id,  /*appid*/
+   agoraIO->agora_ctx=agoraio_init(agoraIO->app_id,  /*appid*/
                                 agoraIO->channel_id, /*channel*/
                                 agoraIO->user_id,    /*user id*/
                                  FALSE,             /*is audio user*/
@@ -270,7 +270,8 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  agoraIO->in_audio_delay,
                                  agoraIO->in_video_delay,
                                  agoraIO->out_audio_delay,
-                                 agoraIO->out_video_delay);  
+                                 agoraIO->out_video_delay,
+                                 0);                     /*send only flag*/
          
 
    if(agoraIO->agora_ctx==NULL){

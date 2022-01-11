@@ -27,19 +27,20 @@ class AgoraIo{
            const int& in_audio_delay,
            const int& in_video_delay,
            const int& out_audio_delay,
-           const int& out_video_delay);
+           const int& out_video_delay,
+           const bool& sendOnly=false);
 
    bool  init(char* in_app_id, 
-                        char* in_ch_id,
-                        char* in_user_id,
-                        bool is_audiouser,
-                        bool enable_enc,
-		                  short enable_dual,
-                        unsigned int  dual_vbr, 
-			               unsigned short  dual_width,
-                        unsigned short  dual_height,
-                        unsigned short min_video_jb,
-                        unsigned short dfps);
+               char* in_ch_id,
+               char* in_user_id,
+               bool is_audiouser,
+               bool enable_enc,
+               short enable_dual,
+               unsigned int  dual_vbr, 
+               unsigned short  dual_width,
+               unsigned short  dual_height,
+               unsigned short min_video_jb,
+               unsigned short dfps);
 
     int sendVideo(const uint8_t * buffer,  
                         uint64_t len,
@@ -75,6 +76,8 @@ class AgoraIo{
 
    void setVideoOutFn(agora_media_out_fn videoOutFn, void* userData);
    void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
+
+   void setSendOnly(const bool& flag);
    
 protected:
 
@@ -197,6 +200,8 @@ protected:
     int                                               _videoOutFps;
     int                                               _videoInFps;
     TimePoint                                         _lastFpsPrintTime;
+
+    bool                                              _sendOnly;
  };
 
 #endif

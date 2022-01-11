@@ -36,7 +36,8 @@ AgoraIo::AgoraIo(const bool& verbose,
                 const int& in_audio_delay,
                 const int& in_video_delay,
                 const int& out_audio_delay,
-                const int& out_video_delay):
+                const int& out_video_delay,
+                const bool& sendOnly):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
@@ -59,7 +60,8 @@ AgoraIo::AgoraIo(const bool& verbose,
  _isPublishingVideo(false),
  _videoOutFps(0),
  _videoInFps(0),
- _lastFpsPrintTime(Now()){
+ _lastFpsPrintTime(Now()),
+ _sendOnly(sendOnly){
 
    _activeUsers.clear();
 }
@@ -158,22 +160,23 @@ bool  AgoraIo::init(char* in_app_id,
    
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>();
-    if (_connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
+    if (_sendOnly==false && _connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
         logMessage("Agora: Failed to set audio frame parameters!");
         return false;
     }
 
-    if (_connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
+    if (_sendOnly==false && _connection->getLocalUser()->setPlaybackAudioFrameBeforeMixingParameters(1, 48000) != 0) {
         logMessage("Agora: Failed to set audio frame parameters!");
         return false;
     }
 
-    // Register connection observer to monitor connection event
-    _connectionObserver = std::make_shared<ConnectionObserver>(this);
-    _connection->registerObserver(_connectionObserver.get());
-    _connection->registerNetworkObserver(_connectionObserver.get());
-
-    _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
+    if(_sendOnly==false){
+        // Register connection observer to monitor connection event
+        _connectionObserver = std::make_shared<ConnectionObserver>(this);
+        _connection->registerObserver(_connectionObserver.get());
+        _connection->registerNetworkObserver(_connectionObserver.get());
+        _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
+    }
     auto res = _connection->connect(in_app_id, in_ch_id, in_user_id);
     if (res)
     {
@@ -214,39 +217,42 @@ bool  AgoraIo::init(char* in_app_id,
     startPublishAudio();
     startPublishVideo();
 
+    if(_sendOnly==false){
+        h264FrameReceiver = std::make_shared<H264FrameReceiver>();
+        _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
 
-    h264FrameReceiver = std::make_shared<H264FrameReceiver>();
-    _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
-
-    //video
-     _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
-    h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
+        //video
+        _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
+        h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
                                                     const uint8_t* buffer,
                                                     const size_t& length,
                                                     const int& isKeyFrame,
                                                     const uint64_t& ts){
 
-           receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
+            receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
 
-    });
+        });
 
-    //audio
-     _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
-    _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
+        //audio
+        _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
+        _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
                                                         const uint8_t* buffer,
                                                         const size_t& length,
                                                         const uint64_t& ts){
 
-          receiveAudioFrame(userId, buffer, length,ts);
-    });
+             receiveAudioFrame(userId, buffer, length,ts);
+        });
 
-    //connection observer: handles user join and leave
-    _connectionObserver->setOnUserStateChanged([this](const std::string& userId,
+        //connection observer: handles user join and leave
+        _connectionObserver->setOnUserStateChanged([this](const std::string& userId,
                                                       const UserState& newState){
-                                             
-        handleUserStateChange(userId, newState);
+                    
+                handleUserStateChange(userId, newState);
 
-    });
+        });
+    }
+
+    
 
     _userObserver->setOnUserInfofn([this](const std::string& userId, const int& messsage, const int& value){
         if(messsage==1 && value==1){
@@ -420,15 +426,17 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
  void AgoraIo::subscribeToVideoUser(const std::string& userId){
 
-    agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
-    subscriptionOptions.encodedFrameOnly = true;
-    subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
-    _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
+    if(_sendOnly==false){  
+        agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
+        subscriptionOptions.encodedFrameOnly = true;
+        subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
+        _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
 
-    _currentVideoUser=userId;
-    std::cout<<"subscribed to video user #"<<_currentVideoUser<<std::endl;
+        _currentVideoUser=userId;
+        std::cout<<"subscribed to video user #"<<_currentVideoUser<<std::endl;
 
-    addEvent(AGORA_EVENT_ON_VIDEO_SUBSCRIBED,userId,0,0);
+        addEvent(AGORA_EVENT_ON_VIDEO_SUBSCRIBED,userId,0,0);
+    }
  }
 
 
@@ -748,6 +756,10 @@ void AgoraIo::stopPublishVideo(){
     _isPublishingVideo=false;
 
     std::cout<<"Agoraio: unpublished video\n";
+}
+
+void AgoraIo::setSendOnly(const bool& flag){
+    _sendOnly=flag;
 }
 
 

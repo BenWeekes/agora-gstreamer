@@ -210,7 +210,7 @@ int init_agora(Gstagorasink * filter){
    }
 
    /*initialize agora*/
-   filter->agora_ctx=agoraio_init2(filter->app_id,  /*appid*/
+   filter->agora_ctx=agoraio_init(filter->app_id,  /*appid*/
                                 filter->channel_id, /*channel*/
                                 filter->user_id,    /*user id*/
                                  FALSE,             /*is audio user*/
@@ -227,13 +227,17 @@ int init_agora(Gstagorasink * filter){
                                  0,
                                  0,
                                  0,
-                                 0); 
+                                 0, 
+                                 1);    //sendonly flag
 
    if(filter->agora_ctx==NULL){
 
       g_print("agora COULD NOT  be initialized\n");
       return -1;   
    }
+
+   //for agorasink, we need to put it in sendonly mode
+   agoraio_set_sendonly_flag(filter->agora_ctx, 1);
 
    g_print("agora has been successfuly initialized\n");
   

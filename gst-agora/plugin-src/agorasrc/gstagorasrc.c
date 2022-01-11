@@ -170,7 +170,7 @@ int init_agora(Gstagorasrc * src){
    }
 
     /*initialize agora*/
-    src->agora_ctx=agoraio_init2(src->app_id,  /*appid*/
+    src->agora_ctx=agoraio_init(src->app_id,  /*appid*/
                                 src->channel_id, /*channel*/
                                 src->user_id,    /*user id*/
                                  FALSE,             /*is audio user*/
@@ -187,7 +187,8 @@ int init_agora(Gstagorasrc * src){
                                  0,
                                  0,
                                  0,
-                                 0); 
+                                 0,
+                                 0);    /*send only*/ 
   
    if(src->agora_ctx==NULL){
 

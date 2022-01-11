@@ -26,7 +26,7 @@ typedef void (*event_fn)(void* userData,
  typedef struct AgoraIoContext_t  AgoraIoContext_t;
 
 
- EXTERNC AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
+ EXTERNC AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                         bool is_audiouser,
                                         bool enc_enable,
 		                                short enable_dual,
@@ -41,7 +41,8 @@ typedef void (*event_fn)(void* userData,
 										int in_audio_delay,
 										int in_video_delay,
 										int out_audio_delay,
-										int out_video_delay);
+										int out_video_delay,
+										int sendOnly);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 
@@ -82,8 +83,9 @@ EXTERNC  void agoraio_set_video_out_handler(AgoraIoContext_t* ctx, agora_media_o
 
 EXTERNC  void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData);
 
+EXTERNC void agoraio_set_sendonly_flag(AgoraIoContext_t* ctx, int flag);
 
- #undef EXTERNC
+#undef EXTERNC
 
 
 #endif

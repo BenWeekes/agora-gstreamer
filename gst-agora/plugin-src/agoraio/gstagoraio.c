@@ -350,7 +350,7 @@ gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
  * register the element factories and other features
  */
 static gboolean
-agoraio_init (GstPlugin * agoraio)
+agoraio_init_agora (GstPlugin * agoraio)
 {
   /* debug category for fltering log messages
    *
@@ -381,7 +381,7 @@ GST_PLUGIN_DEFINE (
     GST_VERSION_MINOR,
     agoraio,
     "agoraio",
-    agoraio_init,
+    agoraio_init_agora,
     PACKAGE_VERSION,
     GST_LICENSE,
     GST_PACKAGE_NAME,
@@ -476,7 +476,7 @@ int init_agora(Gstagoraio *agoraIO){
    }
 
     /*initialize agora*/
-   agoraIO->agora_ctx=agoraio_init2(agoraIO->app_id,  /*appid*/
+   agoraIO->agora_ctx=agoraio_init(agoraIO->app_id,  /*appid*/
                                 agoraIO->channel_id, /*channel*/
                                 agoraIO->user_id,    /*user id*/
                                  FALSE,      /*is audio user*/
@@ -493,7 +493,8 @@ int init_agora(Gstagoraio *agoraIO){
                                  0,
                                  0,
                                  0,
-                                 0);               
+                                 0,
+                                 0);    /*send only*/               
 
    if(agoraIO->agora_ctx==NULL){
 

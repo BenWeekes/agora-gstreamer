@@ -78,7 +78,7 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
    meidaFile.close();
 }
 
-AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
+AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                         bool is_audiouser,
                                         bool enc_enable,
 		                                  short enable_dual,
@@ -93,7 +93,8 @@ AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
                                         int in_audio_delay,
 										          int in_video_delay,
 										          int out_audio_delay,
-										          int out_video_delay){
+										          int out_video_delay,
+                                        int sendOnly){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
@@ -106,7 +107,8 @@ AgoraIoContext_t*  agoraio_init2(char* app_id, char* ch_id, char* user_id,
                                            in_audio_delay,
                                            in_video_delay,
                                            out_audio_delay,
-                                           out_video_delay);
+                                           out_video_delay,
+                                           sendOnly);
 
     ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,
@@ -169,4 +171,11 @@ void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn,
    if(ctx==nullptr)  return;
 
    ctx->agoraIo->setAudioOutFn(fn, userData);
+}
+
+void agoraio_set_sendonly_flag(AgoraIoContext_t* ctx, int flag){
+
+  if(ctx==nullptr)  return;
+
+   ctx->agoraIo->setSendOnly(flag);
 }
