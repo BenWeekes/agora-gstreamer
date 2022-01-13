@@ -49,7 +49,8 @@ class AgoraIo{
 
    int sendAudio(const uint8_t * buffer,  
                         uint64_t len,
-                        long timestamp);
+                        long timestamp,
+                        const long& duration=0);
 
     void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);

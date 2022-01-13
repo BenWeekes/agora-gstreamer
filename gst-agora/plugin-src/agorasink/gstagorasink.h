@@ -84,10 +84,14 @@ struct _Gstagorasink
   
   gboolean audio;
 
+  gboolean enforce_audio_duration;
+
   /*agora context for sending audio and video */
   AgoraIoContext_t* agora_ctx;
 
   size_t                 ts;
+
+  GstClockTime           last_audio_buffer_pts;
 };
 
 struct _GstagorasinkClass 

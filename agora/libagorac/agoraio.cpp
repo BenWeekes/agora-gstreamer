@@ -321,6 +321,7 @@ bool  AgoraIo::init(char* in_app_id,
 
     _outSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength){
+
           doSendAudio(buffer, bufferLength);
     });
 
@@ -566,7 +567,10 @@ void AgoraIo::showFps(){
 
 int AgoraIo::sendAudio(const uint8_t * buffer,  
                        uint64_t len,
-                       long timestamp){
+                       long timestamp,
+                       const long& duration){
+
+    TimePoint nextAudiopacketTime=Now()+std::chrono::milliseconds(duration);
 
     //do nothing if we are in pause state
     if(_isPaused==true){
@@ -580,6 +584,12 @@ int AgoraIo::sendAudio(const uint8_t * buffer,
      }
 
     _lastTimeAudioReceived=Now();
+
+    //block this thread loop until the duration of the current buffer is elapsed
+    if(duration>0){
+
+        std::this_thread::sleep_until(nextAudiopacketTime);
+    }
 
     return 0;
 }

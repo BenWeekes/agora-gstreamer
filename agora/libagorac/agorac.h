@@ -47,12 +47,6 @@ typedef void (*event_fn)(void* userData,
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 
 
- EXTERNC int  agora_send_video(agora_context_t* ctx,  
-                               const unsigned char* buffer,  
-							    unsigned long len, 
-								int is_key_frame,
-							    long timestamp);
-
  EXTERNC int  agoraio_send_video(AgoraIoContext_t* ctx,  
                                 const unsigned char* buffer,  
 							    unsigned long len, 
@@ -66,6 +60,12 @@ EXTERNC int  agoraio_send_audio(AgoraIoContext_t* ctx,
                                const unsigned char* buffer,  
 							   unsigned long len,
 							   long timestamp);
+
+ EXTERNC int  agoraio_send_audio_with_duration(AgoraIoContext_t* ctx,  
+                               const unsigned char* buffer,  
+							   unsigned long len,
+							   long timestamp,
+							   long  duration);
 
  EXTERNC void agora_set_log_function(agora_context_t* ctx, agora_log_func_t f, void* log_ctx);
 

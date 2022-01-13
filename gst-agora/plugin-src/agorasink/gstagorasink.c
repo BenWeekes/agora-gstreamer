@@ -81,7 +81,8 @@ enum
   CHANNEL_ID,
   USER_ID,
   PROP_VERBOSE,
-  AUDIO
+  AUDIO,
+  ENFORCE_AUDIO_DURAION
 };
 
 /* the capabilities of the inputs and outputs.
@@ -133,6 +134,11 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
    g_object_class_install_property (gobject_class, AUDIO,
       g_param_spec_boolean ("audio", "audio", "when true, it sends audio to agora than video",
           FALSE, G_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class, ENFORCE_AUDIO_DURAION,
+      g_param_spec_boolean ("enforce-audio-duration", "enforce-audio-duration", "when true, audio duration is enforced by agorasink",
+          FALSE, G_PARAM_READWRITE));
+
 
   /*app id*/
   g_object_class_install_property (gobject_class, APP_ID,
@@ -194,6 +200,8 @@ gst_agorasink_init (Gstagorasink * filter)
   filter->verbose = FALSE;
   filter->audio = FALSE;
 
+  filter->enforce_audio_duration=FALSE;
+
   filter->ts=0;
 }
 
@@ -239,6 +247,8 @@ int init_agora(Gstagorasink * filter){
    //for agorasink, we need to put it in sendonly mode
    agoraio_set_sendonly_flag(filter->agora_ctx, 1);
 
+   filter->last_audio_buffer_pts=0;
+
    g_print("agora has been successfuly initialized\n");
   
 
@@ -272,6 +282,9 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
      case AUDIO: 
         filter->audio = g_value_get_boolean (value);
         break;
+    case ENFORCE_AUDIO_DURAION:
+        filter->enforce_audio_duration = g_value_get_boolean (value);
+        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -299,6 +312,9 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
        break;
     case AUDIO:
         g_value_set_boolean (value, filter->audio);
+        break;
+    case ENFORCE_AUDIO_DURAION:
+        g_value_set_boolean (value, filter->enforce_audio_duration);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -410,7 +426,15 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
       agoraio_send_video(filter->agora_ctx, data, data_size,is_key_frame, in_buffer_pts);
   }
   else{
-      agoraio_send_audio(filter->agora_ctx, data, data_size, in_buffer_pts);
+      long duration=(long)(GST_BUFFER_DURATION (in_buffer)/1000000.0);
+
+      if(filter->enforce_audio_duration){
+          agoraio_send_audio_with_duration(filter->agora_ctx, data, data_size, in_buffer_pts, duration-1);
+          filter->last_audio_buffer_pts=in_buffer_pts;
+      }
+      else{
+          agoraio_send_audio(filter->agora_ctx, data, data_size, in_buffer_pts);
+      }
   }
  
     
