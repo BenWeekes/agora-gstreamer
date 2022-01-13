@@ -570,7 +570,7 @@ int AgoraIo::sendAudio(const uint8_t * buffer,
                        long timestamp,
                        const long& duration){
 
-    TimePoint nextAudiopacketTime=Now()+std::chrono::milliseconds(duration);
+    TimePoint nextAudiopacketTime=_lastTimeAudioReceived+std::chrono::milliseconds(duration);
 
     //do nothing if we are in pause state
     if(_isPaused==true){
