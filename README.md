@@ -11,7 +11,7 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
    sudo apt install -y build-essential git libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip     
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
    
-## Test gstreamer install
+## Test gstreamer install (on PC as it needs display)
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! glimagesink    
  
 ## Build and install agora gstreamer plugins
