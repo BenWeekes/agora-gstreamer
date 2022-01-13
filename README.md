@@ -10,15 +10,17 @@ A gstreamer wrapper for Agora Linux SDK (sink and src)
    sudo apt-get install -y meson libswscale-dev x264 libx264-dev libopus-dev   
    sudo apt install -y build-essential git libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip     
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
+   
+## Test gstreamer install
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! glimagesink    
  
-## Build and install 
+## Build and install agora gstreamer plugins
    After installing the libraries above on your Ubuntu system         
    Clone this repo then      
    cd agora-gstreamer     
   ./build_all.sh
   
   If no errors are printed the new agora gs plugins will be installed on the system ready for use
-
 
 ## creating and installing a binary release:
 
@@ -52,10 +54,7 @@ cd release
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    
-## Test GStreamer
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! glimagesink
 
-   
  ## agoraioudp
 
 <ins>Video in/out from webcam</ins>     
