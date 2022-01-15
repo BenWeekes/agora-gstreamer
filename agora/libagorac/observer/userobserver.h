@@ -1,17 +1,23 @@
 //  Agora RTC/MEDIA SDK
 //
-//  Created by Pengfei Han in 2020-03.
+//  Created by ZZ in 2020-09.
 //  Copyright (c) 2020 Agora.io. All rights reserved.
 //
 
 #ifndef _USER_OBSERVER_H_
 #define _USER_OBSERVER_H_
 
+#include <map>
 #include <mutex>
+
 #include <functional>
 
 #include "AgoraBase.h"
+#include "NGIAgoraAudioTrack.h"
 #include "NGIAgoraLocalUser.h"
+#include "NGIAgoraMediaNodeFactory.h"
+#include "NGIAgoraMediaNode.h"
+#include "NGIAgoraVideoTrack.h"
 
 using OnUserInfofn=std::function<void(const std::string& userId, const int& messsage, const int& value)>;
 using OnUserVolumeChangedFn=std::function<void(const std::string& userId, const int& volume)>;
@@ -25,6 +31,9 @@ using OnUserLocalTrackStateFn=std::function<void(const std::string& userId,
 using OnIframeRequestFn=std::function<void()>;
 
 class UserObserver : public agora::rtc::ILocalUserObserver {
+  using VideoFrameObserverMap =
+      std::map<const std::string, agora::agora_refptr<agora::rtc::IVideoSinkBase>>;
+
  public:
   UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose);
   virtual ~UserObserver();
@@ -81,16 +90,6 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
     }
   }
 
-  void setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer) {
-    video_frame_observer_ = observer;
-  }
-
-  void unsetVideoFrameObserver() {
-    if (remote_video_track_ && video_frame_observer_) {
-      remote_video_track_->removeRenderer(video_frame_observer_);
-    }
-  }
-
  public:
   // inherit from agora::rtc::ILocalUserObserver
   void onAudioTrackPublishSuccess(
@@ -126,7 +125,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
                                     agora::rtc::REMOTE_VIDEO_STATE state,
                                     agora::rtc::REMOTE_VIDEO_STATE_REASON reason,
-                                    int elapsed) override {}
+                                    int elapsed) override;
 
   void onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
                                     const agora::rtc::RemoteVideoTrackStats& stats) override;
@@ -139,15 +138,12 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                    const agora::rtc::LocalVideoTrackStats& stats) override;
 
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
-                               unsigned int speakerNumber, int totalVolume) override;
+                               unsigned int speakerNumber, int totalVolume) override {}
 
   void onLocalAudioTrackStatistics(const agora::rtc::LocalAudioStats& stats) override {}
 
   void onRemoteAudioTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteAudioTrack> audioTrack,
                                     const agora::rtc::RemoteAudioTrackStats& stats) override {}
-                                  
-  void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
-  
 
   void onUserInfoUpdated(agora::user_id_t userId, USER_MEDIA_INFO msg, bool val) override;
 
@@ -170,17 +166,19 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   void onVideoPublishStateChanged(const char* channel, agora::rtc::STREAM_PUBLISH_STATE oldState,
                                   agora::rtc::STREAM_PUBLISH_STATE newState,
                                   int elapseSinceLastState) override {}
+
+    virtual void onStreamMessage(agora::user_id_t userId, int streamId, const char* data,
+                       size_t length) override;  
+
  private:
   agora::rtc::ILocalUser* local_user_{nullptr};
 
   agora::agora_refptr<agora::rtc::IRemoteAudioTrack> remote_audio_track_;
   agora::agora_refptr<agora::rtc::IRemoteVideoTrack> remote_video_track_;
-
   agora::rtc::IMediaPacketReceiver* media_packet_receiver_{nullptr};
   agora::rtc::IVideoEncodedImageReceiver* video_encoded_receiver_{nullptr};
   agora::media::IAudioFrameObserver* audio_frame_observer_{nullptr};
-  agora::agora_refptr<agora::rtc::IVideoSinkBase> video_frame_observer_{nullptr};
-
+  VideoFrameObserverMap videoFrameObservers_;
   std::mutex observer_lock_;
 
   OnUserInfofn           _onUserInfoChanged;
@@ -192,6 +190,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   OnUserRemoteTrackStateFn    _onRemoteTrackStats;
   OnUserLocalTrackStateFn     _onLocalTrackStats;
+
 };
 
 using UserObserver_ptr=std::shared_ptr<UserObserver>;

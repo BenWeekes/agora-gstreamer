@@ -4,6 +4,15 @@
 #include "../agoratype.h"
 #include "../observer/connectionobserver.h"
 
+#include "NGIAgoraRtcConnection.h"
+
+#include "IAgoraService.h"
+#include "NGIAgoraAudioTrack.h"
+#include "NGIAgoraLocalUser.h"
+#include "NGIAgoraMediaNodeFactory.h"
+#include "NGIAgoraMediaNode.h"
+#include "NGIAgoraVideoTrack.h"
+
 using AgoraVideoSender_ptr=agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>;
 using AgoraAudioSender_ptr=agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>;
 using AgoraVideoFrameType=agora::rtc::VIDEO_FRAME_TYPE;

@@ -11,6 +11,13 @@
 //agora header files
 #include "NGIAgoraRtcConnection.h"
 
+#include "IAgoraService.h"
+#include "NGIAgoraAudioTrack.h"
+#include "NGIAgoraLocalUser.h"
+#include "NGIAgoraMediaNodeFactory.h"
+#include "NGIAgoraMediaNode.h"
+#include "NGIAgoraVideoTrack.h"
+
 
 #include "helpers/agoradecoder.h"
 #include "helpers/agoraencoder.h"
