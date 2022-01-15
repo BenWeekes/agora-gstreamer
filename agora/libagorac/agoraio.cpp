@@ -61,7 +61,8 @@ AgoraIo::AgoraIo(const bool& verbose,
  _videoOutFps(0),
  _videoInFps(0),
  _lastFpsPrintTime(Now()),
- _sendOnly(sendOnly){
+ _sendOnly(sendOnly),
+ _lastSendTime(Now()){
 
    _activeUsers.clear();
 }
@@ -321,7 +322,6 @@ bool  AgoraIo::init(char* in_app_id,
 
     _outSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength){
-
           doSendAudio(buffer, bufferLength);
     });
 
@@ -523,6 +523,11 @@ bool AgoraIo::doSendAudio(const uint8_t* buffer,  uint64_t len){
 
   _audioSender->sendEncodedAudioFrame(buffer,len, audioFrameInfo);
 
+  //auto diff=GetTimeDiff(_lastSendTime, Now());
+  // logMessage("sent audo packet. diff time: "+std::to_string(diff));
+
+  //_lastSendTime=Now();
+
   return true;
 }
 
@@ -583,13 +588,12 @@ int AgoraIo::sendAudio(const uint8_t * buffer,
         _outSyncBuffer->addAudio(buffer, len, timestamp);
      }
 
-    _lastTimeAudioReceived=Now();
-
     //block this thread loop until the duration of the current buffer is elapsed
     if(duration>0){
-
         std::this_thread::sleep_until(nextAudiopacketTime);
     }
+
+    _lastTimeAudioReceived=Now();
 
     return 0;
 }

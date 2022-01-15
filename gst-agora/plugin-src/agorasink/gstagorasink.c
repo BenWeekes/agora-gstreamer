@@ -430,7 +430,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
 
       if(filter->enforce_audio_duration){
          // g_print("duration: %ld\n", duration);
-          agoraio_send_audio_with_duration(filter->agora_ctx, data, data_size, in_buffer_pts, duration*2);
+          agoraio_send_audio_with_duration(filter->agora_ctx, data, data_size, in_buffer_pts, duration);
           filter->last_audio_buffer_pts=in_buffer_pts;
       }
       else{

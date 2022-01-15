@@ -203,6 +203,8 @@ protected:
     TimePoint                                         _lastFpsPrintTime;
 
     bool                                              _sendOnly;
+
+    TimePoint                                         _lastSendTime;
  };
 
 #endif
