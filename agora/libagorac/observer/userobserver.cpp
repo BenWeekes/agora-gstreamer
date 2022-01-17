@@ -11,49 +11,6 @@
 
 #include "AgoraRefCountedObject.h"
 
-class VideoFrameObserver : public agora::rtc::IVideoSinkBase {
- public:
-  VideoFrameObserver(agora::user_id_t userId, const std::string& outputFilePath)
-      : userId_(std::string(userId)), outputFilePath_(outputFilePath), yuvFile_(nullptr) {}
-
-  int onFrame(const agora::media::base::VideoFrame& videoFrame) override;
-
-  virtual ~VideoFrameObserver() = default;
-
- private:
-  std::string userId_;
-  std::string outputFilePath_;
-  FILE* yuvFile_;
-};
-
-int VideoFrameObserver::onFrame(const agora::media::base::VideoFrame& videoFrame) {
-  // Create new file to save received YUV frames
-  if (!yuvFile_) {
-    std::string fileName = outputFilePath_ + "_" + std::string(userId_) + ".yuv";
-    if (!(yuvFile_ = fopen(fileName.c_str(), "w+"))) {
-      return -1;
-    }
-  }
-
-  // Write Y planar
-  size_t writeBytes = videoFrame.yStride * videoFrame.height;
-  if (fwrite(videoFrame.yBuffer, 1, writeBytes, yuvFile_) != writeBytes) {
-    return -1;
-  }
-
-  // Write U planar
-  writeBytes = videoFrame.uStride * videoFrame.height / 2;
-  if (fwrite(videoFrame.uBuffer, 1, writeBytes, yuvFile_) != writeBytes) {
-    return -1;
-  }
-
-  // Write V planar
-  writeBytes = videoFrame.vStride * videoFrame.height / 2;
-  if (fwrite(videoFrame.vBuffer, 1, writeBytes, yuvFile_) != writeBytes) {
-    return -1;
-  }
-  return 0;
-};
 
 UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbose)
     : local_user_(local_user),
@@ -62,9 +19,8 @@ UserObserver::UserObserver(agora::rtc::ILocalUser* local_user, const bool& verbo
     _onIframeRequest(nullptr),
     _verbose(verbose),
     _onRemoteTrackStats(nullptr),
-    _onLocalTrackStats(nullptr){
-
-     local_user_->registerLocalUserObserver(this);
+    _onLocalTrackStats(nullptr) {
+  local_user_->registerLocalUserObserver(this);
 }
 
 UserObserver::~UserObserver() {
@@ -109,7 +65,7 @@ void UserObserver::onUserVideoTrackSubscribed(
     agora::user_id_t userId, agora::rtc::VideoTrackInfo trackInfo,
     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack) {
   
-  /*std::lock_guard<std::mutex> _(observer_lock_);
+  std::lock_guard<std::mutex> _(observer_lock_);
   remote_video_track_ = videoTrack;
   if (remote_video_track_ && video_encoded_receiver_) {
     remote_video_track_->registerVideoEncodedImageReceiver(video_encoded_receiver_);
@@ -117,21 +73,17 @@ void UserObserver::onUserVideoTrackSubscribed(
   if (remote_video_track_ && media_packet_receiver_) {
     remote_video_track_->registerMediaPacketReceiver(media_packet_receiver_);
   }
-  if (videoTrack) {
-    agora::agora_refptr<agora::rtc::IVideoSinkBase> videoFrameObserver =
-        new agora::RefCountedObject<VideoFrameObserver>(userId, outputFilePath_);
-    videoTrack->addRenderer(videoFrameObserver);
-    videoFrameObservers_.emplace(std::string(userId), videoFrameObserver);
-  }*/
+  if (remote_video_track_ && video_frame_observer_) {
+    remote_video_track_->addRenderer(video_frame_observer_);
+  }
 }
 
 void UserObserver::onUserInfoUpdated(agora::user_id_t userId,
-                                                 ILocalUserObserver::USER_MEDIA_INFO msg,
-                                                 bool val) {
+                                                ILocalUserObserver::USER_MEDIA_INFO msg, bool val) {
 
-    if(_onUserInfoChanged!=nullptr){
+  if(_onUserInfoChanged!=nullptr){
        _onUserInfoChanged(userId, msg, val);
-    }
+   }
 
    if(_verbose){
        std::cout<<"UserObserver::onUserInfoUpdated: "
@@ -140,7 +92,8 @@ void UserObserver::onUserInfoUpdated(agora::user_id_t userId,
            <<", msg "<<msg
            <<", val "<<val 
            <<std::endl;
-    }
+   }
+    
 }
 
 void UserObserver::onUserAudioTrackStateChanged(
@@ -151,7 +104,7 @@ void UserObserver::onUserAudioTrackStateChanged(
 }
 
 void UserObserver::onIntraRequestReceived() {
-
+  
    if(_onIframeRequest){
       _onIframeRequest();
   }
@@ -160,24 +113,23 @@ void UserObserver::onIntraRequestReceived() {
    std::cout<<"Agora sdk requested an iframe\n";
 }
 
-void UserObserver::onUserVideoTrackStateChanged(
-    agora::user_id_t userId, agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
-    agora::rtc::REMOTE_VIDEO_STATE state, agora::rtc::REMOTE_VIDEO_STATE_REASON reason,
-    int elapsed) {
-  if (state == agora::rtc::REMOTE_VIDEO_STATE_STOPPED) {
-    auto it = videoFrameObservers_.find(std::string(userId));
-    if (it == videoFrameObservers_.end()) {
-      return;
-    }
-    agora::agora_refptr<agora::rtc::IVideoSinkBase> videoFrameObserver =
-        videoFrameObservers_[userId];
-  }
+void UserObserver::onStreamMessage(agora::user_id_t userId, int streamId, const char* data,size_t length){
+ 
+}
+
+void UserObserver::setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
+
+    _onRemoteTrackStats=fn;
+}
+void UserObserver::setOnUserLocalTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
+
+    _onLocalTrackStats=fn;
 }
 
 void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
-                                                const agora::rtc::RemoteVideoTrackStats& stats) {
+                                    const agora::rtc::RemoteVideoTrackStats& stats){
 
-     if(_onRemoteTrackStats!=nullptr){
+    if(_onRemoteTrackStats!=nullptr){
 
       const int MAX_STATES=15;
       long remoteStats[MAX_STATES];
@@ -206,9 +158,9 @@ void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::
 }
 
 void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
-                                              const agora::rtc::LocalVideoTrackStats& stats){
-
-    if(_onRemoteTrackStats!=nullptr){
+                                   const agora::rtc::LocalVideoTrackStats& stats) 
+{
+     if(_onRemoteTrackStats!=nullptr){
 
       const int MAX_STATES=15;
       long localStats[MAX_STATES];
@@ -236,16 +188,22 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
       _onLocalTrackStats("Local", localStats);
      }
 
-}
-
-void UserObserver::onStreamMessage(agora::user_id_t userId, int streamId, const char* data,size_t length){
-}
-
-void UserObserver::setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
-
-    _onRemoteTrackStats=fn;
-}
-void UserObserver::setOnUserLocalTrackStatsFn(const OnUserRemoteTrackStateFn& fn){
-
-    _onLocalTrackStats=fn;
+     /*if(_verbose==false)  return;
+     std::cout<< "video stats (local): "
+            <<" number_of_streams "<<stats.number_of_streams
+            <<", bytes_major_stream "<<stats.bytes_major_stream
+            <<", bytes_minor_stream "<<stats.bytes_minor_stream
+            <<", frames_encoded "<<stats.frames_encoded
+            <<", ssrc_major_stream "<<stats.ssrc_major_stream
+            <<", ssrc_minor_stream "<<stats.ssrc_minor_stream
+            <<", input_frame_rate "<<stats.input_frame_rate
+            <<", encode_frame_rate "<<stats.encode_frame_rate
+            <<", render_frame_rate "<<stats.render_frame_rate
+            <<", target_media_bitrate_bps "<<stats.target_media_bitrate_bps
+            <<", media_bitrate_bps "<<stats.media_bitrate_bps
+            <<", total_bitrate_bps "<<stats.total_bitrate_bps
+            <<", width "<<stats.width
+            <<", height "<<stats.height
+            <<", encoder_type "<<stats.encoder_type
+            <<std::endl;*/
 }
