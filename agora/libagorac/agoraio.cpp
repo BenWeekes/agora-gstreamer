@@ -139,6 +139,13 @@ bool  AgoraIo::init(char* in_app_id,
     
     _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
 
+    //the channel profile. For details, see #CHANNEL_PROFILE_TYPE. The default channel profile is CHANNEL_PROFILE_LIVE_BROADCASTING
+    _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
+    //_rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION_1v1;
+    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING;
+    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_CLOUD_GAMING;
+    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING_2;
+
     _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false; 
