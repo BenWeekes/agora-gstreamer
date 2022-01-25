@@ -96,23 +96,12 @@ bool PcmFrameObserver::onMixedAudioFrame(AudioFrame& audioFrame){
    return true;
 }
 
-int calcVol(const int16_t* samples, const uint16_t& packetLen){
-	
-       int32_t sum=0;
-       for(int i=0;i<packetLen;i++)	
-         sum +=std::abs(samples[i]);
-	
-       return sum/(double)packetLen;
-}
+
 
  bool PcmFrameObserver::onPlaybackAudioFrame(AudioFrame& audioFrame){
 
    if(_onAudioFrameReceived!=nullptr && _isUserJoined){
 
-         auto volume=calcVol((const int16_t*)audioFrame.buffer, audioFrame.samplesPerChannel);
-        if(volume>0){
-           std::cout<<"audio volume: "<<volume<<std::endl;
-        }
         _onAudioFrameReceived(0, 
                               (const unsigned char*)audioFrame.buffer,
                                audioFrame.samplesPerChannel*2,
