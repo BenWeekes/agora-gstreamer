@@ -360,10 +360,11 @@ bool  AgoraIo::init(char* in_app_id,
                                          const size_t& bufferLength){
 
         
-        auto volume=calcVol((const int16_t*)buffer, bufferLength/2);
-        if(volume>0){
-           std::cout<<"audio volume: "<<volume<<std::endl;
-        }
+        //TODO: we can print volume for each few seconds to make sure we got audio from the sdk
+        //auto volume=calcVol((const int16_t*)buffer, bufferLength/2);
+        //if(volume>0){
+          // std::cout<<"audio volume: "<<volume<<std::endl;
+       // }
         
         if(_audioOutFn!=nullptr){
             _audioOutFn(buffer, bufferLength, _audioOutUserData); 
