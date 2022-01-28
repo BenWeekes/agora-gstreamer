@@ -125,6 +125,15 @@ bool AgoraIo::doConnect(const std::string& appid)
     return true;
 }
 
+int calcVol(const int16_t* samples, const uint16_t& packetLen){
+	
+       int32_t sum=0;
+       for(int i=0;i<packetLen;i++)	
+         sum +=std::abs(samples[i]);
+	
+       return sum/(double)packetLen;
+}
+
 #define ENC_KEY_LENGTH        128
 bool  AgoraIo::init(char* in_app_id, 
                         char* in_ch_id,
@@ -152,7 +161,6 @@ bool  AgoraIo::init(char* in_app_id,
     //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING;
     //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_CLOUD_GAMING;
     //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING_2;
-
 
     _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
@@ -358,6 +366,13 @@ bool  AgoraIo::init(char* in_app_id,
     _inSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength){
 
+        
+        //TODO: we can print volume for each few seconds to make sure we got audio from the sdk
+        //auto volume=calcVol((const int16_t*)buffer, bufferLength/2);
+        //if(volume>0){
+          // std::cout<<"audio volume: "<<volume<<std::endl;
+       // }
+        
         if(_audioOutFn!=nullptr){
             _audioOutFn(buffer, bufferLength, _audioOutUserData); 
         } 
