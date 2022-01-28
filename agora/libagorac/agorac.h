@@ -42,7 +42,8 @@ typedef void (*event_fn)(void* userData,
 										int in_video_delay,
 										int out_audio_delay,
 										int out_video_delay,
-										int sendOnly);
+										int sendOnly,
+										int enableProxy);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 

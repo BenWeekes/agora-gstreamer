@@ -108,6 +108,8 @@ struct _Gstagoraioudp
   gint  out_audio_delay;
   gint  out_video_delay;
 
+  gboolean    proxy;
+
   GstClockTime                 video_ts;
   GstClockTime                 audio_ts;
 

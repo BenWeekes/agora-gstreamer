@@ -44,7 +44,8 @@ AgoraIo::AgoraIo(const bool& verbose,
                 const int& in_video_delay,
                 const int& out_audio_delay,
                 const int& out_video_delay,
-                const bool& sendOnly):
+                const bool& sendOnly,
+                const bool& enableProxy):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
@@ -69,7 +70,8 @@ AgoraIo::AgoraIo(const bool& verbose,
  _videoInFps(0),
  _lastFpsPrintTime(Now()),
  _sendOnly(sendOnly),
- _lastSendTime(Now()){
+ _lastSendTime(Now()),
+ _enableProxy(enableProxy){
 
    _activeUsers.clear();
 }
@@ -201,6 +203,14 @@ bool  AgoraIo::init(char* in_app_id,
         _connection->registerNetworkObserver(_connectionObserver.get());
         _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     }
+
+    //enable connection via proxy when required
+    if (_enableProxy == true) {
+        agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
+        agoraParameter->setBool("rtc.enable_proxy", true);
+        std::cout<<"proxy will be enabled on this connection\n";
+    }
+
     auto res = _connection->connect(in_app_id, in_ch_id, in_user_id);
     if (res)
     {

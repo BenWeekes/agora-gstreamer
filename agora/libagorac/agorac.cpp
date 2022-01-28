@@ -106,7 +106,8 @@ AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
 										          int in_video_delay,
 										          int out_audio_delay,
 										          int out_video_delay,
-                                        int sendOnly){
+                                        int sendOnly,
+                                        int enableProxy){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
@@ -120,7 +121,8 @@ AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                            in_video_delay,
                                            out_audio_delay,
                                            out_video_delay,
-                                           sendOnly);
+                                           sendOnly,
+                                           enableProxy);
 
     ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,
