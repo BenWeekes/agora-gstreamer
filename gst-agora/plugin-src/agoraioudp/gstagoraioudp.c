@@ -110,7 +110,8 @@ enum
   IN_AUDIO_DELAY,
   IN_VIDEO_DELAY,
   OUT_AUDIO_DELAY,
-  OUT_VIDEO_DELAY
+  OUT_VIDEO_DELAY,
+  PROXY
 };
 
 
@@ -147,36 +148,6 @@ static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* use
 
 static void handle_audio_out_fn(const u_int8_t* buffer, u_int64_t len, void* user_data );
 
-
-/*static void on_request_audio_data (GstAppSrc *appsrc, guint unused_size,
-                           gpointer    user_data)
-{   
-    static GstClockTime timestamp = 0;
-    GstBuffer *buffer;
-    GstFlowReturn ret;
-    size_t data_size=0;
-
-    size_t  max_data_size=960*2*2;  //two channels of 48000 sample rate
-
-    AgoraIoContext_t* agora_ctx=(AgoraIoContext_t*)user_data;
-
-    gpointer recv_data=malloc(max_data_size);
-    data_size=agoraio_read_audio(agora_ctx, recv_data, max_data_size);
-
-    buffer = gst_buffer_new_allocate (NULL, data_size, NULL);
-    gst_buffer_fill(buffer, 0, recv_data, data_size);
-    gst_buffer_set_size(buffer, data_size);
-
-    timestamp += GST_BUFFER_DURATION (buffer);
-
-    //g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
-    ret = gst_app_src_push_buffer(appsrc, buffer);
-
-    if (ret != GST_FLOW_OK) {
-       // g_print("not able to push audio data\n");
-         something wrong, stop pushing 
-    }
-}*/
 
 /* The appsink has received a buffer */
 static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
@@ -266,12 +237,14 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  30,                /*dual fps*/
                                  agoraIO->verbose,  /*log level*/
                                  handle_event_Signal, /*signal function to call*/
-                                (void*)(agoraIO),      /*additional params to the signal function*/ 
+                                (void*)(agoraIO),     /*additional params to the signal function*/ 
                                  agoraIO->in_audio_delay,
                                  agoraIO->in_video_delay,
                                  agoraIO->out_audio_delay,
                                  agoraIO->out_video_delay,
-                                 0);                     /*send only flag*/
+                                 0,                    /*send only flag*/
+                                 agoraIO->proxy        /*enable proxy*/
+                                 );                    
          
 
    if(agoraIO->agora_ctx==NULL){
@@ -355,10 +328,6 @@ int init_agora(Gstagoraioudp *agoraIO){
     g_object_set (G_OBJECT (agoraIO->udpsrc),
              "port", agoraIO->in_port,
               NULL);
-
-    //agoraIO->cbs.need_data = on_request_audio_data;
-    //gst_app_src_set_callbacks(GST_APP_SRC_CAST(agoraIO->appAudioSrc),
-    //                             &agoraIO->cbs, agoraIO->agora_ctx, NULL);
 
     //set the pipeline in playing mode
     gst_element_set_state (agoraIO->out_pipeline, GST_STATE_PLAYING);
@@ -677,13 +646,13 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
 
   /*in port*/
   g_object_class_install_property (gobject_class, IN_PORT,
-      g_param_spec_int ("inport", "inport", "udp port that we receive audio on it",0, G_MAXUINT16,
+      g_param_spec_int ("inport", "inport", "inport udp port for audio in",0, G_MAXUINT16,
           5004, G_PARAM_READWRITE));
     
 
   /*out port*/
   g_object_class_install_property (gobject_class, OUT_PORT,
-      g_param_spec_int ("outport", "outport", "udp port that we send audio on it", 0, G_MAXUINT16,
+      g_param_spec_int ("outport", "outport", "outport udp port for audio out", 0, G_MAXUINT16,
           5004, G_PARAM_READWRITE));
 
   /*host*/
@@ -710,6 +679,10 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
   g_object_class_install_property (gobject_class, OUT_VIDEO_DELAY,
       g_param_spec_int ("out-video-delay", "out-video-delay", "amount of delay (ms) for video from agora SDK -> gst ", 0, G_MAXUINT16,
           0, G_PARAM_READWRITE));
+
+   g_object_class_install_property (gobject_class, PROXY,
+      g_param_spec_boolean ("proxy", "proxy", "place call via proxy  ?",
+          FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -883,6 +856,9 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
     case OUT_VIDEO_DELAY: 
        agoraIO->out_video_delay=g_value_get_int (value);
        break;
+    case PROXY:
+       agoraIO->proxy = g_value_get_boolean (value);
+       break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -931,6 +907,9 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
         break;
     case OUT_VIDEO_DELAY: 
         g_value_set_int(value, agoraIO->out_video_delay);
+        break;
+    case PROXY:
+        g_value_set_boolean (value, agoraIO->proxy);
        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

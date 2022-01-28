@@ -236,7 +236,9 @@ int init_agora(Gstagorasink * filter){
                                  0,
                                  0,
                                  0, 
-                                 1);    //sendonly flag
+                                 1,                  /*sendonly flag*/
+                                 FALSE               /*enable proxy*/
+                                 );    
 
    if(filter->agora_ctx==NULL){
 

@@ -494,7 +494,9 @@ int init_agora(Gstagoraio *agoraIO){
                                  0,
                                  0,
                                  0,
-                                 0);    /*send only*/               
+                                 0,                  /*send only*/       
+                                 FALSE               /*enable proxy*/
+                                 );            
 
    if(agoraIO->agora_ctx==NULL){
 

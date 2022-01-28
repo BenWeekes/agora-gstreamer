@@ -28,7 +28,8 @@ class AgoraIo{
            const int& in_video_delay,
            const int& out_audio_delay,
            const int& out_video_delay,
-           const bool& sendOnly=false);
+           const bool& sendOnly=false,
+           const bool& enableProxy=false);
 
    bool  init(char* in_app_id, 
                char* in_ch_id,
@@ -205,6 +206,8 @@ protected:
     bool                                              _sendOnly;
 
     TimePoint                                         _lastSendTime;
+
+    bool                                              _enableProxy;
  };
 
 #endif

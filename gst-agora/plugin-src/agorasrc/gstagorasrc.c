@@ -188,7 +188,9 @@ int init_agora(Gstagorasrc * src){
                                  0,
                                  0,
                                  0,
-                                 0);    /*send only*/ 
+                                 0,                 /*send only*/    
+                                 FALSE               /*enable proxy*/   
+                                 );    
   
    if(src->agora_ctx==NULL){
 
