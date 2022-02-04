@@ -479,6 +479,9 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
     int    is_key_frame=0;
 
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
+    if(agoraIO->agora_ctx==NULL){
+        return GST_FLOW_ERROR;
+    }
 
     //do nothing in case of pause
     if(agoraIO->state==PAUSED){
@@ -526,7 +529,7 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
             g_print("AgoraIO: state change: NULL to READY \n");   
             if(agoraIO->agora_ctx==NULL && init_agora(agoraIO)!=TRUE){
                 g_print("cannot initialize agora\n");
-                return GST_FLOW_ERROR;
+                return GST_STATE_CHANGE_NO_PREROLL;
              }
             break;
 	   case GST_STATE_CHANGE_READY_TO_NULL:
@@ -578,7 +581,11 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
        }
        break;
     case GST_EVENT_EOS:
+         g_print("agoraioudp received a disconnect event\n");
         agoraIO->state=ENDED;
+        if(agoraIO->agora_ctx==NULL){
+            return GST_STATE_CHANGE_SUCCESS;
+        }
         gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
         gst_element_send_event(agoraIO->out_pipeline, gst_event_new_eos());
         
