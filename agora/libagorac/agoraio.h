@@ -83,17 +83,24 @@ class AgoraIo{
    
 protected:
 
-  bool doConnect(const std::string& appid);
+  bool initAgoraService(const std::string& appid);
 
-  agora::base::IAgoraService* createAndInitAgoraService(bool enableAudioDevice,
-                                                        bool enableAudioProcessor,
-						                                      bool enableVideo,
-						                                      bool stringUserid,
-						                                      bool enableEncryption,
-                                                        const char* appid);
+  bool doConnect(char* in_app_id,
+                 char* in_channel_id,
+                 char* in_user_id);
+
+
+ //retry to connect
+ bool retryConnect(char* in_app_id,
+                 char* in_channel_id,
+                 char* in_user_id,
+                 int timeout);   
+
+  bool checkConnection();
 
   bool doSendHighVideo(const uint8_t* buffer,
-                       uint64_t len,int is_key_frame);
+                       uint64_t len,
+                       int is_key_frame);
 
   bool doSendAudio( const uint8_t* buffer,  uint64_t len);
 
@@ -208,6 +215,7 @@ protected:
     TimePoint                                         _lastSendTime;
 
     bool                                              _enableProxy;
+    int                                               _proxyConnectionTimeOut;                               
  };
 
 #endif

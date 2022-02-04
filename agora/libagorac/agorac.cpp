@@ -124,10 +124,14 @@ AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                            sendOnly,
                                            enableProxy);
 
-    ctx->agoraIo->init(app_id, ch_id,user_id,
+    auto ret=ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,
                        dual_vbr, dual_width, dual_height,
                        min_video_jb, dfps);
+
+    if(ret==false){
+       return nullptr;
+    }
 
     return ctx;
 
