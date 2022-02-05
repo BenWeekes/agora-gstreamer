@@ -191,7 +191,6 @@ static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
 
     free(data);
 
-
     gst_sample_unref (sample);
     return GST_FLOW_OK;
   }
@@ -355,7 +354,8 @@ int init_agora(Gstagoraioudp *agoraIO){
     g_signal_connect (agoraIO->appAudioSink, "new-sample",
                     G_CALLBACK (new_sample), agoraIO->agora_ctx);
 
-  
+    g_print("agoraioupd is running on full mode: audio and video\n");
+
    return TRUE;
 }
 
