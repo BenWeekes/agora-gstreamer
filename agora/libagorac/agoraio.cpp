@@ -159,9 +159,11 @@ bool AgoraIo::doConnect(char* in_app_id,
 
             std::cout<<"trying to connect  with proxy enabled ...\n";
             agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
-            agoraParameter->setBool("rtc.enable_proxy", true);
-            //agoraParameter->setParameters("{\"rtc.proxy_server\":[5, \"\\\"148.153.53.105\\\", \\\"128.1.77.34\\\", \\\"128.1.78.146\\\", \\\"128.1.78.94\\\",\\\"148.153.53.106\\\"\", 0]} ");
-            //agoraParameter->setParameters("{\"rtc.proxy_server\":[4, \"\\\"148.153.53.105\\\", \\\"128.1.77.34\\\", \\\"128.1.78.146\\\", \\\"148.153.53.106\\\"\", 0]} ");
+            
+            //agoraParameter->setBool("rtc.enable_proxy", true);
+            //agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \\\"128.1.77.34\\\", \\\"128.1.78.146\\\", 0], \"rtc.enable_proxy\":true}");
+
+            agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \"[\\\"128.1.77.34\\\", \\\"128.1.78.146\\\"]\", 0], \"rtc.enable_proxy\":true}");
 
             auto res = _connection->connect(in_app_id, in_channel_id, in_user_id);
             if (res){
