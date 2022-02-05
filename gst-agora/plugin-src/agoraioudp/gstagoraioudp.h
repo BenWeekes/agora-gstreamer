@@ -110,6 +110,11 @@ struct _Gstagoraioudp
 
   gboolean    proxy;
 
+  gint        mode;                     //different modes of the plugin
+  gchar       proxy_ips[MAX_STRING_LEN];
+  gint        reconnect_timeout;
+
+
   GstClockTime                 video_ts;
   GstClockTime                 audio_ts;
 

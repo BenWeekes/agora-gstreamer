@@ -111,7 +111,15 @@ enum
   IN_VIDEO_DELAY,
   OUT_AUDIO_DELAY,
   OUT_VIDEO_DELAY,
-  PROXY
+  PROXY,
+  OPERATIONAL_MODE
+};
+
+enum {
+
+    OPERATION_MODE_1=1,   /*do nothing at all*/
+    OPERATION_MODE_2=2,   /*no audio in or audio out*/
+    OPERATION_MODE_3=3    /*full mode*/
 };
 
 
@@ -223,6 +231,11 @@ int init_agora(Gstagoraioudp *agoraIO){
        return -1;
    }
 
+   if(agoraIO->mode<2){
+       g_print("agoraioupd is running on basic mode: no video nor audio\n");
+       return TRUE;
+   }
+
     /*initialize agora*/
    agoraIO->agora_ctx=agoraio_init(agoraIO->app_id,  /*appid*/
                                 agoraIO->channel_id, /*channel*/
@@ -263,6 +276,10 @@ int init_agora(Gstagoraioudp *agoraIO){
 
   
    g_print("agora has been successfuly initialized\n");
+   if(agoraIO->mode<3){
+       g_print("agoraioupd is running mode 2: no audio\n");
+       return TRUE;
+   }
 
    agoraIO->appAudioSrc= gst_element_factory_make ("appsrc", "source");
    if(!agoraIO->appAudioSrc){
@@ -453,6 +470,9 @@ static void handle_audio_out_fn(const u_int8_t* data_buffer, u_int64_t len, void
     GstFlowReturn ret;
     
     Gstagoraioudp* agoraIO=(Gstagoraioudp*)(user_data);
+    if(agoraIO->mode<OPERATION_MODE_3){
+        return;
+    }
 
     buffer = gst_buffer_new_allocate (NULL, len, NULL);
     gst_buffer_fill(buffer, 0, data_buffer, len);
@@ -478,7 +498,12 @@ static GstFlowReturn gst_agoraio_chain (GstPad * pad, GstObject * parent, GstBuf
     size_t data_size=0;
     int    is_key_frame=0;
 
+
     Gstagoraioudp *agoraIO=GST_AGORAIOUDP (parent);
+    if(agoraIO->mode<OPERATION_MODE_2){
+        return GST_FLOW_OK;
+    }
+
     if(agoraIO->agora_ctx==NULL){
         return GST_FLOW_ERROR;
     }
@@ -520,7 +545,6 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
 {
 
   GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
-
   Gstagoraioudp *agoraIO=GST_AGORAIOUDP (element);
 
   g_print("AgoraIO: state change request from the plugin: \n");
@@ -563,6 +587,24 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
   return ret;
 }
 
+static void release_audio_pipelines(Gstagoraioudp *agoraIO){
+
+    if(agoraIO->mode>2){
+
+        gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
+        gst_element_send_event(agoraIO->out_pipeline, gst_event_new_eos());
+        
+        if(!gst_element_set_state (agoraIO->in_pipeline, GST_STATE_NULL) ||
+           !gst_element_set_state (agoraIO->out_pipeline, GST_STATE_NULL)){
+               g_print("not able to stop audio plugins!\n");
+        }
+
+        //release internal pipelines
+        gst_object_unref (agoraIO->in_pipeline);
+        gst_object_unref (agoraIO->out_pipeline);
+    }
+}
+
 /* this function handles sink events */
 static gboolean
 gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
@@ -584,22 +626,12 @@ gst_agoraio_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
          g_print("agoraioudp received a disconnect event\n");
         agoraIO->state=ENDED;
         if(agoraIO->agora_ctx==NULL){
-            return GST_STATE_CHANGE_SUCCESS;
-        }
-        gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
-        gst_element_send_event(agoraIO->out_pipeline, gst_event_new_eos());
-        
-        if(!gst_element_set_state (agoraIO->in_pipeline, GST_STATE_NULL) ||
-           !gst_element_set_state (agoraIO->out_pipeline, GST_STATE_NULL)){
-               g_print("not able to stop audio plugins!\n");
+            return gst_pad_event_default (pad, parent, event);
         }
 
+        release_audio_pipelines(agoraIO);
         agoraio_disconnect(&agoraIO->agora_ctx);
         agoraIO->agora_ctx=NULL;
-
-        //release internal pipelines
-        gst_object_unref (agoraIO->in_pipeline);
-        gst_object_unref (agoraIO->out_pipeline);
 
         break;
     default:
@@ -690,6 +722,12 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
    g_object_class_install_property (gobject_class, PROXY,
       g_param_spec_boolean ("proxy", "proxy", "place call via proxy  ?",
           FALSE, G_PARAM_READWRITE));
+
+   //mode
+   g_object_class_install_property (gobject_class, OPERATIONAL_MODE,
+      g_param_spec_int ("mode", "mode", "plugin operational mode: 1=no video nor audio, 2=video only and 3=video and audio ", 1, G_MAXUINT16,
+          3, G_PARAM_READWRITE));
+          
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -811,6 +849,8 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
+
+  agoraIO->mode=3;
 }
 
 static void
@@ -866,6 +906,9 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
     case PROXY:
        agoraIO->proxy = g_value_get_boolean (value);
        break;
+    case OPERATIONAL_MODE: 
+       agoraIO->mode=g_value_get_int (value);
+       break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -917,6 +960,9 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
         break;
     case PROXY:
         g_value_set_boolean (value, agoraIO->proxy);
+       break;
+    case OPERATIONAL_MODE: 
+        g_value_set_int(value, agoraIO->mode);
        break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
