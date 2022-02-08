@@ -7,3 +7,4 @@ cc test_agora_sink.c `pkg-config --cflags --libs gstreamer-1.0` -o test_agora_si
 cc test_pause_resume.c `pkg-config --cflags --libs gstreamer-1.0` -o test_pause_resume
 
 cc test_print_plugin_state.c  `pkg-config --cflags --libs gstreamer-1.0` -o test_print_plugin_state
+cc test_proxy.c  `pkg-config --cflags --libs gstreamer-1.0` -o test_proxy

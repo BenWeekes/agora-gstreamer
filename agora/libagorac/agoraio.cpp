@@ -28,6 +28,8 @@
 #include "helpers/uidtofile.h"
 
 #include "syncbuffer.h"
+#include <sstream>
+#include <list>
 
 
 AgoraIo::AgoraIo(const bool& verbose,
@@ -38,7 +40,9 @@ AgoraIo::AgoraIo(const bool& verbose,
                 const int& out_audio_delay,
                 const int& out_video_delay,
                 const bool& sendOnly,
-                const bool& enableProxy):
+                const bool& enableProxy,
+                const int& proxyTimeout,
+                const std::string& proxyIps):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
@@ -65,7 +69,8 @@ AgoraIo::AgoraIo(const bool& verbose,
  _sendOnly(sendOnly),
  _lastSendTime(Now()),
  _enableProxy(enableProxy),
- _proxyConnectionTimeOut(10000){
+ _proxyConnectionTimeOut(proxyTimeout),
+ _proxyIps(proxyIps){
 
    _activeUsers.clear();
 }
@@ -163,7 +168,10 @@ bool AgoraIo::doConnect(char* in_app_id,
             //agoraParameter->setBool("rtc.enable_proxy", true);
             //agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \\\"128.1.77.34\\\", \\\"128.1.78.146\\\", 0], \"rtc.enable_proxy\":true}");
 
-            agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \"[\\\"128.1.77.34\\\", \\\"128.1.78.146\\\"]\", 0], \"rtc.enable_proxy\":true}");
+            auto ipList=parseIpList();
+            auto ipListString=createProxyString(ipList);
+            std::cout<<ipListString<<std::endl;
+            agoraParameter->setParameters(ipListString.c_str());
 
             auto res = _connection->connect(in_app_id, in_channel_id, in_user_id);
             if (res){
@@ -877,4 +885,48 @@ void AgoraIo::setSendOnly(const bool& flag){
     _sendOnly=flag;
 }
 
+std::list<std::string> AgoraIo::parseIpList(){
 
+    std::stringstream ss(_proxyIps);
+
+   std::list<std::string>  returnList;
+   returnList.clear();
+
+    while (ss.good()){
+        std::string ip;
+        getline(ss, ip, ',');
+        returnList.emplace_back(ip);
+
+        std::cout<<ip<<std::endl;
+    }
+
+  return returnList;
+}
+
+std::string AgoraIo::createProxyString(std::list<std::string> ipList){
+
+    //TODO: this is a reference of how the proxy string looks like
+    //agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \"[\\\"128.1.77.34\\\", \\\"128.1.78.146\\\"]\", 0], \"rtc.enable_proxy\":true}");
+
+    std::string ipListStr="\"[";
+    bool addComma=false;
+    for(const auto ip: ipList){
+
+        if(addComma){
+            ipListStr+=",";
+        } 
+        else{
+            addComma=true;
+        }
+
+        ipListStr +="\\\""+ip+"\\\" ";
+    }
+
+    ipListStr+="]\", ";
+
+    std::string proxyString="{\"rtc.proxy_server\":[2, "+
+                             ipListStr +
+                             "0], \"rtc.enable_proxy\":true}";
+
+    return proxyString;
+}

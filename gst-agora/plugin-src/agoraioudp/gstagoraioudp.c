@@ -112,7 +112,9 @@ enum
   OUT_AUDIO_DELAY,
   OUT_VIDEO_DELAY,
   PROXY,
-  OPERATIONAL_MODE
+  OPERATIONAL_MODE,
+  PROXY_CONNECT_TIMEOUT,
+  PROXY_IPS
 };
 
 enum {
@@ -255,8 +257,9 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  agoraIO->out_audio_delay,
                                  agoraIO->out_video_delay,
                                  0,                    /*send only flag*/
-                                 agoraIO->proxy        /*enable proxy*/
-                                 );                    
+                                 agoraIO->proxy,        /*enable proxy*/
+                                 agoraIO->reconnect_timeout,   /*proxy timeout*/
+                                 agoraIO->proxy_ips);               /*proxy ips*/          
          
 
    if(agoraIO->agora_ctx==NULL){
@@ -727,7 +730,17 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
    g_object_class_install_property (gobject_class, OPERATIONAL_MODE,
       g_param_spec_int ("mode", "mode", "plugin operational mode: 1=no video nor audio, 2=video only and 3=video and audio ", 1, G_MAXUINT16,
           3, G_PARAM_READWRITE));
-          
+
+    //proxy timeout
+    g_object_class_install_property (gobject_class, PROXY_CONNECT_TIMEOUT,
+      g_param_spec_int ("proxytimeout", "proxytimeout", "set the value of connection timeout before trying to connect  with a proxy ", 1, G_MAXUINT16,
+          10000, G_PARAM_READWRITE));
+
+    //proxy ips
+    g_object_class_install_property (gobject_class, PROXY_IPS,
+      g_param_spec_string ("proxyips", "proxyips", "set proxy ips (comma seprated list)",
+          FALSE, G_PARAM_READWRITE));
+        
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -851,6 +864,9 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   agoraIO->audio=FALSE;
 
   agoraIO->mode=3;
+
+  agoraIO->reconnect_timeout=10000;
+  memset(agoraIO->proxy_ips, 0, MAX_STRING_LEN);
 }
 
 static void
@@ -909,6 +925,13 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
     case OPERATIONAL_MODE: 
        agoraIO->mode=g_value_get_int (value);
        break;
+    case PROXY_CONNECT_TIMEOUT: 
+       agoraIO->reconnect_timeout=g_value_get_int (value);
+       break;
+    case PROXY_IPS:
+        str=g_value_get_string (value);
+        g_strlcpy(agoraIO->proxy_ips, str, MAX_STRING_LEN);
+        break; 
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -963,10 +986,16 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
        break;
     case OPERATIONAL_MODE: 
         g_value_set_int(value, agoraIO->mode);
-       break;
+        break;
+    case PROXY_CONNECT_TIMEOUT: 
+        g_value_set_int(value, agoraIO->reconnect_timeout);
+        break;
+    case PROXY_IPS:
+        g_value_set_string (value, agoraIO->proxy_ips);
+        break;
     default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;
   }
 }
 

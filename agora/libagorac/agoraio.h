@@ -29,7 +29,9 @@ class AgoraIo{
            const int& out_audio_delay,
            const int& out_video_delay,
            const bool& sendOnly=false,
-           const bool& enableProxy=false);
+           const bool& enableProxy=false,
+           const int& proxyTimeout=0,
+           const std::string& proxyIps="");
 
    bool  init(char* in_app_id, 
                char* in_ch_id,
@@ -138,6 +140,10 @@ protected:
 
     void showFps();
 
+    std::list<std::string> parseIpList();
+
+    std::string createProxyString(std::list<std::string> ipList);
+
  private:
 
     WorkQueue_ptr                                 _receivedVideoFrames;
@@ -215,7 +221,8 @@ protected:
     TimePoint                                         _lastSendTime;
 
     bool                                              _enableProxy;
-    int                                               _proxyConnectionTimeOut;                               
+    int                                               _proxyConnectionTimeOut; 
+    std::string                                       _proxyIps;                              
  };
 
 #endif
