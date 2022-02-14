@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
      mode=atoi(argv[3]);
   }
 
-  snprintf (video_pipe_str, MAX_BUFFER/4, " videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 verbose=false mode=%d ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel, mode);
+  snprintf (video_pipe_str, MAX_BUFFER/4, " v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 verbose=false mode=%d ! queue ! decodebin ! queue ! glimagesink sync=false", appid, channel, mode);
   snprintf (audio_in_pipe_str, MAX_BUFFER/4, "udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48000,layout=interleaved ! audioconvert ! queue name=1on1AudIn ! pulsesink  name=incaudsink");
   
   //in mode 1, we send raw audio directly 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 	if (msg == NULL) {
 		// Send an EOS after N secs to end the call
 		static int secs = 1;
-		if (secs == 20) {
+		if (secs == 3600) {
 		    gst_element_send_event(video_pipeline, gst_event_new_eos());
         gst_element_send_event(audio_in_pipeline, gst_event_new_eos());
         gst_element_send_event(audio_out_pipeline, gst_event_new_eos());

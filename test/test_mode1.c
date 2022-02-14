@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
      mode=atoi(argv[3]);
   }
 
-  snprintf (video_pipe_str, MAX_BUFFER/4, " videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 verbose=false mode=%d ! queue ! decodebin ! queue ! glimagesink sync=false",appid, channel, mode);
+  snprintf (video_pipe_str, MAX_BUFFER/4, " v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=30 tune=zerolatency ! queue  ! agoraioudp appid=%s channel=%s outport=7372 inport=7373 verbose=false mode=%d ! queue ! decodebin ! queue ! glimagesink sync=false",appid, channel, mode);
   
   //in mode 1, we send raw audio directly 
   if(mode==1){
