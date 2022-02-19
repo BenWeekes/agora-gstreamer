@@ -6,4 +6,4 @@ cc test_publish_unpublish.c `pkg-config --cflags --libs gstreamer-1.0` -o test_p
 cc test_agora_sink.c `pkg-config --cflags --libs gstreamer-1.0` -o test_agora_sink
 cc test_pause_resume.c `pkg-config --cflags --libs gstreamer-1.0` -o test_pause_resume
 
-
+cc test_arm.c `pkg-config --cflags --libs gstreamer-1.0` -o test_arm
