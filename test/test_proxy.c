@@ -201,7 +201,10 @@ int main(int argc, char *argv[]) {
   char* appid=argv[1];
   char* channel=argv[2];
 
-  snprintf (buffer, MAX_BUFFER, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=%s channel=%s userid=123 inport=7374 verbose=false proxy=true proxytimeout=1000 proxyips=128.1.77.34,128.1.78.146 ! fakesink", appid, channel);
+  /*
+  snprintf (buffer, MAX_BUFFER, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=%s channel=%s userid=123 inport=7374 verbose=false proxy=true proxytimeout=1000 ! fakesink", appid, channel);
+  */
+  snprintf (buffer, MAX_BUFFER, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=%s channel=%s userid=123 inport=7374 verbose=false proxy=true proxytimeout=10000 proxyips=128.1.77.34,128.1.78.146 ! fakesink", appid, channel);
 
   pipeline = gst_parse_launch (
      buffer

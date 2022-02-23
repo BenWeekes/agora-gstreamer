@@ -115,79 +115,11 @@ int calcVol(const int16_t* samples, const uint16_t& packetLen){
 
 #define ENC_KEY_LENGTH        128
 
-bool AgoraIo::retryConnect(char* in_app_id,
-                          char* in_channel_id,
-                          char* in_user_id,
-                          int timeout){
-
-    TimePoint  connectTryStartTime=Now();
-    const int interconnectTime=1000;
-
-    while(GetTimeDiff(connectTryStartTime, Now())<timeout){
-
-        auto res = _connection->connect(in_app_id, in_channel_id, in_user_id);
-        if (res){
-            std::cout<<"failed to connect\n";
-            return false;
-        }
-
-        auto connectionInfo=_connection->getConnectionInfo();
-
-        if(connectionInfo.state!=agora::rtc::CONNECTION_STATE_CONNECTED){
-            std::this_thread::sleep_for(std::chrono::milliseconds(interconnectTime));
-        }
-        else if(connectionInfo.state==agora::rtc::CONNECTION_STATE_CONNECTED){
-            return true;
-        }
-
-        std::cout<<"retrying to coonnect in "<<interconnectTime<<" ms"<<std::endl;
-        _connection->disconnect();
-    }
-
-    _connection->disconnect();
-
-    return false;
-}  
-
 bool AgoraIo::doConnect(char* in_app_id,
                         char* in_channel_id,
                         char* in_user_id){
-
-
-    if(_enableProxy == true){
-
-        //first try to connect without proxy (many times untill timeout)
-        auto res=retryConnect(in_app_id, in_channel_id, in_user_id, _proxyConnectionTimeOut);
-        
-        //if not connected, then try to connect with proxy
-        if(res==false){
-
-            std::cout<<"trying to connect  with proxy enabled ...\n";
-            agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
-            
-            //agoraParameter->setBool("rtc.enable_proxy", true);
-            //agoraParameter->setParameters("{\"rtc.proxy_server\":[2, \\\"128.1.77.34\\\", \\\"128.1.78.146\\\", 0], \"rtc.enable_proxy\":true}");
-
-            auto ipList=parseIpList();
-            auto ipListString=createProxyString(ipList);
-            std::cout<<ipListString<<std::endl;
-            agoraParameter->setParameters(ipListString.c_str());
-
-            auto res = _connection->connect(in_app_id, in_channel_id, in_user_id);
-            if (res){
-                return false;
-            }
-        }
-    }
-    else{ //proxy is disabled, so we do not need to try to reconnect
-        auto res = _connection->connect(in_app_id, in_channel_id, in_user_id);
-        if (res){
-            return false;
-        }
-    }
-     
-   
-    return true;
+	 _connection->connect(in_app_id, in_channel_id, in_user_id);
+	return true;
 }
 
 bool AgoraIo::checkConnection(){
@@ -197,9 +129,8 @@ bool AgoraIo::checkConnection(){
          return true;
      }
      
-    const int DEFAULT_CONNECT_TIMEOUT_MS =3000;
     if(_connectionObserver!=nullptr){
-         _connectionObserver->waitUntilConnected(DEFAULT_CONNECT_TIMEOUT_MS);
+         _connectionObserver->waitUntilConnected(_proxyConnectionTimeOut);
     }
     else{
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -209,7 +140,6 @@ bool AgoraIo::checkConnection(){
     if(connectionInfo.state==agora::rtc::CONNECTION_STATE_CONNECTED){
          return true;
      }
-
      return false;
 }
 
@@ -280,9 +210,24 @@ bool  AgoraIo::init(char* in_app_id,
         _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     }
 
-    std::cout<<"connecting to: "<<in_ch_id<<std::endl;
+    std::cout<<" connecting to: "<<in_ch_id<<std::endl;
     auto connected=doConnect(in_app_id, in_ch_id, in_user_id);
-    if (connected==false || checkConnection()==false){
+    if (!checkConnection() && _enableProxy) {
+	_connection->disconnect();
+        agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
+        auto ipList=parseIpList();
+        if (ipList.size() > 1) {
+            auto ipListString=createProxyString(ipList);
+            std::cout<< "Set proxy IPs  " << ipList.size() << std::endl;
+            agoraParameter->setParameters(ipListString.c_str());
+        } else {
+            std::cout<< "Enable proxy with default access IPs " << std::endl;
+            agoraParameter->setBool("rtc.enable_proxy", true);
+        }
+       	connected=doConnect(in_app_id, in_ch_id, in_user_id);
+    }
+
+    if (checkConnection()==false){
 
        logMessage("Error connecting to channel");
        std::cout<<"Error connecting to channel\n";
