@@ -77,9 +77,15 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 
 The Agora SDK returns encoded audio and video in sync with one another. Your system may have a different 'decode and present' path duration for audio or video. You can adjust the delay on either using the out-audio-delay=0 and out-video-delay=70 params in the agoraioudp plugin. Units a microseconds.   
 
-<ins>Proxy</ins>   
-proxy=true connecttimeout=10000   
+<ins>Firewall Proxy</ins>  
+add proxy=true to the agoraioudp param list and the plugin will use the proxy service if the call can't connect after a default timeout of 10000 ms.   
+For the proxy to work you need to whitelist the ip:ports for the relevant region(s) listed here: https://docs-preprod.agora.io/en/Video/cloud_proxy_na?platform=Android     
 
+Additional optional params are:      
+proxytimeout=10000 proxyips=128.1.77.34,128.1.78.146      
+proxyips are the signalling ips to use.
+test/test_proxy.c has test code for proxy. 
+ 
    
  ## agorasink
    
