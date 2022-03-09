@@ -69,7 +69,7 @@ AgoraIo::AgoraIo(const bool& verbose,
  _sendOnly(sendOnly),
  _lastSendTime(Now()),
  _enableProxy(enableProxy),
- _proxyConnectionTimeOut(proxyTimeout),
+ _proxyConnectionTimeOut((proxyTimeout < 1 ) ? 10000 : proxyTimeout),
  _proxyIps(proxyIps){
 
    _activeUsers.clear();
@@ -101,6 +101,10 @@ bool AgoraIo::initAgoraService(const std::string& appid)
         return false;
     }
 
+    if(verifyLicense() != 0) {
+      return false;
+    }
+
     return true;
 }
 
@@ -118,6 +122,9 @@ int calcVol(const int16_t* samples, const uint16_t& packetLen){
 bool AgoraIo::doConnect(char* in_app_id,
                         char* in_channel_id,
                         char* in_user_id){
+
+	 std::cout<<"BWRIX BWRIX BWRIX\n";
+
 	 _connection->connect(in_app_id, in_channel_id, in_user_id);
 	return true;
 }
@@ -159,21 +166,16 @@ bool  AgoraIo::init(char* in_app_id,
         return false;
     }
 
+
     std::string _userId=in_user_id;
     
     _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
-
-    //the channel profile. For details, see #CHANNEL_PROFILE_TYPE. The default channel profile is CHANNEL_PROFILE_LIVE_BROADCASTING
     _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
-    //_rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION_1v1;
-    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING;
-    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_CLOUD_GAMING;
-    //_rtcConfig.channelProfile=agora::CHANNEL_PROFILE_LIVE_BROADCASTING_2;
-
     _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false; 
     
+   std::cout<<"BWRAX BWRAX BWRAX\n";
     _connection = _service->createRtcConnection(_rtcConfig);
     if (!_connection)
     {
@@ -202,17 +204,20 @@ bool  AgoraIo::init(char* in_app_id,
         return false;
     }
 
+   std::cout<<"BWRAX BWRAX BWRAX\n";
+
+   _connectionObserver = std::make_shared<ConnectionObserver>(this);
+   _connection->registerObserver(_connectionObserver.get());
+   _connection->registerNetworkObserver(_connectionObserver.get());
+
     if(_sendOnly==false){
-        // Register connection observer to monitor connection event
-        _connectionObserver = std::make_shared<ConnectionObserver>(this);
-        _connection->registerObserver(_connectionObserver.get());
-        _connection->registerNetworkObserver(_connectionObserver.get());
         _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     }
 
-    std::cout<<" connecting to: "<<in_ch_id<<std::endl;
+    std::cout<<" connecting to: "<<in_ch_id << "  " <<  _proxyConnectionTimeOut <<std::endl;
     auto connected=doConnect(in_app_id, in_ch_id, in_user_id);
     if (!checkConnection() && _enableProxy) {
+   std::cout<<"BWROX checkConnection 1 \n";
 	_connection->disconnect();
         agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
         auto ipList=parseIpList();
@@ -227,6 +232,7 @@ bool  AgoraIo::init(char* in_app_id,
        	connected=doConnect(in_app_id, in_ch_id, in_user_id);
     }
 
+   std::cout<<"BWROX checkConnection 2 \n";
     if (checkConnection()==false){
 
        logMessage("Error connecting to channel");
@@ -240,6 +246,7 @@ bool  AgoraIo::init(char* in_app_id,
        return false;
     }
 
+   std::cout<<"BWROX CONNECTED \n";
     //if you want to send_dual_h264,the ccMode must be enabled
      agora::base::SenderOptions option;
      option.ccMode = agora::base::CC_ENABLED;
@@ -554,6 +561,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   auto frameType=agora::rtc::VIDEO_FRAME_TYPE_DELTA_FRAME; 
   if(is_key_frame){
      frameType=agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
+     std::cout<<"BWRAX doSendHighVideo KEY FRAME" << len << "  \n";
   }
 
   agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
@@ -562,6 +570,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   videoEncodedFrameInfo.framesPerSecond = 30;
   videoEncodedFrameInfo.frameType = frameType;
   videoEncodedFrameInfo.streamType = agora::rtc::VIDEO_STREAM_HIGH;
+
 
   _videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 

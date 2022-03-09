@@ -12,6 +12,8 @@
 
 //#include "../userobserver.h"
 #include "context.h"
+#include <iostream>
+
 
 TimePoint Now(){
    return std::chrono::steady_clock::now();
@@ -162,4 +164,96 @@ uint64_t GetCurrentTimestamp(){
           (std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+
+#if SDK_BUILD_NUM==110077
+class LicenseCallbackImpl : public agora::base::LicenseCallback
+{
+public:
+  LicenseCallbackImpl() {}
+  virtual ~LicenseCallbackImpl() {}
+
+  virtual void onCertificateRequired() {
+    std::cout<<__FUNCTION__<<" line: "<<__LINE__<<std::endl;
+  }
+
+  virtual void onLicenseRequest() {
+    std::cout<<__FUNCTION__<<" line: "<<__LINE__<<std::endl;
+  }
+
+  virtual void onLicenseValidated() {
+    std::cout<<__FUNCTION__<<" line: "<<__LINE__<<std::endl;
+  }
+
+  virtual void onLicenseError(int result) {
+    std::cout<<__FUNCTION__<<" line: "<<__LINE__<<std::endl;
+  }
+};
+
+
+static const std::string CERTIFICATE_FILE = "certificate.bin";
+
+int verifyLicense()
+{
+#ifndef LICENSE_CHECK
+  // Step1: read the certificate buffer from the certificate.bin file
+  char* cert_buffer = NULL;
+  int cert_length = 0;
+  std::ifstream f_cert(CERTIFICATE_FILE.c_str(), std::ios::binary);
+  if (f_cert) {
+    f_cert.seekg(0, f_cert.end);
+    cert_length = f_cert.tellg();
+    f_cert.seekg(0, f_cert.beg);
+
+    cert_buffer = new char[cert_length + 1];
+    std::cout<<"cert_length: "<<cert_length<<std::endl;
+    memset(cert_buffer, 0, cert_length + 1);
+    f_cert.read(cert_buffer, cert_length);
+    if (!cert_buffer || f_cert.gcount() < cert_length) {
+      f_cert.close();
+      if (cert_buffer) {
+        delete[] cert_buffer;
+        cert_buffer = NULL;
+      }
+      std::cout<<"read %s failed: "<<CERTIFICATE_FILE.c_str();
+      return -1;
+    }
+    else {
+      f_cert.close();
+    }
+  }
+  else {
+    std::cout<<CERTIFICATE_FILE.c_str() <<" doesn't exist"<<std::endl;
+    return -1;
+  }
+
+  std::cout<<"certificate: "<<cert_buffer<<std::endl;
+
+  // Step3: register callback of license state
+  LicenseCallbackImpl *cb = static_cast<LicenseCallbackImpl *>(getAgoraLicenseCallback());
+  if (!cb) {
+    cb = new LicenseCallbackImpl();
+    setAgoraLicenseCallback(static_cast<agora::base::LicenseCallback *>(cb));
+  }
+
+  // Step4: verify the license with credential and certificate
+  int result = getAgoraCertificateVerifyResult(NULL, 0, cert_buffer, cert_length);
+
+  std::cout<< "verify result: "<<result<<std::endl;
+
+  if (cert_buffer) {
+    delete[] cert_buffer;
+    cert_buffer = NULL;
+  }
+
+  return result;
+#else
+  return 0;
+#endif
+}
+
+#else
+
+int verifyLicense(){}
+
+#endif
 
