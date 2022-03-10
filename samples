@@ -100,3 +100,8 @@ gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=
 gst-launch-1.0 -e v4l2src ! image/jpeg,width=960,height=540,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
 gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
 
+
+debug slow in for agoraioudp
+  153  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr verbose=true ! fakesink sync=false
+  154  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+
