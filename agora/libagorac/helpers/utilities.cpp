@@ -253,7 +253,9 @@ int verifyLicense()
 
 #else
 
-int verifyLicense(){}
+int verifyLicense(){
+	return 0;
+}
 
 #endif
 
