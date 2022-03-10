@@ -562,6 +562,9 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   if(is_key_frame){
      frameType=agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
      std::cout<<"BWRAX doSendHighVideo KEY FRAME" << len << "  \n";
+    // logMessage("BWRAX doSendHighVideo KEY FRAME");
+  } else {
+    // std::cout<<"BWRAX doSendHighVideo !KEY FRAME" << len << "  \n";
   }
 
   agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
