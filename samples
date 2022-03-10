@@ -77,7 +77,22 @@ gst-launch-1.0  -e v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264e
 agorasink only works with x264 - to be investigated
 gst-launch-1.0  -v v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr 
 
+gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr verbose=true ! fakesink sync=false
 
+ gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=1280, height=720, framerate=5/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+
+ gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+
+ gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+
+
+JN NICE
+
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1  -e sync=false
+
+V NICE
+
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=1280,height=720,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=1280 overlay-h=720 overlay=1  -e sync=false
 
 
 ************************ PI ****************************
