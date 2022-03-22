@@ -1,0 +1,165 @@
+#!/bin/bash -e
+
+sudo iptables --flush
+sudo iptables -A INPUT -p udp --sport 53 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
+#sudo iptables -A INPUT -p udp --sport 8130 -j ACCEPT
+#sudo iptables -A INPUT -p udp --dport 8130 -j ACCEPT
+#sudo iptables -A INPUT -p udp --sport 9120 -j ACCEPT
+#sudo iptables -A INPUT -p udp --dport 9120 -j ACCEPT
+#sudo iptables -A INPUT -p udp --sport 9137 -j ACCEPT
+#sudo iptables -A INPUT -p udp --dport 9137 -j ACCEPT
+sudo iptables -A INPUT -p udp --sport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 8443 -j ACCEPT
+####SIGNAL
+sudo iptables -A INPUT -p udp -s 184.72.16.87 --sport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 35.168.106.53 --sport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 54.178.26.110 --sport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 52.221.23.86 --sport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 13.230.60.35 --sport 8443 -j ACCEPT
+####MEDIA
+sudo iptables -A INPUT -p udp -s 128.14.195.192/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.195.192/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.245.16/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.245.16/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.72.80/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.72.80/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.200.208/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 128.14.200.208/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 148.153.53.105 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 148.153.53.105 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 148.153.53.106 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 148.153.53.106 --sport 8001:8010 -j ACCEPT
+
+sudo iptables -A INPUT -p udp -s 129.227.113.112/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 129.227.113.112/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 129.227.55.96/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 129.227.55.96/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 122.10.153.74 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 122.10.153.74 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 129.227.234.123 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 129.227.234.123 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 122.10.153.86 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 122.10.153.86 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 103.101.125.23 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 103.101.125.23 --sport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 164.52.24.42 --sport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -s 164.52.24.42 --sport 8001:8010 -j ACCEPT
+
+sudo iptables -A INPUT -p udp -d 184.72.16.87 --dport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 35.168.106.53 --dport 8443 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.195.192/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.195.192/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.245.16/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.245.16/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.72.80/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.72.80/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.200.208/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 128.14.200.208/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 148.153.53.105 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 148.153.53.105 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 148.153.53.106 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 148.153.53.106 --dport 8001:8010 -j ACCEPT
+
+sudo iptables -A INPUT -p udp -d 129.227.113.112/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 129.227.113.112/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 129.227.55.96/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 129.227.55.96/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 122.10.153.74 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 122.10.153.74 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 129.227.234.123 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 129.227.234.123 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 122.10.153.86 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 122.10.153.86 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 103.101.125.23 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 103.101.125.23 --dport 8001:8010 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 164.52.24.42 --dport 4590:4600 -j ACCEPT
+sudo iptables -A INPUT -p udp -d 164.52.24.42 --dport 8001:8010 -j ACCEPT
+
+#####OUTPUT#####
+sudo iptables -A OUTPUT -p udp --sport 53 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --sport 8130 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 8130 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 9120 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --sport 9137 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 9137 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --sport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp --dport 8443 -j ACCEPT
+
+####SIGNAL
+sudo iptables -A OUTPUT -p udp -s 184.72.16.87 --sport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 35.168.106.53 --sport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 54.178.26.110 --sport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 52.221.23.86 --sport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 13.230.60.35 --sport 8443 -j ACCEPT
+
+####MEDIA
+sudo iptables -A OUTPUT -p udp -s 128.14.195.192/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.195.192/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.245.16/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.245.16/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.72.80/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.72.80/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.200.208/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.200.208/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.105 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.105 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.106 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.106 --sport 8001:8010 -j ACCEPT
+
+sudo iptables -A OUTPUT -p udp -s 128.14.72.80/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.200.208/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 128.14.200.208/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.105 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.105 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.106 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 148.153.53.106 --sport 8001:8010 -j ACCEPT
+
+sudo iptables -A OUTPUT -p udp -s 129.227.113.112/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 129.227.113.112/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 129.227.55.96/28 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 129.227.55.96/28 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 122.10.153.74 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 122.10.153.74 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 129.227.234.123 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 129.227.234.123 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 122.10.153.86 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 122.10.153.86 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 103.101.125.23 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 103.101.125.23 --sport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 164.52.24.42 --sport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -s 164.52.24.42 --sport 8001:8010 -j ACCEPT
+
+sudo iptables -A OUTPUT -p udp -d 184.72.16.87 --dport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 35.168.106.53 --dport 8443 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.195.192/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.195.192/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.245.16/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.245.16/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.72.80/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.72.80/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.200.208/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 128.14.200.208/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 148.153.53.105 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 148.153.53.105 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 148.153.53.106 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 148.153.53.106 --dport 8001:8010 -j ACCEPT
+
+sudo iptables -A OUTPUT -p udp -d 129.227.113.112/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 129.227.113.112/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 129.227.55.96/28 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 129.227.55.96/28 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 122.10.153.74 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 122.10.153.74 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 129.227.234.123 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 129.227.234.123 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 122.10.153.86 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 122.10.153.86 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 103.101.125.23 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 103.101.125.23 --dport 8001:8010 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 164.52.24.42 --dport 4590:4600 -j ACCEPT
+sudo iptables -A OUTPUT -p udp -d 164.52.24.42 --dport 8001:8010 -j ACCEPT
+
+sudo iptables -A INPUT -p udp -j DROP
+sudo iptables -A OUTPUT -p udp -j DROP
