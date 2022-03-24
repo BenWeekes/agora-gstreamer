@@ -4,7 +4,7 @@ gst-launch-1.0 nvarguscamerasrc sensor_id=0 !    'video/x-raw(memory:NVMM),width
 
 cd /home/ben-nano/Downloads/agora_rtc_sdk/example/out/aarch64
 
-./sample_send_h264_dual_stream --token 20b7c51ff4c644ab80cf5a4e646b0537 --channelId rrr  --HighVideoFile ~/Downloads/test_data/test_multi_slice.h264 --LowVideoFile ~/Downloads/test_data/test_multi_slice.h264
+./sample_send_h264_dual_stream --token 20b7c51ff4c644ab80cf5a4e646b05377 --channelId rrr  --HighVideoFile ~/Downloads/test_data/test_multi_slice.h264 --LowVideoFile ~/Downloads/test_data/test_multi_slice.h264
 
  gst-launch-1.0 -v v4l2src device=/dev/video1 ! 'video/x-raw,width=640, height=480, framerate=30/1, format=YUY2' ! nvvidconv ! 'video/x-raw(memory:NVMM),format=NV12' ! omxh264enc ! qtmux ! filesink location=test.mp4 -e
 
@@ -31,92 +31,92 @@ https://developer.ridgerun.com/wiki/index.php?title=Xavier/GStreamer_Pipelines/H
 
 gst-launch-1.0 -v v4l2src device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! h264parse ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1
 
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! decodebin ! queue ! glimagesink
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! decodebin ! queue ! glimagesink
 
  export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1
  
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
- gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! decodebin ! queue ! glimagesink
+ gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! decodebin ! queue ! glimagesink
 
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr ! queue ! decodebin ! queue ! glimagesink
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr ! queue ! decodebin ! queue ! glimagesink
 
 export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
  export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
-gst-launch-1.0 agorasrc verbose=false appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr ! decodebin ! glimagesink
+gst-launch-1.0 agorasrc verbose=false appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr ! decodebin ! glimagesink
 
- gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
-
-export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
-
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=960, height=540, framerate=20/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
-
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
-
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! queue ! h264parse ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1
-
+ gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=480, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
 
 export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
 
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1  -e sync=false
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=960, height=540, framerate=20/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
 
- gst-launch-1.0 -e v4l2src device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=20/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! omxh264dec ! nvoverlaysink -e sync=false
 
- gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=1280, height=720, framerate=5/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! queue ! h264parse ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1
+
+
+export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
+
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=30/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1  -e sync=false
+
+ gst-launch-1.0 -e v4l2src device=/dev/video1 ! video/x-raw, width=640, height=360, framerate=20/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+
+ gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=1280, height=720, framerate=5/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
 
 workd
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
-gst-launch-1.0  -e v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0  -e v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
 agorasink only works with x264 - to be investigated
-gst-launch-1.0  -v v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr 
+gst-launch-1.0  -v v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr 
 
-gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr verbose=true ! fakesink sync=false
+gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr verbose=true ! fakesink sync=false
 
- gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=1280, height=720, framerate=5/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+ gst-launch-1.0 -e v4l2src  device=/dev/video1 ! video/x-raw, width=1280, height=720, framerate=5/1, format=YUY2 ! nvvidconv ! 'video/x-raw(memory:NVMM), format=NV12' ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
 
- gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+ gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
 
- gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
+ gst-launch-1.0 -e v4l2src device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink -e sync=false
 
 
 JN NICE
 
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1  -e sync=false
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=640,height=360,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=640 overlay-h=480 overlay=1  -e sync=false
 
 V NICE
 
-gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=1280,height=720,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=1280 overlay-h=720 overlay=1  -e sync=false
+gst-launch-1.0 -e v4l2src  device=/dev/video1 ! image/jpeg,width=1280,height=720,framerate=30/1,rate=30 ! nvv4l2decoder mjpeg=1 ! nvvidconv  ! omxh264enc ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr outport=7372 inport=7373 verbose=false ! queue ! h264parse ! queue ! omxh264dec ! nvoverlaysink overlay-x=0 overlay-y=0 overlay-w=1280 overlay-h=720 overlay=1  -e sync=false
 
 
 ************************ PI ****************************
 
 export GST_PLUGIN_PATH=/usr/local/lib/arm-linux-gnueabihf/gstreamer-1.0
 
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
 agorasink only works with x264 - to be investigated
-gst-launch-1.0  -v v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0  -v v4l2src  device=/dev/video1 ! jpegdec !  videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
 
 
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=1280,height=720 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1  ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=1280,height=720 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360 ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=960,height=540,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
-gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=960,height=540,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
+gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=30/1,rate=30  ! jpegdec ! queue ! videoconvert ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
 
 debug slow in for agoraioudp
-  153  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr verbose=true ! fakesink sync=false
-  154  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=rrr
+  153  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr verbose=true ! fakesink sync=false
+  154  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
