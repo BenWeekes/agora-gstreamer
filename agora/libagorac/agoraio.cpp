@@ -351,7 +351,7 @@ bool  AgoraIo::init(char* in_app_id,
 		long media_bitrate_bps= (*(stats+10)) ;
 		long target_media_bitrate_bps= (*(stats+9)) ;
 	 
-	        if (target_media_bitrate_bps < 1000000) {
+	        if (target_media_bitrate_bps < 2000000) {
 			_requireTranscode=true;
 		} else if (_requireTranscode) {
 			_requireTranscode=false;
