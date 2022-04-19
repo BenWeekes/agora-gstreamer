@@ -632,7 +632,7 @@ bool AgoraIo::initTranscoder(){
         std::cout<<"decoder is initialized successfully\n";
     }
 
-    int width=1280, height=720, bitrate=50000, fps=30;
+    int width=640, height=360, bitrate=300000, fps=30;
     _videoEncoder=std::make_shared<AgoraEncoder>(width,height,bitrate, fps);
     if(_videoEncoder->init()){
          std::cout<<"encoder is  initialized successfully\n";
