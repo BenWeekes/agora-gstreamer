@@ -227,7 +227,9 @@ void UserObserver::onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::I
             <<", width "<<stats.width
             <<", height "<<stats.height
             <<", encoder_type "<<stats.encoder_type
-            <<std::endl;*/
+            <<std::endl;
+      */
+
 }
 
 void UserObserver::setOnUserRemoteTrackStatsFn(const OnUserRemoteTrackStateFn& fn){

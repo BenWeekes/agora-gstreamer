@@ -82,7 +82,8 @@ enum
   USER_ID,
   PROP_VERBOSE,
   AUDIO,
-  ENFORCE_AUDIO_DURAION
+  ENFORCE_AUDIO_DURAION,
+  TRANSCODE
 };
 
 /* the capabilities of the inputs and outputs.
@@ -129,6 +130,10 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 
   g_object_class_install_property (gobject_class, PROP_VERBOSE,
       g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
+          FALSE, G_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class, TRANSCODE,
+      g_param_spec_boolean ("transcode", "transcode", "Produce transcoded output as needed ?",
           FALSE, G_PARAM_READWRITE));
 
    g_object_class_install_property (gobject_class, AUDIO,
@@ -198,6 +203,7 @@ gst_agorasink_init (Gstagorasink * filter)
   memset(filter->user_id, 0, MAX_STRING_LEN);
 
   filter->verbose = FALSE;
+  filter->transcode = FALSE;
   filter->audio = FALSE;
 
   filter->enforce_audio_duration=FALSE;
@@ -216,6 +222,8 @@ int init_agora(Gstagorasink * filter){
        g_print("channel id cannot be empty!\n");
        return -1;
    }
+
+
 
    /*initialize agora*/
    filter->agora_ctx=agoraio_init(filter->app_id,  /*appid*/
@@ -239,7 +247,8 @@ int init_agora(Gstagorasink * filter){
                                  1,                  /*sendonly flag*/
                                  FALSE,               /*enable proxy*/
                                  0,
-                                 "");    
+                                 "",
+				 filter->transcode);    
 
    if(filter->agora_ctx==NULL){
 
@@ -288,6 +297,9 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
     case ENFORCE_AUDIO_DURAION:
         filter->enforce_audio_duration = g_value_get_boolean (value);
         break;
+    case TRANSCODE:
+         filter->transcode = g_value_get_boolean (value);
+         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -318,6 +330,9 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
         break;
     case ENFORCE_AUDIO_DURAION:
         g_value_set_boolean (value, filter->enforce_audio_duration);
+        break;
+    case TRANSCODE:
+        g_value_set_boolean (value, filter->transcode);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

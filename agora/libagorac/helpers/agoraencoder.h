@@ -23,6 +23,7 @@ public:
 
   void setQMin(int qMin){_qMin=qMin;}
   void setQMax(int qMax){_qMax=qMax;}
+  bool bitrateChange(uint32_t bitrate);
 
 protected:
 
@@ -35,6 +36,7 @@ protected:
 
   //called whenever source resolution is changed
   void onResolutionChange(const uint16_t& newWidth, const uint16_t& newHeight);
+
 
   AVFrame* scaleFrame(AVFrame* inFrame);
 private:

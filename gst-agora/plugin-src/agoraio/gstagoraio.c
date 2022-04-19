@@ -85,7 +85,8 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
-  AUDIO
+  AUDIO,
+  TRANSCODE
 };
 
 /* the capabilities of the inputs and outputs.
@@ -188,6 +189,10 @@ g_object_class_install_property (gobject_class, PROP_VERBOSE,
       g_param_spec_boolean ("verbose", "verbose", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
 
+g_object_class_install_property (gobject_class, TRANSCODE,
+      g_param_spec_boolean ("transcode", "transcode", "Produce transcode output ?",
+          FALSE, G_PARAM_READWRITE));
+
   g_object_class_install_property (gobject_class, AUDIO,
       g_param_spec_boolean ("audio", "audio", "when true, it reads audio from agora than video",
           FALSE, G_PARAM_READWRITE));
@@ -252,6 +257,9 @@ gst_agoraio_set_property (GObject * object, guint prop_id,
     case PROP_VERBOSE:
       filter->verbose = g_value_get_boolean (value);
       break;
+    case TRANSCODE:
+      filter->transcode = g_value_get_boolean (value);
+      break;
     case APP_ID:
         str=g_value_get_string (value);
         g_strlcpy(filter->app_id, str, MAX_STRING_LEN);
@@ -282,6 +290,9 @@ gst_agoraio_get_property (GObject * object, guint prop_id,
   switch (prop_id) {
     case PROP_VERBOSE:
        g_value_set_boolean (value, filter->verbose);
+       break;
+    case TRANSCODE:
+       g_value_set_boolean (value, filter->transcode);
        break;
     case APP_ID:
        g_value_set_string (value, filter->app_id);
@@ -497,7 +508,8 @@ int init_agora(Gstagoraio *agoraIO){
                                  0,                  /*send only*/       
                                  FALSE,               /*enable proxy*/
                                  0,
-                                 "");            
+                                 "",
+				 agoraIO->transcode);            
 
    if(agoraIO->agora_ctx==NULL){
 

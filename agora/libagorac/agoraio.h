@@ -31,7 +31,8 @@ class AgoraIo{
            const bool& sendOnly=false,
            const bool& enableProxy=false,
            const int& proxyTimeout=0,
-           const std::string& proxyIps="");
+           const std::string& proxyIps="",
+	   const bool& transcode=false);
 
    bool  init(char* in_app_id, 
                char* in_ch_id,
@@ -144,6 +145,12 @@ protected:
 
     std::string createProxyString(std::list<std::string> ipList);
 
+    bool initTranscoder();
+    bool setTranscoderBitrate(int bitrate);
+
+    uint32_t transcode(const uint8_t* inBuffer,  const uint64_t& inLen,
+                        uint8_t* outBuffer, bool isKeyFrame);
+
  private:
 
     WorkQueue_ptr                                 _receivedVideoFrames;
@@ -176,6 +183,8 @@ protected:
     agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
     agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
+    AgoraDecoder_ptr                                  _videoDecoder;
+    AgoraEncoder_ptr                                  _videoEncoder;
 
     TimePoint                                       _lastVideoUserSwitchTime;
 
@@ -222,7 +231,12 @@ protected:
 
     bool                                              _enableProxy;
     int                                               _proxyConnectionTimeOut; 
-    std::string                                       _proxyIps;                              
+    std::string                                       _proxyIps;   
+
+    //turn it on/off when you need the in video to be transcoded
+    bool                                              _transcodeVideo;                           
+    bool                                              _requireTranscode;
+    bool                                              _requireKeyframe;
  };
 
 #endif

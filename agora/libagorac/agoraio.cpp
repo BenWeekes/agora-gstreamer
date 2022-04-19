@@ -20,7 +20,8 @@
 //#include "userobserver.h"
 #include "observer/connectionobserver.h"
 #include "helpers/context.h"
-
+#include "helpers/agoradecoder.h"
+#include "helpers/agoraencoder.h"
 #include "helpers/utilities.h"
 #include "agoratype.h"
 #include "helpers/agoraconstants.h"
@@ -42,7 +43,8 @@ AgoraIo::AgoraIo(const bool& verbose,
                 const bool& sendOnly,
                 const bool& enableProxy,
                 const int& proxyTimeout,
-                const std::string& proxyIps):
+                const std::string& proxyIps,
+                const bool& enableTranscode ):
  _verbose(verbose),
  _lastReceivedFrameTime(Now()),
  _currentVideoUser(""),
@@ -70,7 +72,11 @@ AgoraIo::AgoraIo(const bool& verbose,
  _lastSendTime(Now()),
  _enableProxy(enableProxy),
  _proxyConnectionTimeOut((proxyTimeout < 1 ) ? 10000 : proxyTimeout),
- _proxyIps(proxyIps){
+ _proxyIps(proxyIps),
+ _requireTranscode(true), // start off with transcoder
+ _requireKeyframe(false),
+_transcodeVideo(enableTranscode)
+{
 
    _activeUsers.clear();
 }
@@ -123,7 +129,6 @@ bool AgoraIo::doConnect(char* in_app_id,
                         char* in_channel_id,
                         char* in_user_id){
 
-	 std::cout<<"BWRIX BWRIX BWRIX\n";
 
 	 _connection->connect(in_app_id, in_channel_id, in_user_id);
 	return true;
@@ -175,7 +180,6 @@ bool  AgoraIo::init(char* in_app_id,
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false; 
     
-   std::cout<<"BWRAX BWRAX BWRAX\n";
     _connection = _service->createRtcConnection(_rtcConfig);
     if (!_connection)
     {
@@ -204,7 +208,6 @@ bool  AgoraIo::init(char* in_app_id,
         return false;
     }
 
-   std::cout<<"BWRAX BWRAX BWRAX\n";
 
    _connectionObserver = std::make_shared<ConnectionObserver>(this);
    _connection->registerObserver(_connectionObserver.get());
@@ -217,7 +220,6 @@ bool  AgoraIo::init(char* in_app_id,
     std::cout<<" connecting to: "<<in_ch_id << "  " <<  _proxyConnectionTimeOut <<std::endl;
     auto connected=doConnect(in_app_id, in_ch_id, in_user_id);
     if (!checkConnection() && _enableProxy) {
-   std::cout<<"BWROX checkConnection 1 \n";
 	_connection->disconnect();
         agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
         auto ipList=parseIpList();
@@ -232,7 +234,6 @@ bool  AgoraIo::init(char* in_app_id,
        	connected=doConnect(in_app_id, in_ch_id, in_user_id);
     }
 
-   std::cout<<"BWROX checkConnection 2 \n";
     if (checkConnection()==false){
 
        logMessage("Error connecting to channel");
@@ -246,7 +247,6 @@ bool  AgoraIo::init(char* in_app_id,
        return false;
     }
 
-   std::cout<<"BWROX CONNECTED \n";
     //if you want to send_dual_h264,the ccMode must be enabled
      agora::base::SenderOptions option;
      option.ccMode = agora::base::CC_ENABLED;
@@ -274,6 +274,11 @@ bool  AgoraIo::init(char* in_app_id,
     startPublishAudio();
     startPublishVideo();
 
+    //initialize encoder and decoder
+    if(!initTranscoder()){
+        std::cout<<"failed to init transcoder\n";
+    }
+    
     if(_sendOnly==false){
         h264FrameReceiver = std::make_shared<H264FrameReceiver>();
         _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
@@ -340,6 +345,22 @@ bool  AgoraIo::init(char* in_app_id,
 
     _userObserver->setOnUserLocalTrackStatsFn([this](const std::string& userId,
                                                       long* stats){
+
+        if (_transcodeVideo) {
+	        // frm transcode down when 
+		long media_bitrate_bps= (*(stats+10)) ;
+		long target_media_bitrate_bps= (*(stats+9)) ;
+	 
+	        if (target_media_bitrate_bps < 1000000) {
+			_requireTranscode=true;
+		} else if (_requireTranscode) {
+			_requireTranscode=false;
+			_requireKeyframe=true;
+		}	
+	
+	        //std::cout<<"BWSTATS target_media_bitrate_bps " << (*(stats+9)) << " media_bitrate_bps " <<  (*(stats+10)) <<  " _requireTranscode " << _requireTranscode << " \n";
+		setTranscoderBitrate(*(stats+9));
+	}
 
         addEvent(AGORA_EVENT_ON_LOCAL_TRACK_STATS_CHANGED,userId,0,0,stats);
      });
@@ -561,12 +582,10 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   auto frameType=agora::rtc::VIDEO_FRAME_TYPE_DELTA_FRAME; 
   if(is_key_frame){
      frameType=agora::rtc::VIDEO_FRAME_TYPE_KEY_FRAME;
-     std::cout<<"BWRAX doSendHighVideo KEY FRAME" << len << "  \n";
-    // logMessage("BWRAX doSendHighVideo KEY FRAME");
   } else {
-    // std::cout<<"BWRAX doSendHighVideo !KEY FRAME" << len << "  \n";
   }
 
+  
   agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
   videoEncodedFrameInfo.rotation = agora::rtc::VIDEO_ORIENTATION_0;
   videoEncodedFrameInfo.codecType = agora::rtc::VIDEO_CODEC_H264;
@@ -574,10 +593,81 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   videoEncodedFrameInfo.frameType = frameType;
   videoEncodedFrameInfo.streamType = agora::rtc::VIDEO_STREAM_HIGH;
 
+  if(_transcodeVideo && (_requireTranscode || (_requireKeyframe && !is_key_frame))){
+        //transcoding 
+        const uint32_t MAX_FRAME_SIZE=1024*1020;
+        std::unique_ptr<uint8_t[]> outBuffer(new uint8_t[MAX_FRAME_SIZE]);
+        uint32_t outBufferSize=transcode(buffer, len, outBuffer.get(), is_key_frame);
+	if (outBufferSize>0) {
+        	_videoFrameSender->sendEncodedVideoImage(outBuffer.get(),outBufferSize,videoEncodedFrameInfo);
+	} else {
+        	std::cout<<"encode skipped as no decode \n";
+	}
+  }
+  else{
+	// if switching back do it on keyframe 
+	if (_requireKeyframe && is_key_frame) {
+		_requireKeyframe=false;
+	}
 
-  _videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
+	if (!_requireKeyframe) { 
+        	//std::cout<<" SENDing encoded   \n";
+        	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
+	} else {
+        	std::cout<<" pr encoded skipped as not keyframe  \n";
+	}
+  }
+
 
   return true;
+}
+
+
+bool AgoraIo::initTranscoder(){
+
+     if (!_transcodeVideo) return true;
+
+    _videoDecoder=std::make_shared<AgoraDecoder>();
+    if(_videoDecoder->init()){
+        std::cout<<"decoder is initialized successfully\n";
+    }
+
+    int width=1280, height=720, bitrate=50000, fps=30;
+    _videoEncoder=std::make_shared<AgoraEncoder>(width,height,bitrate, fps);
+    if(_videoEncoder->init()){
+         std::cout<<"encoder is  initialized successfully\n";
+    }
+
+    return true;
+}
+
+bool AgoraIo::setTranscoderBitrate(int bitrate){
+
+    /*
+    int width=1280, height=720, fps=30;
+    _videoEncoder=std::make_shared<AgoraEncoder>(width,height,bitrate, fps);
+    if(_videoEncoder->init()){
+         std::cout<<"encoder is re-initialized successfully\n";
+    }
+    */
+
+  if (_videoEncoder->bitrateChange(bitrate)) {
+  	std::cout<<"encoder bitrate set to " << bitrate << " \n";
+  }
+
+    return true;
+}
+
+uint32_t AgoraIo::transcode(const uint8_t* inBuffer,  const uint64_t& inLen,
+                             uint8_t* outBuffer, bool isKeyFrame){
+
+    uint32_t outBufferSize=0;
+    if(_videoDecoder->decode(inBuffer, inLen)){
+        auto frame=_videoDecoder->getFrame();
+        _videoEncoder->encode(frame, outBuffer, outBufferSize,isKeyFrame);
+    }
+
+  return outBufferSize;
 }
 
 bool AgoraIo::doSendAudio(const uint8_t* buffer,  uint64_t len){

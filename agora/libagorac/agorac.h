@@ -45,7 +45,8 @@ typedef void (*event_fn)(void* userData,
 										int sendOnly,
 										int enableProxy,
 										int proxy_timeout,
-										char* proxy_ips);
+										char* proxy_ips,
+										bool transcode);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 

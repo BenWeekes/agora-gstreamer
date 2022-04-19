@@ -114,7 +114,8 @@ enum
   PROXY,
   OPERATIONAL_MODE,
   PROXY_CONNECT_TIMEOUT,
-  PROXY_IPS
+  PROXY_IPS,
+  TRANSCODE
 };
 
 enum {
@@ -345,7 +346,8 @@ int init_agora(Gstagoraioudp *agoraIO){
                                  0,                    /*send only flag*/
                                  agoraIO->proxy,        /*enable proxy*/
                                  agoraIO->reconnect_timeout,   /*proxy timeout*/
-                                 agoraIO->proxy_ips);               /*proxy ips*/          
+                                 agoraIO->proxy_ips,               /*proxy ips*/          
+                                 agoraIO->transcode);               /*proxy ips*/          
          
 
    if(agoraIO->agora_ctx==NULL){
@@ -755,6 +757,10 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
       g_param_spec_string ("proxyips", "proxyips", "set proxy ips (comma seprated list)",
           FALSE, G_PARAM_READWRITE));
         
+    // transcode
+    g_object_class_install_property (gobject_class, TRANSCODE,
+      g_param_spec_boolean ("transcode", "transcode", "Produce transcoded output if needed to respect requested bitrate ?",
+          FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -876,6 +882,7 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
+  agoraIO->transcode=false;
 
   agoraIO->mode=3;
 
@@ -946,6 +953,9 @@ gst_agoraioudp_set_property (GObject * object, guint prop_id,
         str=g_value_get_string (value);
         g_strlcpy(agoraIO->proxy_ips, str, MAX_STRING_LEN);
         break; 
+    case TRANSCODE:
+         agoraIO->transcode = g_value_get_boolean (value);
+         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -1006,6 +1016,9 @@ gst_agoraioudp_get_property (GObject * object, guint prop_id,
         break;
     case PROXY_IPS:
         g_value_set_string (value, agoraIO->proxy_ips);
+        break;
+    case TRANSCODE:
+        g_value_set_boolean (value, agoraIO->transcode);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

@@ -109,7 +109,8 @@ AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                         int sendOnly,
                                         int enableProxy,
                                         int proxy_timeout,
-										          char* proxy_ips){
+										          char* proxy_ips, 
+											  bool transcode){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
@@ -126,7 +127,8 @@ AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
                                            sendOnly,
                                            enableProxy,
                                            proxy_timeout,
-                                           proxy_ips);
+                                           proxy_ips,
+					   transcode);
 
     auto ret=ctx->agoraIo->init(app_id, ch_id,user_id,
                        is_audiouser, enc_enable, enable_dual,

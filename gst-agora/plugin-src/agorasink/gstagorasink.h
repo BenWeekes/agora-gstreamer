@@ -81,6 +81,7 @@ struct _Gstagorasink
   gchar user_id[MAX_STRING_LEN];
 
   gboolean verbose;
+  gboolean transcode;
   
   gboolean audio;
 

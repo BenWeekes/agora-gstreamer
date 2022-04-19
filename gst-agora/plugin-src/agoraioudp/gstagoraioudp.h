@@ -109,6 +109,7 @@ struct _Gstagoraioudp
   gint  out_video_delay;
 
   gboolean    proxy;
+  gboolean    transcode;
 
   gint        mode;                     //different modes of the plugin
   gchar       proxy_ips[MAX_STRING_LEN];

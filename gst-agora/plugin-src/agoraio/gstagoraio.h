@@ -91,6 +91,7 @@ struct _Gstagoraio
   GstAppSrcCallbacks cbs;
 
   gboolean verbose;
+  gboolean transcode;
   gboolean audio;
 
   AgoraIoContext_t* agora_ctx;
