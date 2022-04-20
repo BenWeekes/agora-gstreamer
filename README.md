@@ -107,6 +107,10 @@ gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid
 <ins>Audio into Agora from AAC file</ins>    
 gst-launch-1.0 urisourcebin uri=https://filesamples.com/samples/audio/aac/sample3.aac   ! aacparse ! faad ! audioresample ! audioconvert ! opusenc bitrate=128000 ! queue ! agorasink audio=true appid=xxx channel=xxx enforce-audio-duration=true
 
+<ins>Video into Agora from mp4 file</ins>    
+gst-launch-1.0  urisourcebin uri=https://sa-utils.agora.io/media/v223.mp4  ! decodebin  ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=xxx channel=xxx
+
+
  ## agorasrc
 
 <ins>Video out of Agora:</ins>    
