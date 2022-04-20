@@ -17,6 +17,10 @@ m_srcHeight(targetHeight),
 m_targetWidth(targetWidth),
 m_targetHeight(targetHeight),
 m_bitrate(bitRate),
+m_targetWidth2(targetWidth),
+m_targetHeight2(targetHeight),
+m_bitrate2(bitRate),
+_fps2(fps),
 m_scaleContext(nullptr),
 _fps(fps){
 
@@ -67,6 +71,10 @@ bool AgoraEncoder::encode(AVFrame* frame,uint8_t* out, uint32_t& outSize, bool r
   //dyamically read input from frame res
   if(frame->width!=m_srcWidth || frame->height!=m_srcHeight){
      onResolutionChange(frame->width, frame->height);
+  }
+
+  if (m_targetWidth2!=m_targetWidth || m_targetHeight2!=m_targetHeight) {
+	  propsChangeInternal(m_targetWidth2,m_targetHeight2,m_bitrate2,_fps2);
   }
 
   //scale video
@@ -206,23 +214,56 @@ bool AgoraEncoder::createVideoScaleContext(){
 }
 
 bool AgoraEncoder::bitrateChange(uint32_t bitrate){
-
   if (m_bitrate==bitrate) {
 	  return false;
   }
 
   m_bitrate=bitrate;
+  x264_param_t param;
+  initParams(param);
+  x264_encoder_reconfig(m_avCodec, &param);
+  logMessage("Agora encoder BITRATE has been reconfigured "+std::to_string(bitrate));
+  return true;
+}
+
+// call from encode thread
+bool AgoraEncoder::propsChange(const uint16_t& targetWidth,
+                      const uint16_t& targetHeight,const uint32_t& bitrate,
+                      const uint16_t& fps){
+
+	m_bitrate2=bitrate;
+	m_targetWidth2=targetWidth;
+	m_targetHeight2=targetHeight;
+	_fps2=fps;
+	return true;
+}
+
+bool AgoraEncoder::propsChangeInternal(const uint16_t& targetWidth,
+                      const uint16_t& targetHeight,const uint32_t& bitrate,
+                      const uint16_t& fps){
+
+  if (m_bitrate==bitrate && m_targetWidth==targetWidth && m_targetHeight==targetHeight && _fps==fps) {
+          return false;
+  }
+
+  m_bitrate=bitrate;
+  m_targetWidth=targetWidth;
+  m_targetHeight=targetHeight;
+  _fps=fps;
 
   x264_param_t param;
   initParams(param);
+  x264_encoder_close(m_avCodec);
+  m_avCodec=nullptr;
   m_avCodec = x264_encoder_open( &param );
   if( m_avCodec==nullptr){
      logMessage("Cannot open X264 encoder.");
      return false;
   } else {
      logMessage("Agora encoder BITRATE has been reconfigured "+std::to_string(bitrate));
-
   }
+
+  createVideoScaleContext();
  return true;
 }
 

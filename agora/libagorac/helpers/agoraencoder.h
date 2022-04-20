@@ -24,8 +24,12 @@ public:
   void setQMin(int qMin){_qMin=qMin;}
   void setQMax(int qMax){_qMax=qMax;}
   bool bitrateChange(uint32_t bitrate);
+  bool propsChange(const uint16_t& targetWidth, const uint16_t& targetHeight,const uint32_t& bitrate, const uint16_t& fps);
+
 
 protected:
+
+  bool propsChangeInternal(const uint16_t& targetWidth, const uint16_t& targetHeight,const uint32_t& bitrate, const uint16_t& fps);
 
   void initParams(x264_param_t& param);
   int handlePostEncoding(uint8_t* out, const int& nalCount,
@@ -51,6 +55,11 @@ private:
   uint16_t         m_targetWidth;
   uint16_t         m_targetHeight;
   uint32_t         m_bitrate;
+
+  uint16_t         m_targetWidth2;
+  uint16_t         m_targetHeight2;
+  uint32_t         m_bitrate2;
+  uint16_t         _fps2;
 
   SwsContext*      m_scaleContext;
   uint16_t         _fps;

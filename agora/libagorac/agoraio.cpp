@@ -73,6 +73,8 @@ AgoraIo::AgoraIo(const bool& verbose,
  _enableProxy(enableProxy),
  _proxyConnectionTimeOut((proxyTimeout < 1 ) ? 10000 : proxyTimeout),
  _proxyIps(proxyIps),
+ _transcodeWidth(0),
+ _transcodeHeight(0),
  _requireTranscode(true), // start off with transcoder
  _requireKeyframe(false),
 _transcodeVideo(enableTranscode)
@@ -351,15 +353,18 @@ bool  AgoraIo::init(char* in_app_id,
 		long media_bitrate_bps= (*(stats+10)) ;
 		long target_media_bitrate_bps= (*(stats+9)) ;
 	 
-	        if (target_media_bitrate_bps < 2000000) {
+	        if (target_media_bitrate_bps < 1200000) {
 			_requireTranscode=true;
+			setTranscoderProps(640, 360, *(stats+9), 30);
+		} else if (target_media_bitrate_bps < 2000000) {
+			_requireTranscode=true;
+			setTranscoderProps(1280, 720, *(stats+9), 30);
 		} else if (_requireTranscode) {
 			_requireTranscode=false;
 			_requireKeyframe=true;
 		}	
 	
-	        //std::cout<<"BWSTATS target_media_bitrate_bps " << (*(stats+9)) << " media_bitrate_bps " <<  (*(stats+10)) <<  " _requireTranscode " << _requireTranscode << " \n";
-		setTranscoderBitrate(*(stats+9));
+	        std::cout<<"BWSTATS target_media_bitrate_bps " << (*(stats+9)) << " media_bitrate_bps " <<  (*(stats+10)) <<  " _requireTranscode " << _requireTranscode << " \n";
 	}
 
         addEvent(AGORA_EVENT_ON_LOCAL_TRACK_STATS_CHANGED,userId,0,0,stats);
@@ -632,8 +637,11 @@ bool AgoraIo::initTranscoder(){
         std::cout<<"decoder is initialized successfully\n";
     }
 
-    int width=640, height=360, bitrate=300000, fps=30;
-    _videoEncoder=std::make_shared<AgoraEncoder>(width,height,bitrate, fps);
+    int bitrate=300000, fps=30;
+    _transcodeWidth=640;
+    _transcodeHeight=360;
+    _videoEncoder=std::make_shared<AgoraEncoder>(_transcodeWidth,_transcodeHeight,bitrate,fps);
+
     if(_videoEncoder->init()){
          std::cout<<"encoder is  initialized successfully\n";
     }
@@ -641,18 +649,17 @@ bool AgoraIo::initTranscoder(){
     return true;
 }
 
-bool AgoraIo::setTranscoderBitrate(int bitrate){
+bool AgoraIo::setTranscoderProps(int width, int height, int bitrate, int fps){
 
-    /*
-    int width=1280, height=720, fps=30;
-    _videoEncoder=std::make_shared<AgoraEncoder>(width,height,bitrate, fps);
-    if(_videoEncoder->init()){
-         std::cout<<"encoder is re-initialized successfully\n";
-    }
-    */
-
-  if (_videoEncoder->bitrateChange(bitrate)) {
-  	std::cout<<"encoder bitrate set to " << bitrate << " \n";
+  if (_transcodeWidth!=width || _transcodeHeight!=height) {
+  	if (_videoEncoder->propsChange(width, height, bitrate ,fps)) {
+		_transcodeWidth=width;
+		 _transcodeHeight=height;
+	  	std::cout<<"encoder change w=" << width << " h="  << height << " br=" << bitrate << " fps=" << fps << " \n";
+  	}
+  } else {
+	 _videoEncoder->bitrateChange(bitrate);
+	 std::cout<<"encoder change br=" << bitrate << " \n";
   }
 
     return true;

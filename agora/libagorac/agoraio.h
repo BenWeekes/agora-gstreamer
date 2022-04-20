@@ -146,7 +146,7 @@ protected:
     std::string createProxyString(std::list<std::string> ipList);
 
     bool initTranscoder();
-    bool setTranscoderBitrate(int bitrate);
+    bool setTranscoderProps(int width, int height, int bitrate, int fps);
 
     uint32_t transcode(const uint8_t* inBuffer,  const uint64_t& inLen,
                         uint8_t* outBuffer, bool isKeyFrame);
@@ -237,6 +237,10 @@ protected:
     bool                                              _transcodeVideo;                           
     bool                                              _requireTranscode;
     bool                                              _requireKeyframe;
+
+    int                                              _transcodeWidth;
+    int                                              _transcodeHeight;
+
  };
 
 #endif
