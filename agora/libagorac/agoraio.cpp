@@ -364,7 +364,7 @@ bool  AgoraIo::init(char* in_app_id,
 			_requireKeyframe=true;
 		}	
 	
-	        std::cout<<"BWSTATS target_media_bitrate_bps " << (*(stats+9)) << " media_bitrate_bps " <<  (*(stats+10)) <<  " _requireTranscode " << _requireTranscode << " \n";
+	        std::cout<<"BWSTATS target_media_bitrate_bps " << (*(stats+9)) << " media_bitrate_bps " <<  (*(stats+10)) <<  " _requireTranscode " << _requireTranscode << " _requireKeyframe " <<  _requireKeyframe  << " \n";
 	}
 
         addEvent(AGORA_EVENT_ON_LOCAL_TRACK_STATS_CHANGED,userId,0,0,stats);
@@ -603,6 +603,9 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
         const uint32_t MAX_FRAME_SIZE=1024*1020;
         std::unique_ptr<uint8_t[]> outBuffer(new uint8_t[MAX_FRAME_SIZE]);
         uint32_t outBufferSize=transcode(buffer, len, outBuffer.get(), is_key_frame);
+	if (!_requireTranscode) {
+        	std::cout<<"waiting for keyframe  \n";
+	}
 	if (outBufferSize>0) {
         	_videoFrameSender->sendEncodedVideoImage(outBuffer.get(),outBufferSize,videoEncodedFrameInfo);
 	} else {
@@ -616,7 +619,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 	}
 
 	if (!_requireKeyframe) { 
-        	//std::cout<<" SENDing encoded   \n";
+        	std::cout<<" SENDing encoded   \n";
         	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 	} else {
         	std::cout<<" pr encoded skipped as not keyframe  \n";
