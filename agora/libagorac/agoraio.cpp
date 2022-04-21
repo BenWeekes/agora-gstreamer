@@ -604,7 +604,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
         std::unique_ptr<uint8_t[]> outBuffer(new uint8_t[MAX_FRAME_SIZE]);
         uint32_t outBufferSize=transcode(buffer, len, outBuffer.get(), is_key_frame);
 	if (!_requireTranscode) {
-        	std::cout<<"waiting for keyframe  \n";
+        	std::cout<<"waiting for keyframe, length=  " << len <<  " \n";
 	}
 	if (outBufferSize>0) {
         	_videoFrameSender->sendEncodedVideoImage(outBuffer.get(),outBufferSize,videoEncodedFrameInfo);
@@ -619,7 +619,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 	}
 
 	if (!_requireKeyframe) { 
-        	std::cout<<" SENDing encoded   \n";
+        	std::cout<<" SENDing encoded, length= " << len << "  \n";
         	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 	} else {
         	std::cout<<" pr encoded skipped as not keyframe  \n";
