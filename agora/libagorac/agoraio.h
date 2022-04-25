@@ -147,6 +147,9 @@ protected:
 
     bool initTranscoder();
     bool setTranscoderProps(int width, int height, int bitrate, int fps);
+    void setTranscoderResolutions(int width, int height);
+    int isIFrame(const uint8_t* packet, uint64_t len);
+
 
     uint32_t transcode(const uint8_t* inBuffer,  const uint64_t& inLen,
                         uint8_t* outBuffer, bool isKeyFrame);
@@ -240,6 +243,10 @@ protected:
 
     int                                              _transcodeWidth;
     int                                              _transcodeHeight;
+    int                                              _transcodeWidthLow;
+    int                                              _transcodeHeightLow;
+    int                                              _transcodeWidthMedium;
+    int                                              _transcodeHeightMedium;
 
  };
 

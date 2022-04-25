@@ -75,6 +75,10 @@ AgoraIo::AgoraIo(const bool& verbose,
  _proxyIps(proxyIps),
  _transcodeWidth(0),
  _transcodeHeight(0),
+ _transcodeWidthLow(640),
+ _transcodeHeightLow(360),
+ _transcodeWidthMedium(1280),
+ _transcodeHeightMedium(720),
  _requireTranscode(true), // start off with transcoder
  _requireKeyframe(false),
 _transcodeVideo(enableTranscode)
@@ -355,10 +359,10 @@ bool  AgoraIo::init(char* in_app_id,
 	 
 	        if (target_media_bitrate_bps < 1200000) {
 			_requireTranscode=true;
-			setTranscoderProps(640, 360, *(stats+9), 30);
+			setTranscoderProps(_transcodeWidthLow, _transcodeHeightLow, *(stats+9), 30);
 		} else if (target_media_bitrate_bps < 2000000) {
 			_requireTranscode=true;
-			setTranscoderProps(1280, 720, *(stats+9), 30);
+			setTranscoderProps(_transcodeWidthMedium, _transcodeHeightMedium, *(stats+9), 30);
 		} else if (_requireTranscode) {
 			_requireTranscode=false;
 			_requireKeyframe=true;
@@ -582,7 +586,55 @@ void AgoraIo::unsubscribeAudioUser(const std::string& userId){
   _connection->getLocalUser()->unsubscribeAudio(userId.c_str());
 }
 
+
+
+int AgoraIo::isIFrame(const uint8_t* buffer, uint64_t len) {
+
+  int fragment_type = buffer[0] & 0x1F;
+  int nal_type = buffer[1] & 0x1F;
+  int start_bit = buffer[1] & 0x80;
+
+
+  //std::string text;
+ //  text.assign(buffer, 100);
+
+   //std::cout<<" isIFrame " << fragment_type << " " << nal_type << " " << start_bit << " "   << " \n";;
+
+ // std::cout<<" isIFrame 0 " << buffer[0] <<  " 1 " << buffer[1] <<  " 2 " << buffer[2] <<  " 3 " << buffer[3] << " " << text << " \n";
+
+//  std::cout<<" isIFrame 1  " <<  *(buffer+0)  <<  " "  <<  *(buffer+1)  <<  " "  <<  *(buffer+2)  <<  " "  << " \n";
+//
+      for(int i=0;i<20;i++) {
+	       //std::cout<< std::hex << (buffer[i] & 0x1F) ;
+	       std::cout<< (buffer[i] & 0x1F) << " ";
+       }
+
+  std::cout << " \n";
+
+
+
+  if (((fragment_type == 28 || fragment_type == 29) && nal_type == 5 && start_bit == 128) || fragment_type == 5){
+    return 1;
+  }
+
+  if ((buffer[10] & 0x1F) == 7 )
+	  return 1;
+
+
+  return 0;
+}
+
 bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_frame){
+
+  int is_iframe=isIFrame(buffer, len);
+
+
+  if (is_iframe!=is_key_frame) {
+  	std::cout<<" keyframe detect is_iframe=" << is_iframe <<  " is_key_frame " << is_key_frame << " \n";
+  }
+  if (is_iframe && !is_key_frame) {
+	  is_key_frame=1;
+  }
 
   auto frameType=agora::rtc::VIDEO_FRAME_TYPE_DELTA_FRAME; 
   if(is_key_frame){
@@ -641,8 +693,8 @@ bool AgoraIo::initTranscoder(){
     }
 
     int bitrate=300000, fps=30;
-    _transcodeWidth=640;
-    _transcodeHeight=360;
+    _transcodeWidth=_transcodeWidthLow;
+    _transcodeHeight=_transcodeHeightLow;
     _videoEncoder=std::make_shared<AgoraEncoder>(_transcodeWidth,_transcodeHeight,bitrate,fps);
 
     if(_videoEncoder->init()){
@@ -668,12 +720,33 @@ bool AgoraIo::setTranscoderProps(int width, int height, int bitrate, int fps){
     return true;
 }
 
+void AgoraIo::setTranscoderResolutions(int width, int height){
+
+  if (_transcodeWidthLow==(width/4))
+	  return;
+
+  _transcodeWidthLow=width/4;
+  _transcodeHeightLow=height/4;
+
+  _transcodeWidthMedium=width/2;
+  _transcodeHeightMedium=height/2;
+
+  setTranscoderProps(_transcodeWidthLow, _transcodeHeightLow, 300000, 30);
+
+}
+
 uint32_t AgoraIo::transcode(const uint8_t* inBuffer,  const uint64_t& inLen,
                              uint8_t* outBuffer, bool isKeyFrame){
 
     uint32_t outBufferSize=0;
     if(_videoDecoder->decode(inBuffer, inLen)){
         auto frame=_videoDecoder->getFrame();
+	if (frame->height>0) {
+		setTranscoderResolutions(frame->width,frame->height);
+	}
+	// make sure encoder aspect ration correct
+	// std::cout<<" frame-width " << frame->width << " \n";
+	// std::cout<<" frame-height " << frame->height << " \n";
         _videoEncoder->encode(frame, outBuffer, outBufferSize,isKeyFrame);
     }
 
