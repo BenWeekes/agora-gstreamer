@@ -594,21 +594,33 @@ int AgoraIo::isIFrame(const uint8_t* buffer, uint64_t len) {
   int nal_type = buffer[1] & 0x1F;
   int start_bit = buffer[1] & 0x80;
 
-
-  //std::string text;
- //  text.assign(buffer, 100);
-
-   //std::cout<<" isIFrame " << fragment_type << " " << nal_type << " " << start_bit << " "   << " \n";;
-
- // std::cout<<" isIFrame 0 " << buffer[0] <<  " 1 " << buffer[1] <<  " 2 " << buffer[2] <<  " 3 " << buffer[3] << " " << text << " \n";
-
-//  std::cout<<" isIFrame 1  " <<  *(buffer+0)  <<  " "  <<  *(buffer+1)  <<  " "  <<  *(buffer+2)  <<  " "  << " \n";
-//
-      for(int i=0;i<20;i++) {
-	       //std::cout<< std::hex << (buffer[i] & 0x1F) ;
-	       std::cout<< (buffer[i] & 0x1F) << " ";
-       }
-
+  /*
+  std::cout << "  \n ";
+  for(int i=0;i<20;i++) {
+    std::cout<< (buffer[i]) << " ";
+  }
+  std::cout << " \n";
+  std::cout << " 1F \n ";
+  for(int i=0;i<20;i++) {
+    std::cout<< (buffer[i] & 0x1F) << " ";
+  }
+  std::cout << " \n";
+  std::cout << " 3F \n ";
+  for(int i=0;i<20;i++) {
+    std::cout<< (buffer[i] & 0x3F) << " ";
+  }
+  std::cout << " \n";
+  std::cout << " 7F \n ";
+  for(int i=0;i<20;i++) {
+    std::cout<< (buffer[i] & 0x7F) << " ";
+  }
+  std::cout << " \n";
+  std::cout << " FF \n ";
+  */
+  for(int i=0;i<100;i++) {
+    std::cout<< (buffer[i] & 0xFF) << " ";
+  }
+  std::cout << " \n";
   std::cout << " \n";
 
 
@@ -621,6 +633,8 @@ int AgoraIo::isIFrame(const uint8_t* buffer, uint64_t len) {
 	  return 1;
 
 
+  if (len > 50000) // studio hack for iframe
+	  return 1;
   return 0;
 }
 
