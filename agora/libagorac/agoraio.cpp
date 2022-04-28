@@ -617,11 +617,13 @@ int AgoraIo::isIFrame(const uint8_t* buffer, uint64_t len) {
   std::cout << " \n";
   std::cout << " FF \n ";
   */
-  for(int i=0;i<100;i++) {
-    std::cout<< (buffer[i] & 0xFF) << " ";
-  }
-  std::cout << " \n";
-  std::cout << " \n";
+ // for(int i=0;i<100;i++) {
+  //  std::cout<< (buffer[i] & 0xFF) << " ";
+  //}
+  //
+  //std::cout << " \n";
+
+ // std::cout << " \n";
 
 
 
@@ -629,12 +631,16 @@ int AgoraIo::isIFrame(const uint8_t* buffer, uint64_t len) {
     return 1;
   }
 
-  if ((buffer[10] & 0x1F) == 7 )
+  if (len>10 && (buffer[10] & 0x1F) == 7 ) {
 	  return 1;
+  }
 
-
-  if (len > 50000) // studio hack for iframe
+  if (len>45 && (buffer[43] & 0xFF) == 1 && (buffer[44] & 0xFF) == 103 && (buffer[45] & 0xFF) == 100) {
 	  return 1;
+  }
+
+  //if (len > 50000) // studio hack for iframe
+//	  return 1;
   return 0;
 }
 
@@ -642,10 +648,10 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 
   int is_iframe=isIFrame(buffer, len);
 
+ // if (is_iframe!=is_key_frame) {
+  //	std::cout<<" keyframe detect is_iframe=" << is_iframe <<  " is_key_frame " << is_key_frame << " \n";
+  //}
 
-  if (is_iframe!=is_key_frame) {
-  	std::cout<<" keyframe detect is_iframe=" << is_iframe <<  " is_key_frame " << is_key_frame << " \n";
-  }
   if (is_iframe && !is_key_frame) {
 	  is_key_frame=1;
   }
@@ -656,7 +662,6 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   } else {
   }
 
-  
   agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
   videoEncodedFrameInfo.rotation = agora::rtc::VIDEO_ORIENTATION_0;
   videoEncodedFrameInfo.codecType = agora::rtc::VIDEO_CODEC_H264;
@@ -685,17 +690,14 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 	}
 
 	if (!_requireKeyframe) { 
-        	std::cout<<" SENDing encoded, length= " << len << "  \n";
+        	//std::cout<<" SENDing encoded, length= " << len << "  \n";
         	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 	} else {
         	std::cout<<" pr encoded skipped as not keyframe  \n";
 	}
   }
-
-
   return true;
 }
-
 
 bool AgoraIo::initTranscoder(){
 
