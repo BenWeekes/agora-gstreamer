@@ -181,7 +181,10 @@ bool  AgoraIo::init(char* in_app_id,
     std::string _userId=in_user_id;
     
     _rtcConfig.clientRoleType = agora::rtc::CLIENT_ROLE_BROADCASTER;
-    _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
+    // set to LIVE but SDK 3.4.1 is only able to do LIVE
+    _rtcConfig.channelProfile = agora::CHANNEL_PROFILE_LIVE_BROADCASTING;
+    //_rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION;
+   //_rtcConfig.channelProfile = agora::CHANNEL_PROFILE_COMMUNICATION_1v1;
     _rtcConfig.autoSubscribeAudio = false;
     _rtcConfig.autoSubscribeVideo = false;
     _rtcConfig.enableAudioRecordingOrPlayout = false; 
@@ -690,7 +693,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 	}
 
 	if (!_requireKeyframe) { 
-        	//std::cout<<" SENDing encoded, length= " << len << "  \n";
+        	std::cout<<" SENDing encoded, length= " << len << "  \n";
         	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 	} else {
         	std::cout<<" pr encoded skipped as not keyframe  \n";
