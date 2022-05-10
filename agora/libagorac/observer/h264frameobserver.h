@@ -4,7 +4,7 @@
 #include <functional>
 #include "AgoraBase.h"
 
-using OnNewFrame_fn=std::function<void(const uint userId, 
+using OnNewFrame_fn=std::function<void(const unsigned int userId, 
                                         const uint8_t* buffer,
                                         const size_t& size,
                                         const int isKeyFrame,
