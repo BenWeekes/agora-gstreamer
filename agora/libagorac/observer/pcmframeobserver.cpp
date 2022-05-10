@@ -76,14 +76,26 @@ _isUserJoined(false){
 
 }
 
-bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) {
-   
-  auto iter=_pcmUsers.find(std::to_string(uid));
+#if SDK_BUILD_NUM==190534
+ bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(const char* channelId, agora::media::base::user_id_t userId, AudioFrame& audioFrame) {
+#else
+ bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int userId, AudioFrame& audioFrame) {
+#endif
+
+#if SDK_BUILD_NUM==190534
+  auto userIdString=std::string(userId);
+#else
+   auto userIdString=std::to_string(userId);
+#endif
+
+  auto iter=_pcmUsers.find(userIdString);
+
   if(iter!=_pcmUsers.end()){
+
       auto user=iter->second;
       auto isSpeaking=user->onAudioPacket((int16_t*)audioFrame.buffer, audioFrame.samplesPerChannel);
       if(isSpeaking && _onUserSpeaking!=nullptr){
-         _onUserSpeaking(std::to_string(uid), user->lastVolume());
+         _onUserSpeaking(userIdString, user->lastVolume());
           //std::cout<<"user: "<<uid<<" is speaking, volume: "<<user->lastVolume()<<std::endl;
       }
   }
@@ -91,15 +103,11 @@ bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioF
   return true;
 }
 
-bool PcmFrameObserver::onMixedAudioFrame(AudioFrame& audioFrame){
-  
-   return true;
-}
-
-
-
- bool PcmFrameObserver::onPlaybackAudioFrame(AudioFrame& audioFrame){
-
+#if SDK_BUILD_NUM==190534
+ bool PcmFrameObserver::onPlaybackAudioFrame(const char* channelId,AudioFrame& audioFrame){
+#else
+ bool PcmFrameObserver::onPlaybackAudioFrame(AudioFrame& audioFrame){ 
+#endif
    if(_onAudioFrameReceived!=nullptr && _isUserJoined){
 
         _onAudioFrameReceived(0, 

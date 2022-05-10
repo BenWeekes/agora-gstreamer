@@ -17,7 +17,12 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
     
     _onVideoFrameReceived(videoEncodedFrameInfo.uid,
                           imageBuffer, length,isKeyFrame,
-                          videoEncodedFrameInfo.renderTimeMs);
+#if SDK_BUILD_NUM==190534
+                          videoEncodedFrameInfo.captureTimeMs
+#else
+                          videoEncodedFrameInfo.renderTimeMs
+#endif
+                          );
 
     return true;
 }

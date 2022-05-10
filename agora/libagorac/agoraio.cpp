@@ -258,7 +258,11 @@ bool  AgoraIo::init(char* in_app_id,
 
     //if you want to send_dual_h264,the ccMode must be enabled
      agora::base::SenderOptions option;
-     option.ccMode = agora::base::CC_ENABLED;
+#if SDK_BUILD_NUM==190534
+     option.ccMode = agora::rtc::TCcMode::CC_ENABLED;
+#else
+    option.ccMode = agora::base::CC_ENABLED;
+#endif
     // Create video track
     _customVideoTrack=_service->createCustomVideoTrack(_videoFrameSender, option);
     if (!_customVideoTrack) {
@@ -522,7 +526,12 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
  void AgoraIo::subscribeToVideoUser(const std::string& userId){
 
     if(_sendOnly==false){  
+        
+#if SDK_BUILD_NUM==190534
+        agora::rtc::VideoSubscriptionOptions subscriptionOptions;
+#else
         agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
+#endif
         subscriptionOptions.encodedFrameOnly = true;
         subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
         _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
@@ -693,7 +702,7 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
 	}
 
 	if (!_requireKeyframe) { 
-        	std::cout<<" SENDing encoded, length= " << len << "  \n";
+        	//std::cout<<" SENDing encoded, length= " << len << "  \n";
         	_videoFrameSender->sendEncodedVideoImage(buffer,len,videoEncodedFrameInfo);
 	} else {
         	std::cout<<" pr encoded skipped as not keyframe  \n";

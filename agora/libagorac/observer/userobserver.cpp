@@ -111,7 +111,8 @@ void UserObserver::onIntraRequestReceived() {
    std::cout<<"Agora sdk requested an iframe\n";
 }
 
-void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
+#if SDK_BUILD_NUM==190534
+void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInformation* speakers,
                                        unsigned int speakerNumber, int totalVolume) {
 
    
@@ -126,6 +127,25 @@ void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* sp
                 <<std::endl; 
      }*/
 }
+
+#else
+
+void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
+                                       unsigned int speakerNumber, int totalVolume) {
+
+   
+    /* if(speakers!=nullptr && speakers->volume>0){
+       if(_onUserVolumeChanged!=nullptr){
+           _onUserVolumeChanged(speakers->userId, speakers->volume);
+       }
+       std::cout<< "spearker: "<<speakers->uid
+                <<" speakerNumber: "<<speakerNumber
+                <<" volume: "<<speakers->volume
+                <<std::endl; 
+     }*/
+}
+
+#endif
 
 void UserObserver::onRemoteVideoTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack,
                                     const agora::rtc::RemoteVideoTrackStats& stats)

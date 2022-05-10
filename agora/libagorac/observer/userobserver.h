@@ -13,6 +13,14 @@
 #include "AgoraBase.h"
 #include "NGIAgoraLocalUser.h"
 
+#if SDK_BUILD_NUM==190534
+#include "NGIAgoraAudioTrack.h"
+#include "NGIAgoraMediaNodeFactory.h"
+#include "NGIAgoraMediaNode.h"
+#include "NGIAgoraVideoTrack.h"
+#include "NGIAgoraRtcConnection.h"
+#endif
+
 using OnUserInfofn=std::function<void(const std::string& userId, const int& messsage, const int& value)>;
 using OnUserVolumeChangedFn=std::function<void(const std::string& userId, const int& volume)>;
 
@@ -138,26 +146,47 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   void onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                    const agora::rtc::LocalVideoTrackStats& stats) override;
 
+#if SDK_BUILD_NUM==190534
+  void onAudioVolumeIndication(const agora::rtc::AudioVolumeInformation* speakers,
+                               unsigned int speakerNumber, int totalVolume) override;
+#else
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInfo* speakers,
                                unsigned int speakerNumber, int totalVolume) override;
-
+#endif
   void onLocalAudioTrackStatistics(const agora::rtc::LocalAudioStats& stats) override {}
 
   void onRemoteAudioTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteAudioTrack> audioTrack,
                                     const agora::rtc::RemoteAudioTrackStats& stats) override {}
-                                  
 
-                       
- #if SDK_BUILD_NUM !=110077    
-  void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
- #endif
+#if SDK_BUILD_NUM==190534                                 
+  void onFirstRemoteVideoFrameRendered(agora::user_id_t userId, int width,
+                                               int height, int elapsed){}
+  void onFirstRemoteVideoFrame(agora::user_id_t userId, int width, int height, int elapsed){}
+  void onFirstRemoteAudioFrame(agora::user_id_t userId, int elapsed) {}
+  void onFirstRemoteAudioDecoded(agora::user_id_t userId, int elapsed) {}
+  void onFirstRemoteVideoDecoded(agora::user_id_t userId, int width, int height, int elapsed){}
 
-  
+  void onVideoSizeChanged(agora::user_id_t userId, int width, int height, int rotation) {}
+  void onActiveSpeaker(agora::user_id_t userId){}
+ #endif                      
+ // void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
+ 
+ 
 
   void onUserInfoUpdated(agora::user_id_t userId, USER_MEDIA_INFO msg, bool val) override;
 
   void onIntraRequestReceived() override;
 
+#if SDK_BUILD_NUM==190534
+  void onAudioSubscribeStateChanged(const char* channel, agora::user_id_t uid,
+                                    agora::rtc::STREAM_SUBSCRIBE_STATE oldState,
+                                    agora::rtc::STREAM_SUBSCRIBE_STATE newState,
+                                    int elapseSinceLastState) override {}
+void onVideoSubscribeStateChanged(const char* channel, agora::user_id_t uid,
+                                    agora::rtc::STREAM_SUBSCRIBE_STATE oldState,
+                                    agora::rtc::STREAM_SUBSCRIBE_STATE newState,
+                                    int elapseSinceLastState) override {}
+#else
   void onAudioSubscribeStateChanged(const char* channel, agora::rtc::uid_t uid,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE oldState,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE newState,
@@ -167,6 +196,9 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                     agora::rtc::STREAM_SUBSCRIBE_STATE oldState,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE newState,
                                     int elapseSinceLastState) override {}
+
+  void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
+#endif
 
   void onAudioPublishStateChanged(const char* channel, agora::rtc::STREAM_PUBLISH_STATE oldState,
                                   agora::rtc::STREAM_PUBLISH_STATE newState,
