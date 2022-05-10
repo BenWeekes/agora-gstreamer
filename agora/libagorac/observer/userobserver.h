@@ -197,7 +197,9 @@ void onVideoSubscribeStateChanged(const char* channel, agora::user_id_t uid,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE newState,
                                     int elapseSinceLastState) override {}
 
-  void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
+   #if SDK_BUILD_NUM !=110077    //for compilation on this sdk version 
+      void onRemoteVideoStreamInfoUpdated(const agora::rtc::RemoteVideoStreamInfo& info) override {}
+   #endif
 #endif
 
   void onAudioPublishStateChanged(const char* channel, agora::rtc::STREAM_PUBLISH_STATE oldState,
