@@ -12,3 +12,4 @@ cc test_proxy.c  `pkg-config --cflags --libs gstreamer-1.0` -o test_proxy
 cc test_mode1.c common.c `pkg-config --cflags --libs gstreamer-1.0` -o test_mode1
 cc test_sep_pipes.c common.c `pkg-config --cflags --libs gstreamer-1.0` -o test_sep_pipes
 
+cc test_lite.c common.c `pkg-config --cflags --libs gstreamer-1.0` -o test_lite

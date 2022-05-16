@@ -1,7 +1,4 @@
 #include "utilities.h"
-#include "NGIAgoraRtcConnection.h"
-#include "IAgoraService.h"
-#include "AgoraBase.h"
 
 #include "agoradecoder.h"
 #include "agoraencoder.h"
@@ -10,8 +7,7 @@
 
 #include "agoraconstants.h"
 
-//#include "../userobserver.h"
-#include "context.h"
+//#include "context.h"
 #include <iostream>
 
 
@@ -27,7 +23,7 @@ std::string GetAddressAsString(agora_context_t* ctx){
    return std::to_string((long)(ctx))+": ";
 }
 
-TimePoint GetNextSamplingPoint(const std::string& label,
+/*TimePoint GetNextSamplingPoint(const std::string& label,
                                agora_context_t* ctx,
                                const WorkQueue_ptr& q, 
                                const long& currentTimestamp,
@@ -134,7 +130,7 @@ void ResizeBuffer(agora_context_t* ctx){
 
      ctx->lastBufferingTime=Now();
      ctx->reBufferingCount++;
-}
+}*/
 
 bool isNumber(const std::string& userIdString)
 {

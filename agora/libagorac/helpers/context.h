@@ -2,44 +2,18 @@
 #define _CONTEXT_H_
 
 #include "../agoratype.h"
-#include "../observer/connectionobserver.h"
 
-#if SDK_BUILD_NUM==190534
-#include "IAgoraService.h"
-#include "NGIAgoraLocalUser.h"
-#include "NGIAgoraAudioTrack.h"
-
-#include "NGIAgoraMediaNodeFactory.h"
-#include "NGIAgoraMediaNode.h"
-#include "NGIAgoraVideoTrack.h"
-#include "NGIAgoraRtcConnection.h"
-#endif
-
-using AgoraVideoSender_ptr=agora::agora_refptr<agora::rtc::IVideoEncodedImageSender>;
-using AgoraAudioSender_ptr=agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>;
-using AgoraVideoFrameType=agora::rtc::VIDEO_FRAME_TYPE;
-using ConnectionConfig=agora::rtc::RtcConnectionConfiguration;
 
 //a context that group all require info about agora
 struct agora_context_t{
 
-  agora::base::IAgoraService*                      service;
-  agora::agora_refptr<agora::rtc::IRtcConnection>  connection;
 
   int                                              isConnected;
-
-  ConnectionConfig                                 config;
-
-  AgoraVideoSender_ptr                             videoSender;
-  AgoraAudioSender_ptr                             audioSender;
 
   std::shared_ptr<std::thread>                    videoThreadHigh;
   std::shared_ptr<std::thread>                    videoThreadLow;
 
   std::shared_ptr<std::thread>                    audioThread;
-
-  agora::agora_refptr<agora::rtc::ILocalAudioTrack> audioTrack;
-  agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack;
 
   bool                                            isRunning;
 
@@ -91,14 +65,8 @@ struct agora_context_t{
 
    std::string                                     audioDumpFileName;   
 
-   ConnectionObserver_ptr                         _connectionObserver;      
 };
 
-class AgoraReceiverUser;
-struct agora_receive_context_t{
-
-   std::shared_ptr<AgoraReceiverUser> _receiver;
-};
 
 class AgoraIo;
 struct AgoraIoContext_t{

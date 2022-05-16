@@ -8,14 +8,6 @@
 #include <list>
 
 #include "agoratype.h"
-#include "helpers/context.h"
-
-#include "IAgoraService.h"
-#include "AgoraBase.h"
-
-#include "observer/pcmframeobserver.h"
-#include "observer/h264frameobserver.h"
-#include "observer/userobserver.h"
 
 
 class AgoraIo{
@@ -56,8 +48,8 @@ class AgoraIo{
                         long timestamp,
                         const long& duration=0);
 
-    void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
-    void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
+    //void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
+    //void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
     size_t getNextVideoFrame(uint8_t* data, 
                              size_t max_buffer_size,
@@ -83,6 +75,20 @@ class AgoraIo{
    void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
 
    void setSendOnly(const bool& flag);
+
+   void receiveVideoFrame(const uint userId, 
+                           const uint8_t* buffer,
+                           const size_t& length,
+                           const int& isKeyFrame,
+                           const uint64_t& ts);
+
+   void receiveAudioFrame(const uint userId, 
+                           const uint8_t* buffer,
+                           const size_t& length,
+                           const uint64_t& ts);
+
+  /*void handleUserStateChange(const std::string& userId, 
+                              const UserState& newState);*/
    
 protected:
 
@@ -112,19 +118,6 @@ protected:
    //receiver events
    void subscribeToVideoUser(const std::string& userId);
 
-   void receiveVideoFrame(const uint userId, 
-                           const uint8_t* buffer,
-                           const size_t& length,
-                           const int& isKeyFrame,
-                           const uint64_t& ts);
-
-   void receiveAudioFrame(const uint userId, 
-                           const uint8_t* buffer,
-                           const size_t& length,
-                           const uint64_t& ts);
-
-   void handleUserStateChange(const std::string& userId, 
-                              const UserState& newState);
 
     void subscribeAudioUser(const std::string& userId);
     void unsubscribeAudioUser(const std::string& userId);
@@ -166,25 +159,9 @@ protected:
     std::list<std::string>                         _activeUsers;
     std::string                                    _currentVideoUser;
 
-    agora::base::IAgoraService*                     _service;
-    agora::agora_refptr<agora::rtc::IRtcConnection> _connection;
-    agora::rtc::RtcConnectionConfiguration          _rtcConfig;
 
     bool                                           _connected = false;
 
-    std::shared_ptr<H264FrameReceiver>   h264FrameReceiver;
-
-    PcmFrameObserver_ptr                 _pcmFrameObserver;
-    ConnectionObserver_ptr               _connectionObserver;
-    UserObserver_ptr                     _userObserver;
-
-    agora::agora_refptr<agora::rtc::IMediaNodeFactory> _factory;
-
-    agora::agora_refptr<agora::rtc::ILocalAudioTrack> _customAudioTrack;
-    agora::agora_refptr<agora::rtc::ILocalVideoTrack> _customVideoTrack;
-
-    agora::agora_refptr<agora::rtc::IVideoEncodedImageSender> _videoFrameSender;
-    agora::agora_refptr<agora::rtc::IAudioEncodedFrameSender>  _audioSender;
 
     AgoraDecoder_ptr                                  _videoDecoder;
     AgoraEncoder_ptr                                  _videoEncoder;
