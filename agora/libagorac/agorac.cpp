@@ -90,57 +90,43 @@ void agora_dump_audio_to_file(agora_context_t* ctx, unsigned char* data, short s
    meidaFile.close();
 }
 
-AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
-                                        bool is_audiouser,
-                                        bool enc_enable,
-		                                  short enable_dual,
-										          unsigned int    dual_vbr, 
-				                            unsigned short  dual_width, 
-										          unsigned short  dual_height,
-									             unsigned short  min_video_jb,
-										          unsigned short  dfps,
-                                        bool verbose,
-                                        event_fn fn,
-										          void* userData,
-                                        int in_audio_delay,
-										          int in_video_delay,
-										          int out_audio_delay,
-										          int out_video_delay,
-                                        int sendOnly,
-                                        int enableProxy,
-                                        int proxy_timeout,
-										          char* proxy_ips, 
-											  bool transcode){
+AgoraIoContext_t*  agoraio_init(agora_config_t* config){
 
     AgoraIoContext_t* ctx=new AgoraIoContext_t;
     if(ctx==nullptr){
         return NULL;
     }
 
-    ctx->agoraIo=std::make_shared<AgoraIo>(verbose,
-                                           fn,
-                                           userData, 
-                                           in_audio_delay,
-                                           in_video_delay,
-                                           out_audio_delay,
-                                           out_video_delay,
-                                           sendOnly,
-                                           enableProxy,
-                                           proxy_timeout,
-                                           proxy_ips,
-					   transcode);
+    ctx->agoraIo=std::make_shared<AgoraIo>(config->verbose,
+                                           config->fn,
+                                           config->userData, 
+                                           config->in_audio_delay,
+                                           config->in_video_delay,
+                                           config->out_audio_delay,
+                                           config->out_video_delay,
+                                           config->sendOnly,
+                                           config->enableProxy,
+                                           config->proxy_timeout,
+                                           config->proxy_ips,
+					                            config->transcode);
 
-    auto ret=ctx->agoraIo->init(app_id, ch_id,user_id,
-                       is_audiouser, enc_enable, enable_dual,
-                       dual_vbr, dual_width, dual_height,
-                       min_video_jb, dfps);
+    auto ret=ctx->agoraIo->init(config->app_id,
+                                config->ch_id,
+                                config->user_id,
+                                config->is_audiouser, 
+                                config->enc_enable, 
+                                config->enable_dual,
+                                config->dual_vbr, 
+                                config->dual_width, 
+                                config->dual_height,
+                                config->min_video_jb, 
+                                config->dfps);
 
     if(ret==false){
        return nullptr;
     }
 
     return ctx;
-
 }
 
 int  agoraio_send_video(AgoraIoContext_t* ctx,  

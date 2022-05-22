@@ -80,6 +80,7 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
+  IN_PORT,
   PROP_VERBOSE,
   AUDIO,
   ENFORCE_AUDIO_DURAION,
@@ -160,6 +161,11 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
       g_param_spec_string ("userid", "userid", "agora user id (optional)",
           FALSE, G_PARAM_READWRITE));
 
+   /*in port*/
+  g_object_class_install_property (gobject_class, IN_PORT,
+      g_param_spec_int ("inport", "inport", "inport udp port for audio in",0, G_MAXUINT16,
+          5004, G_PARAM_READWRITE));
+
   gst_element_class_set_details_simple(gstelement_class,
     "agorasink",
     "agorasink",
@@ -206,9 +212,92 @@ gst_agorasink_init (Gstagorasink * filter)
   filter->transcode = FALSE;
   filter->audio = FALSE;
 
+  filter->in_port=5004;
+
   filter->enforce_audio_duration=FALSE;
 
   filter->ts=0;
+}
+
+/* The appsink has received a buffer */
+static GstFlowReturn new_sample (GstElement *sink, gpointer *user_data) {
+  
+   GstSample *sample;
+
+   Gstagorasink *agoraSink=(Gstagorasink*)user_data;
+   AgoraIoContext_t* agora_ctx=agoraSink->agora_ctx;
+
+  /* Retrieve the buffer */
+  g_signal_emit_by_name (sink, "pull-sample", &sample);
+  if (sample) {
+
+    GstBuffer * in_buffer=gst_sample_get_buffer (sample);
+
+    size_t data_size=gst_buffer_get_size (in_buffer);
+    gpointer data=malloc(data_size);
+    if(data==NULL){
+       g_print("cannot allocate memory!\n");
+       return GST_FLOW_ERROR;
+    }
+
+    gst_buffer_extract(in_buffer,0, data, data_size);
+
+    GstClockTime in_buffer_pts= GST_BUFFER_CAST(in_buffer)->pts;
+    if (agora_ctx==NULL) {
+      return GST_FLOW_ERROR;
+    }
+    
+    agoraio_send_audio(agora_ctx, data, data_size,(in_buffer_pts)/1000000);
+
+    free(data);
+
+    gst_sample_unref (sample);
+    return GST_FLOW_OK;
+  }
+
+  return GST_FLOW_ERROR;
+}
+
+int setup_audio_udp(Gstagorasink *agoraSink){
+
+   agoraSink->udpsrc = gst_element_factory_make("udpsrc", "udpsrc");
+   if(!agoraSink->udpsrc){
+       g_print("failed to create audio udpsrc\n");
+   }
+   else{
+       g_print("created udpsrc successfully\n");
+   }
+
+   agoraSink->appAudioSink = gst_element_factory_make("appsink", "appsink");
+   if(!agoraSink->appAudioSink){
+       g_print("failed to create audio appsink\n");
+   }
+   else{
+       g_print("created appsink successfully\n");
+   }
+
+   agoraSink->in_pipeline = gst_pipeline_new ("in-pipeline");
+   if(!agoraSink->in_pipeline){
+       g_print("failed to create audio pipeline\n");
+   }
+
+   //in plugin
+   gst_bin_add_many (GST_BIN (agoraSink->in_pipeline),agoraSink->udpsrc, agoraSink->appAudioSink, NULL);
+   gst_element_link_many (agoraSink->udpsrc, agoraSink->appAudioSink, NULL);
+
+    g_object_set (G_OBJECT (agoraSink->udpsrc),
+             "port", agoraSink->in_port,
+              NULL);
+
+    //set the pipeline in playing mode
+    gst_element_set_state (agoraSink->in_pipeline, GST_STATE_PLAYING);
+
+    //Configure appsink 
+    g_object_set (agoraSink->appAudioSink, "emit-signals", TRUE, NULL);
+    g_signal_connect (agoraSink->appAudioSink, "new-sample",
+                    G_CALLBACK (new_sample), agoraSink);
+
+    return TRUE;
 }
 
 int init_agora(Gstagorasink * filter){
@@ -223,32 +312,34 @@ int init_agora(Gstagorasink * filter){
        return -1;
    }
 
+   agora_config_t config;
 
-
+   config.app_id=filter->app_id;               /*appid*/
+   config.ch_id=filter->channel_id;            /*channel*/
+   config.user_id=filter->user_id;             /*user id*/
+   config.is_audiouser=FALSE;                   /*is audio user*/
+   config.enc_enable=0;                         /*enable encryption */
+   config.enable_dual=0;                        /*enable dual */
+   config.dual_vbr=500000;                      /*dual video bitrate*/
+   config.dual_width=320;                      /*dual video width*/ 
+   config.dual_height=180;                      /*dual video height*/
+   config.min_video_jb=12;                     /*initial size of video buffer*/
+   config.dfps=30;                             /*dual fps*/
+   config.verbose=filter->verbose;             /*log level*/
+   config.fn=NULL;                             /*signal function to call*/
+   config.userData=(void*)(filter);           /*additional params to the signal function*/ ;
+   config.in_audio_delay=0;
+   config.in_video_delay=0;
+   config.out_audio_delay=0;
+   config.out_video_delay=0;
+   config.sendOnly= 1;                          /*send only flag*/
+   config.enableProxy=FALSE;                    /*enable proxy*/
+   config.proxy_timeout= 0;                     /*proxy timeout*/
+   config.proxy_ips= "";                        /*proxy ips*/
+   config.transcode=filter->transcode;          /*proxy ips*/  
+   
    /*initialize agora*/
-   filter->agora_ctx=agoraio_init(filter->app_id,  /*appid*/
-                                filter->channel_id, /*channel*/
-                                filter->user_id,    /*user id*/
-                                 FALSE,             /*is audio user*/
-                                 0,                 /*enable encryption */
-                                 0,                 /*enable dual */
-                                 500000,            /*dual video bitrate*/
-                                 320,               /*dual video width*/
-                                 180,               /*dual video height*/
-                                 12,                /*initial size of video buffer*/
-                                 30,                /*dual fps*/
-                                 filter->verbose,  /*log level*/
-                                 NULL, /*signal function to call*/
-                                (void*)(filter),      /*additional params to the signal function*/ 
-                                 0,
-                                 0,
-                                 0,
-                                 0, 
-                                 1,                  /*sendonly flag*/
-                                 FALSE,               /*enable proxy*/
-                                 0,
-                                 "",
-				 filter->transcode);    
+   filter->agora_ctx=agoraio_init(&config);    
 
    if(filter->agora_ctx==NULL){
 
@@ -262,8 +353,9 @@ int init_agora(Gstagorasink * filter){
    filter->last_audio_buffer_pts=0;
 
    g_print("agora has been successfuly initialized\n");
-  
 
+   setup_audio_udp(filter);
+  
    return 0;
 }
 
@@ -294,6 +386,9 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
      case AUDIO: 
         filter->audio = g_value_get_boolean (value);
         break;
+    case IN_PORT: 
+        filter->in_port=g_value_get_int (value);
+        break;
     case ENFORCE_AUDIO_DURAION:
         filter->enforce_audio_duration = g_value_get_boolean (value);
         break;
@@ -320,13 +415,16 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
        g_value_set_string (value, filter->app_id);
        break;
     case CHANNEL_ID:
-        g_value_set_string (value, filter->channel_id);
+       g_value_set_string (value, filter->channel_id);
        break;
     case USER_ID:
         g_value_set_string (value, filter->user_id);
        break;
     case AUDIO:
         g_value_set_boolean (value, filter->audio);
+        break;
+    case IN_PORT:
+        g_value_set_int (value, filter->in_port);
         break;
     case ENFORCE_AUDIO_DURAION:
         g_value_set_boolean (value, filter->enforce_audio_duration);
@@ -335,8 +433,8 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
         g_value_set_boolean (value, filter->transcode);
         break;
     default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;
   }
 }
 
@@ -469,7 +567,6 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   return GST_FLOW_OK;
 }
 
-
 /* entry point to initialize the plug-in
  * initialize the plug-in itself
  * register the element factories and other features
@@ -495,7 +592,7 @@ agorasink_init (GstPlugin * agorasink)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstagorasink"
+#define PACKAGE "agorasink"
 #endif
 
 /* gstreamer looks for this structure to register agorasinks

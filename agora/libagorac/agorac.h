@@ -7,12 +7,8 @@
  #define EXTERNC
  #endif
 
-typedef void (*event_fn)(void* userData, 
-                         int type, 
-                         const char* userName,
-                         long param1,
-                         long param2,
-						 long* states);
+ #include "agoraconfig.h"
+
 
  typedef  struct agora_context_t agora_context_t;
  typedef  void (*agora_log_func_t)(void*, const char*);
@@ -26,27 +22,7 @@ typedef void (*event_fn)(void* userData,
  typedef struct AgoraIoContext_t  AgoraIoContext_t;
 
 
- EXTERNC AgoraIoContext_t*  agoraio_init(char* app_id, char* ch_id, char* user_id,
-                                        bool is_audiouser,
-                                        bool enc_enable,
-		                                short enable_dual,
-										unsigned int  dual_vbr, 
-				                        unsigned short  dual_width, 
-										unsigned short  dual_height,
-									    unsigned short min_video_jb,
-										unsigned short dfps,
-										bool verbose,
-										event_fn fn,
-										void* userData,
-										int in_audio_delay,
-										int in_video_delay,
-										int out_audio_delay,
-										int out_video_delay,
-										int sendOnly,
-										int enableProxy,
-										int proxy_timeout,
-										char* proxy_ips,
-										bool transcode);
+ EXTERNC AgoraIoContext_t*  agoraio_init(agora_config_t* config);
 
 EXTERNC void agoraio_disconnect(AgoraIoContext_t** ctx);
 

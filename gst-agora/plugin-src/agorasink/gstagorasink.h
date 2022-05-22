@@ -76,9 +76,14 @@ struct _Gstagorasink
 
   GstPad *sinkpad, *srcpad;
 
+  GstElement *appAudioSink, *udpsrc;
+  GstElement *in_pipeline;
+
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
+
+  gint in_port;
 
   gboolean verbose;
   gboolean transcode;

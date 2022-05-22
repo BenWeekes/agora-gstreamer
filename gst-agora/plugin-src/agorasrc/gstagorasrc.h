@@ -76,6 +76,9 @@ struct _Gstagorasrc
 {
   GstPushSrc element;
 
+  GstElement *appAudioSrc, *udpsink;
+  GstElement *out_pipeline;
+
   GstPad  *srcpad;
 
   gboolean verbose;
@@ -88,6 +91,9 @@ struct _Gstagorasrc
   gchar app_id[MAX_STRING_LEN];
   gchar channel_id[MAX_STRING_LEN];
   gchar user_id[MAX_STRING_LEN];
+
+  gchar host[MAX_STRING_LEN];
+  gint out_port;
 };
 
 G_END_DECLS

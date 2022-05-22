@@ -324,31 +324,34 @@ int init_agora(Gstagoraioudp *agoraIO){
        return TRUE;
    }
 
+   agora_config_t config;
+
+   config.app_id=agoraIO->app_id;               /*appid*/
+   config.ch_id=agoraIO->channel_id;            /*channel*/
+   config.user_id=agoraIO->user_id;             /*user id*/
+   config.is_audiouser=FALSE;                   /*is audio user*/
+   config.enc_enable=0;                         /*enable encryption */
+   config.enable_dual=0;                        /*enable dual */
+   config.dual_vbr=500000;                      /*dual video bitrate*/
+   config.dual_width=320;                       /*dual video width*/ 
+   config.dual_height=180;                      /*dual video height*/
+   config.min_video_jb=12;                      /*initial size of video buffer*/
+   config.dfps=30;                              /*dual fps*/
+   config.verbose=agoraIO->verbose;             /*log level*/
+   config.fn=handle_event_Signal;               /*signal function to call*/
+   config.userData=(void*)(agoraIO);            /*additional params to the signal function*/ ;
+   config.in_audio_delay=agoraIO->in_audio_delay;
+   config.in_video_delay=agoraIO->in_video_delay;
+   config.out_audio_delay=agoraIO->out_audio_delay;
+   config.out_video_delay=agoraIO->out_video_delay;
+   config.sendOnly= 0;                          /*send only flag*/
+   config.enableProxy=agoraIO->proxy;           /*enable proxy*/
+   config.proxy_timeout= agoraIO->reconnect_timeout;   /*proxy timeout*/
+   config.proxy_ips= agoraIO->proxy_ips;               /*proxy ips*/
+   config.transcode=agoraIO->transcode;                /*proxy ips*/  
+
     /*initialize agora*/
-   agoraIO->agora_ctx=agoraio_init(agoraIO->app_id,  /*appid*/
-                                agoraIO->channel_id, /*channel*/
-                                agoraIO->user_id,    /*user id*/
-                                 FALSE,             /*is audio user*/
-                                 0,                 /*enable encryption */
-                                 0,                 /*enable dual */
-                                 500000,            /*dual video bitrate*/
-                                 320,               /*dual video width*/
-                                 180,               /*dual video height*/
-                                 12,                /*initial size of video buffer*/
-                                 30,                /*dual fps*/
-                                 agoraIO->verbose,  /*log level*/
-                                 handle_event_Signal, /*signal function to call*/
-                                (void*)(agoraIO),     /*additional params to the signal function*/ 
-                                 agoraIO->in_audio_delay,
-                                 agoraIO->in_video_delay,
-                                 agoraIO->out_audio_delay,
-                                 agoraIO->out_video_delay,
-                                 0,                    /*send only flag*/
-                                 agoraIO->proxy,        /*enable proxy*/
-                                 agoraIO->reconnect_timeout,   /*proxy timeout*/
-                                 agoraIO->proxy_ips,               /*proxy ips*/          
-                                 agoraIO->transcode);               /*proxy ips*/          
-         
+   agoraIO->agora_ctx=agoraio_init(&config);
 
    if(agoraIO->agora_ctx==NULL){
 

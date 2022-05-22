@@ -83,7 +83,9 @@ enum
   APP_ID,
   CHANNEL_ID,
   USER_ID,
-  AUDIO
+  AUDIO,
+  OUT_PORT,
+  HOST
 };
 
 /* the capabilities of the inputs and outputs.
@@ -168,31 +170,36 @@ int init_agora(Gstagorasrc * src){
        g_print("channel id cannot be empty!\n");
        return -1;
    }
+    
+   agora_config_t config;
+
+   config.app_id=src->app_id;               /*appid*/
+   config.ch_id=src->channel_id;            /*channel*/
+   config.user_id=src->user_id;             /*user id*/
+   config.is_audiouser=FALSE;                   /*is audio user*/
+   config.enc_enable=0;                         /*enable encryption */
+   config.enable_dual=0;                        /*enable dual */
+   config.dual_vbr=500000;                      /*dual video bitrate*/
+   config.dual_width=320;                       /*dual video width*/ 
+   config.dual_height=180;                      /*dual video height*/
+   config.min_video_jb=12;                      /*initial size of video buffer*/
+   config.dfps=30;                              /*dual fps*/
+   config.verbose=src->verbose;                 /*log level*/
+   config.fn=NULL;                              /*signal function to call*/
+   config.userData=(void*)(src);                /*additional params to the signal function*/ ;
+   config.in_audio_delay=0;
+   config.in_video_delay=0;
+   config.out_audio_delay=0;
+   config.out_video_delay=0;
+   config.sendOnly= 0;                          /*send only flag*/
+   config.enableProxy=FALSE;                    /*enable proxy*/
+   config.proxy_timeout= 0;                     /*proxy timeout*/
+   config.proxy_ips= "";                        /*proxy ips*/
+   config.transcode=FALSE;                      /*proxy ips*/  
+
 
     /*initialize agora*/
-    src->agora_ctx=agoraio_init(src->app_id,  /*appid*/
-                                src->channel_id, /*channel*/
-                                src->user_id,    /*user id*/
-                                 FALSE,             /*is audio user*/
-                                 0,                 /*enable encryption */
-                                 0,                 /*enable dual */
-                                 500000,            /*dual video bitrate*/
-                                 320,               /*dual video width*/
-                                 180,               /*dual video height*/
-                                 12,                /*initial size of video buffer*/
-                                 30,                /*dual fps*/
-                                 src->verbose,  /*log level*/
-                                 NULL, /*signal function to call*/
-                                (void*)(src),      /*additional params to the signal function*/ 
-                                 0,
-                                 0,
-                                 0,
-                                 0,
-                                 0,                 /*send only*/    
-                                 FALSE,               /*enable proxy*/   
-                                 0,
-                                 "",
-				 FALSE);    
+   src->agora_ctx=agoraio_init(&config);    
   
    if(src->agora_ctx==NULL){
 
@@ -212,6 +219,50 @@ int init_agora(Gstagorasrc * src){
 
    return 0;
 }
+
+int setup_audio_udp(Gstagorasrc *agoraSrc){
+
+   agoraSrc->appAudioSrc= gst_element_factory_make ("appsrc", "source");
+   if(!agoraSrc->appAudioSrc){
+       g_print("failed to create audio app src\n");
+   }
+   else{
+       g_print("created audio app src successfully\n");
+   }
+   agoraSrc->udpsink = gst_element_factory_make("udpsink", "udpsink");
+   if(!agoraSrc->udpsink){
+       g_print("failed to create audio udpsink\n");
+   }
+   else{
+       g_print("created udpsink successfully\n");
+   }
+
+   agoraSrc->out_pipeline = gst_pipeline_new ("pipeline");
+   if(!agoraSrc->out_pipeline){
+       g_print("failed to create audio pipeline\n");
+   }
+
+   //out plugin
+   gst_bin_add_many (GST_BIN (agoraSrc->out_pipeline), agoraSrc->appAudioSrc, agoraSrc->udpsink, NULL);
+   gst_element_link_many (agoraSrc->appAudioSrc, agoraSrc->udpsink, NULL);
+
+    //setup appsrc 
+    g_object_set (G_OBJECT (agoraSrc->appAudioSrc),
+            "stream-type", 0,
+            "is-live", TRUE,
+            "format", GST_FORMAT_TIME, NULL);
+
+     g_object_set (G_OBJECT (agoraSrc->udpsink),
+            "host", agoraSrc->host,
+            "port", agoraSrc->out_port,
+              NULL);
+
+    //set the pipeline in playing mode
+    gst_element_set_state (agoraSrc->out_pipeline, GST_STATE_PLAYING);
+
+    return TRUE;
+}
+
 
 static GstFlowReturn
 gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
@@ -314,6 +365,16 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
       g_param_spec_string ("remoteuserid", "remoteuserid", "agora user id to subscribe to it (optional)",
           FALSE, G_PARAM_READWRITE));
 
+  /*out port*/
+  g_object_class_install_property (gobject_class, OUT_PORT,
+      g_param_spec_int ("outport", "outport", "outport udp port for audio out", 0, G_MAXUINT16,
+          5004, G_PARAM_READWRITE));
+
+  /*host*/
+  g_object_class_install_property (gobject_class, HOST,
+      g_param_spec_string ("host", "host", "udp host that we send audio to it",
+          FALSE, G_PARAM_READWRITE));
+
 
   gst_element_class_set_details_simple(gstelement_class,
     "agorasrc",
@@ -348,6 +409,10 @@ gst_agorasrc_init (Gstagorasrc * agoraSrc)
   
   agoraSrc->verbose = FALSE;
   agoraSrc->audio=FALSE;
+
+  memset(agoraSrc->host, 0, MAX_STRING_LEN);
+  strcpy(agoraSrc->host,"127.0.0.1");
+  agoraSrc->out_port=5004;
 }
 static void
 gst_agorasrc_set_property (GObject * object, guint prop_id,
@@ -376,6 +441,13 @@ gst_agorasrc_set_property (GObject * object, guint prop_id,
      case AUDIO: 
         agoraSrc->audio = g_value_get_boolean (value);
         break;
+     case OUT_PORT: 
+        agoraSrc->out_port=g_value_get_int (value);
+        break;
+    case HOST: 
+        str=g_value_get_string (value);
+        g_strlcpy(agoraSrc->host, str, MAX_STRING_LEN);
+        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
         break;
@@ -403,6 +475,12 @@ gst_agorasrc_get_property (GObject * object, guint prop_id,
         break;
     case AUDIO:
         g_value_set_boolean (value, agoraSrc->audio);
+        break;
+    case OUT_PORT:
+        g_value_set_int (value, agoraSrc->out_port);
+        break;
+    case HOST:
+        g_value_set_string (value, agoraSrc->host);
         break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

@@ -10,4 +10,5 @@ sudo make install
 sudo cp  $INPUT_DIR/agora_sdk/libagora_rtc_sdk.so  /usr/local/lib
 sudo cp  $INPUT_DIR/agora_sdk/libagora-ffmpeg.so  /usr/local/lib
 sudo cp agorac.h /usr/local/include
+sudo cp agoraconfig.h /usr/local/include
 sudo ldconfig
