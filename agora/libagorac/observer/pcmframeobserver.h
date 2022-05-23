@@ -8,7 +8,7 @@
 
 #include "AgoraBase.h"
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534
 #include "NGIAgoraAudioTrack.h"
 #endif
 
@@ -22,7 +22,7 @@ using OnUserSpeakingFn=std::function<void(const std::string& userId, const int& 
  class AudioUser;
  using AudioUser_ptr=std::shared_ptr<AudioUser>;
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
 class PcmFrameObserver : public agora::media::IAudioFrameObserverBase {
 #else
 class PcmFrameObserver : public agora::media::IAudioFrameObserver {
@@ -38,7 +38,7 @@ class PcmFrameObserver : public agora::media::IAudioFrameObserver {
      _onUserSpeaking=fn;
   }
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
   bool onPlaybackAudioFrame(const char* channelId,AudioFrame& audioFrame) override;
   bool onRecordAudioFrame(const char* channelId,AudioFrame& audioFrame) override { return true; };
   bool onMixedAudioFrame(const char* channelId,AudioFrame& audioFrame) override {return true;}

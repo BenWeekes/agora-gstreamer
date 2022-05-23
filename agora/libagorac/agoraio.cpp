@@ -257,8 +257,12 @@ bool  AgoraIo::init(char* in_app_id,
     }
 
     //if you want to send_dual_h264,the ccMode must be enabled
+#if SDK_BUILD_NUM ==200931
+    agora::rtc::SenderOptions option;
+#else
      agora::base::SenderOptions option;
-#if SDK_BUILD_NUM==190534
+#endif
+#if SDK_BUILD_NUM >=190534
      option.ccMode = agora::rtc::TCcMode::CC_ENABLED;
 #else
     option.ccMode = agora::base::CC_ENABLED;
@@ -527,7 +531,7 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
     if(_sendOnly==false){  
         
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
         agora::rtc::VideoSubscriptionOptions subscriptionOptions;
 #else
         agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;

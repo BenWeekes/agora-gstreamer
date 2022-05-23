@@ -4,7 +4,7 @@
 #include "../agoratype.h"
 #include "../observer/connectionobserver.h"
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
 #include "IAgoraService.h"
 #include "NGIAgoraLocalUser.h"
 #include "NGIAgoraAudioTrack.h"

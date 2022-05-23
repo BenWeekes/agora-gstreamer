@@ -76,13 +76,13 @@ _isUserJoined(false){
 
 }
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534
  bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(const char* channelId, agora::media::base::user_id_t userId, AudioFrame& audioFrame) {
 #else
  bool PcmFrameObserver::onPlaybackAudioFrameBeforeMixing(unsigned int userId, AudioFrame& audioFrame) {
 #endif
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
   auto userIdString=std::string(userId);
 #else
    auto userIdString=std::to_string(userId);
@@ -103,7 +103,7 @@ _isUserJoined(false){
   return true;
 }
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
  bool PcmFrameObserver::onPlaybackAudioFrame(const char* channelId,AudioFrame& audioFrame){
 #else
  bool PcmFrameObserver::onPlaybackAudioFrame(AudioFrame& audioFrame){ 

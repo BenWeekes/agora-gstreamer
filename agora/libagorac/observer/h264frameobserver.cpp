@@ -17,7 +17,7 @@ bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, 
     
     _onVideoFrameReceived(videoEncodedFrameInfo.uid,
                           imageBuffer, length,isKeyFrame,
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
                           videoEncodedFrameInfo.captureTimeMs
 #else
                           videoEncodedFrameInfo.renderTimeMs

@@ -13,7 +13,7 @@
 #include "AgoraBase.h"
 #include "NGIAgoraLocalUser.h"
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
 #include "NGIAgoraAudioTrack.h"
 #include "NGIAgoraMediaNodeFactory.h"
 #include "NGIAgoraMediaNode.h"
@@ -146,7 +146,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   void onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                    const agora::rtc::LocalVideoTrackStats& stats) override;
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInformation* speakers,
                                unsigned int speakerNumber, int totalVolume) override;
 #else
@@ -158,7 +158,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
   void onRemoteAudioTrackStatistics(agora::agora_refptr<agora::rtc::IRemoteAudioTrack> audioTrack,
                                     const agora::rtc::RemoteAudioTrackStats& stats) override {}
 
-#if SDK_BUILD_NUM==190534                                 
+#if SDK_BUILD_NUM>=190534                                
   void onFirstRemoteVideoFrameRendered(agora::user_id_t userId, int width,
                                                int height, int elapsed){}
   void onFirstRemoteVideoFrame(agora::user_id_t userId, int width, int height, int elapsed){}
@@ -177,7 +177,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   void onIntraRequestReceived() override;
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
   void onAudioSubscribeStateChanged(const char* channel, agora::user_id_t uid,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE oldState,
                                     agora::rtc::STREAM_SUBSCRIBE_STATE newState,

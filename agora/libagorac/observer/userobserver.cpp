@@ -111,7 +111,7 @@ void UserObserver::onIntraRequestReceived() {
    std::cout<<"Agora sdk requested an iframe\n";
 }
 
-#if SDK_BUILD_NUM==190534
+#if SDK_BUILD_NUM>=190534 
 void UserObserver::onAudioVolumeIndication(const agora::rtc::AudioVolumeInformation* speakers,
                                        unsigned int speakerNumber, int totalVolume) {
 
