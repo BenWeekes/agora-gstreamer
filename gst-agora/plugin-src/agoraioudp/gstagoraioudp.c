@@ -609,6 +609,11 @@ gst_on_change_state (GstElement *element, GstStateChange transition)
 
 static void release_audio_pipelines(Gstagoraioudp *agoraIO){
 
+    if(agoraIO->in_pipeline==NULL ||
+       agoraIO->out_pipeline==NULL){
+          g_print("cannot release audo plugin because they have not been allocated\n");
+          return;
+    }
     if(agoraIO->mode==3 || agoraIO->mode==1){
 
         gst_element_send_event(agoraIO->in_pipeline, gst_event_new_eos());
@@ -891,6 +896,9 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
 
   agoraIO->reconnect_timeout=10000;
   memset(agoraIO->proxy_ips, 0, MAX_STRING_LEN);
+
+  agoraIO->in_pipeline=NULL; 
+  agoraIO->out_pipeline=NULL;
 }
 
 static void

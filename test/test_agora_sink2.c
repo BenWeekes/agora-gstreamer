@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   char* channel=argv[2];
 
   snprintf (video_pipe_str, MAX_BUFFER/4, "videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! agorasink  appid=%s channel=%s userid=123 inport=7373", appid, channel);
-  snprintf (audio_in_pipe_str, MAX_BUFFER/4,"audiotestsrc wave=ticks apply-tick-ramp=true tick-interval=100000000 freq=10000 volume=0.4 marker-tick-period=10 sine-periods-per-tick=20  ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! audioconvert ! opusenc ! udpsink auto-multicast=true host=127.0.0.1 address=127.0.0.1 port=7373");
+  snprintf (audio_in_pipe_str, MAX_BUFFER/4,"audiotestsrc wave=ticks apply-tick-ramp=true tick-interval=100000000 freq=10000 volume=0.4 marker-tick-period=10 sine-periods-per-tick=20  ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! audioconvert ! opusenc ! udpsink host=224.1.1.1 port=7373 auto-multicast=true");
 
   snprintf (complete_pipe_str, MAX_BUFFER,"%s %s ",video_pipe_str, audio_in_pipe_str);
 

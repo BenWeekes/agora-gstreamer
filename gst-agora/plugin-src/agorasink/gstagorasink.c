@@ -289,9 +289,14 @@ int setup_audio_udp(Gstagorasink *agoraSink){
              "port", agoraSink->in_port,
               NULL);
 
-     g_object_set (G_OBJECT (agoraSink->udpsrc),
-             "address", "127.0.0.1",
+    g_object_set (G_OBJECT (agoraSink->udpsrc),
+             "auto-multicast", true,
               NULL);
+
+    /*g_object_set (G_OBJECT (agoraSink->udpsrc),
+             "multicast-group", "224.1.1.1",
+              NULL);*/
+
 
     //set the pipeline in playing mode
     gst_element_set_state (agoraSink->in_pipeline, GST_STATE_PLAYING);
