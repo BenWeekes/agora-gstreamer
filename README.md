@@ -105,7 +105,7 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 
 gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test 
 
-<ins>Video into Agora with audio from udp port 73737</ins>   
+<ins>Video into Agora with audio from udp port 7373</ins>   
 agorasink appid=xxx channel=test inport=7373
 
 <ins>Audio into Agora from microphone</ins>    
