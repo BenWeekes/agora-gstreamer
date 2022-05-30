@@ -69,6 +69,10 @@ gst-launch-1.0 -v udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48
 
 gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=127.0.0.1 port=7373
 
+<ins>Audio in from mic multiple cast</ins>   
+
+gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=224.1.1.1 port=7373 auto-multicast=true
+
 <ins>Token example</ins>
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency !  queue ! agoraioudp appid="006e24ca3eb5db7440ea673061316187b06IAB63A2UQqvEo8f1Ou8yGA2d4nYbefdEqP+/YTS0z+JJR0kQgrCBkyDDIgBEAvsBNXKGYQQAAQDFLoVhAgDFLoVhAwDffFLoVhBADFLoVh"  channel=ttt userid=1001 outport=7372 inport=7373 out-audio-delay=0 out-video-delay=70 verbose=false ! fakesink sync=false
@@ -100,6 +104,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 <ins>Audio into Agora from test source:</ins>    
 
 gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test 
+
+<ins>Video into Agora with audio from udp port 73737</ins>   
+agorasink appid=xxx channel=test inport=7373
 
 <ins>Audio into Agora from microphone</ins>    
 gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=xxx
