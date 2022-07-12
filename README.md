@@ -165,9 +165,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  Uses this SDK wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz     
  tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
  sudo apt install cmake    
- sudo apt-get update
- sudo apt-get install -y build-essential
- cd  agora_rtc_sdk/example    
+ sudo apt-get update    
+ sudo apt-get install -y build-essential     
+ cd  agora_rtc_sdk/example        
  ./build-x86_64.sh    
  LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk    
  export LD_LIBRARY_PATH     
