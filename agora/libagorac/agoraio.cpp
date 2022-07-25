@@ -257,12 +257,12 @@ bool  AgoraIo::init(char* in_app_id,
     }
 
     //if you want to send_dual_h264,the ccMode must be enabled
-#if SDK_BUILD_NUM ==200931
+#if SDK_BUILD_NUM >=200931 //sdk >=3.8
     agora::rtc::SenderOptions option;
 #else
      agora::base::SenderOptions option;
 #endif
-#if SDK_BUILD_NUM >=190534
+#if SDK_BUILD_NUM >=190534 //sdk >=3.7
      option.ccMode = agora::rtc::TCcMode::CC_ENABLED;
 #else
     option.ccMode = agora::base::CC_ENABLED;

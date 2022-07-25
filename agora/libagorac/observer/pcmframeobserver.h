@@ -50,6 +50,12 @@ class PcmFrameObserver : public agora::media::IAudioFrameObserver {
   bool onPlaybackAudioFrameBeforeMixing(unsigned int uid, AudioFrame& audioFrame) override;
 #endif
 
+#if SDK_BUILD_NUM>=214232  //sdk 3.8202 
+  virtual bool onEarMonitoringAudioFrame(AudioFrame& audioFrame){
+     return true;
+  }
+#endif
+
   void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
   void setUserJoined(const bool& flag);
 
