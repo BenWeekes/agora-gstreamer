@@ -69,6 +69,10 @@ gst-launch-1.0 -v udpsrc port=7372 ! audio/x-raw,format=S16LE,channels=1,rate=48
 
 gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=127.0.0.1 port=7373
 
+<ins>Audio in from mic multiple cast</ins>   
+
+gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! udpsink host=224.1.1.1 port=7373 auto-multicast=true
+
 <ins>Token example</ins>
 
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! videoconvert ! x264enc key-int-max=60 tune=zerolatency !  queue ! agoraioudp appid="006e24ca3eb5db7440ea673061316187b06IAB63A2UQqvEo8f1Ou8yGA2d4nYbefdEqP+/YTS0z+JJR0kQgrCBkyDDIgBEAvsBNXKGYQQAAQDFLoVhAgDFLoVhAwDffFLoVhBADFLoVh"  channel=ttt userid=1001 outport=7372 inport=7373 out-audio-delay=0 out-video-delay=70 verbose=false ! fakesink sync=false
@@ -100,6 +104,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 <ins>Audio into Agora from test source:</ins>    
 
 gst-launch-1.0 -v audiotestsrc wave=sine ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=test 
+
+<ins>Video into Agora with audio from udp port 7373</ins>   
+agorasink appid=xxx channel=test inport=7373
 
 <ins>Audio into Agora from microphone</ins>    
 gst-launch-1.0 -v pulsesrc ! audioconvert ! opusenc ! agorasink audio=true appid=xxx channel=xxx
@@ -158,7 +165,9 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  Uses this SDK wget https://download.agora.io/sdk/release/Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz     
  tar -xvzf Agora-RTC-x86_64-linux-gnu-v3.4.217.tgz   
  sudo apt install cmake    
- cd  agora_rtc_sdk/example    
+ sudo apt-get update    
+ sudo apt-get install -y build-essential     
+ cd  agora_rtc_sdk/example        
  ./build-x86_64.sh    
  LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk    
  export LD_LIBRARY_PATH     
@@ -166,3 +175,6 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  ./sample_send_h264_dual_stream --token xxxx --channelId xxxx --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264   
 
 SDK Log ~/.agora/agorasdk.log
+
+Jetson: Linux kernel architecture is aarch64 / arm64 (64-bit) (?)
+PiL: gnueabihf (?)
