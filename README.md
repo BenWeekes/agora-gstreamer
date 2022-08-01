@@ -117,6 +117,11 @@ gst-launch-1.0 urisourcebin uri=https://filesamples.com/samples/audio/aac/sample
 <ins>Video into Agora from mp4 file</ins>    
 gst-launch-1.0  urisourcebin uri=https://sa-utils.agora.io/media/v223.mp4  ! decodebin  ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=xxx channel=xxx
 
+<ins>RTSP from camera on network</ins>    
+
+gst-launch-1.0 rtspsrc location=rtsp://admin:eee@1.2.3.4:2036/Streaming/Channels/102 latency=0 buffer-mode=auto ! decodebin ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency  !  agorasink appid=xxx channel=xxx   
+
+
 
  ## agorasrc
 
