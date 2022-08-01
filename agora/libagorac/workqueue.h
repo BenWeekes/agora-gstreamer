@@ -49,7 +49,7 @@ public:
              _condition.wait(lk, [this]{return !isEmpty();});
 	}
 	
-	int size(){
+	size_t size(){
 		return (int)_workQueue.size();
 	}
 

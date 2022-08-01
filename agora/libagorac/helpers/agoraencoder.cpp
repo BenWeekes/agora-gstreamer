@@ -64,7 +64,6 @@ bool AgoraEncoder::encode(AVFrame* frame,uint8_t* out, uint32_t& outSize, bool r
 
   int nalCount;
   x264_nal_t* nals;
-  int encodedBytes=0;
 
   if(m_avCodec==nullptr) return false;
 
@@ -105,7 +104,7 @@ bool AgoraEncoder::encode(AVFrame* frame,uint8_t* out, uint32_t& outSize, bool r
 
   //flush delayed frames
   while( x264_encoder_delayed_frames(m_avCodec) ){
-     encodedBytes = x264_encoder_encode( m_avCodec, &nals, &nalCount, nullptr, &m_avOutputFrame );
+     x264_encoder_encode( m_avCodec, &nals, &nalCount, nullptr, &m_avOutputFrame );
      outSize=handlePostEncoding(out, nalCount, nals,outSize);
   }
 
@@ -121,8 +120,6 @@ static void  X264LogFunc( void *, int i_level, const char *psz, va_list ){
 }
 
 void AgoraEncoder::initParams(x264_param_t& param){
-
-  const int PACKET_SIZE=60000;
 
   x264_param_default_preset(&param, "veryfast", "zerolatency");
   param.i_csp = X264_CSP_I420;

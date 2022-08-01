@@ -30,8 +30,8 @@ std::string GetAddressAsString(agora_context_t* ctx){
 TimePoint GetNextSamplingPoint(const std::string& label,
                                agora_context_t* ctx,
                                const WorkQueue_ptr& q, 
-                               const long& currentTimestamp,
-                               const long& lastTimestamp){
+                               const unsigned long& currentTimestamp,
+                               const unsigned long& lastTimestamp){
 
     //calculate the next ts to wait
      auto currentTs=currentTimestamp;

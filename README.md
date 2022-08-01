@@ -178,3 +178,28 @@ SDK Log ~/.agora/agorasdk.log
 
 Jetson: Linux kernel architecture is aarch64 / arm64 (64-bit) (?)
 PiL: gnueabihf (?)
+
+
+## Cross compilation of Arm (Target) on x86 (Host)
+
+(1) install gcc and G++ for arm 
+
+sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+(2) make sure you set the environment variable INSTALL_PATH where the library will be copied to:
+
+for example:
+
+export INSTALL_PATH=/home/ubuntu/arm-dist
+
+(3) copy  the dir /usr/include/aarch64-linux-gnu from the target to the host
+
+this will allow g++-aarch64-linux-gnu to find the required libraries on the host
+
+(4) compile libagorac by specifying arm config in cmake:
+
+mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=arm64.cmake .. && make && sudo make install
+
+(5) copy the installation files from host to target and test there
+
+

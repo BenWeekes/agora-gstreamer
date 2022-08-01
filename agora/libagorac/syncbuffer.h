@@ -50,8 +50,8 @@ protected:
   void audioThread();
 
   TimePoint getNextSamplingPoint(const WorkQueue_ptr& q, 
-                                 const long& currentTimestamp,
-                                 const long& lastTimestamp);
+                                 const  unsigned long& currentTimestamp,
+                                 const  long& lastTimestamp);
 
   void WaitForBuffering();
   void checkAndFillInVideoJb(const TimePoint& lastSendTime);

@@ -52,9 +52,9 @@ AgoraIo::AgoraIo(const bool& verbose,
  _isRunning(false),
  _isPaused(false),
  _eventfn(fn),
+  _userEventData(userData),
  _outSyncBuffer(nullptr),
  _inSyncBuffer(nullptr),
- _userEventData(userData),
  _in_audio_delay(in_audio_delay),
  _in_video_delay(in_video_delay),
  _out_audio_delay(out_audio_delay),
@@ -73,15 +73,15 @@ AgoraIo::AgoraIo(const bool& verbose,
  _enableProxy(enableProxy),
  _proxyConnectionTimeOut((proxyTimeout < 1 ) ? 10000 : proxyTimeout),
  _proxyIps(proxyIps),
+ _transcodeVideo(enableTranscode),
+ _requireTranscode(true), // start off with transcoder
+ _requireKeyframe(false),
  _transcodeWidth(0),
  _transcodeHeight(0),
  _transcodeWidthLow(640),
  _transcodeHeightLow(360),
  _transcodeWidthMedium(1280),
- _transcodeHeightMedium(720),
- _requireTranscode(true), // start off with transcoder
- _requireKeyframe(false),
-_transcodeVideo(enableTranscode)
+ _transcodeHeightMedium(720)
 {
 
    _activeUsers.clear();
@@ -227,7 +227,7 @@ bool  AgoraIo::init(char* in_app_id,
     }
 
     std::cout<<" connecting to: "<<in_ch_id << "  " <<  _proxyConnectionTimeOut <<std::endl;
-    auto connected=doConnect(in_app_id, in_ch_id, in_user_id);
+    doConnect(in_app_id, in_ch_id, in_user_id);
     if (!checkConnection() && _enableProxy) {
 	_connection->disconnect();
         agora::base::IAgoraParameter* agoraParameter = _connection->getAgoraParameter();
@@ -240,7 +240,7 @@ bool  AgoraIo::init(char* in_app_id,
             std::cout<< "Enable proxy with default access IPs " << std::endl;
             agoraParameter->setBool("rtc.enable_proxy", true);
         }
-       	connected=doConnect(in_app_id, in_ch_id, in_user_id);
+       	doConnect(in_app_id, in_ch_id, in_user_id);
     }
 
     if (checkConnection()==false){
@@ -365,7 +365,7 @@ bool  AgoraIo::init(char* in_app_id,
 
         if (_transcodeVideo) {
 	        // frm transcode down when 
-		long media_bitrate_bps= (*(stats+10)) ;
+		//long media_bitrate_bps= (*(stats+10)) ;
 		long target_media_bitrate_bps= (*(stats+9)) ;
 	 
 	        if (target_media_bitrate_bps < 1200000) {
@@ -515,7 +515,7 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
         _activeUsers.emplace_back(userId);  
     }
-    else if(newState==USER_LEAVE || USER_CAM_OFF){
+    else if(newState==USER_LEAVE || newState==USER_CAM_OFF){
 
          _connection->getLocalUser()->unsubscribeVideo(userId.c_str());
         _activeUsers.remove_if([userId](const std::string& id){ return (userId==id); });
@@ -566,7 +566,6 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
     if(_receivedVideoFrames->isEmpty()){
         return 0;
     }
-    const int MS_PER_VIDEO_FRAME=10;
 
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
@@ -581,9 +580,6 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
 
 size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
    
-    const int MS_PER_AUDIO_PACKET=10;
-
-
     _receivedAudioFrames->waitForWork();
     Work_ptr work=_receivedAudioFrames->get();
 

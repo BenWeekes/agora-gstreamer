@@ -31,11 +31,6 @@
 #include "agoraio.h"
 
 
-//threads
-static void VideoThreadHandlerHigh(agora_context_t* ctx);
-static void VideoThreadHandlerLow(agora_context_t* ctx);
-static void AudioThreadHandler(agora_context_t* ctx);
-
 
 //do not use it before calling agora_init
 void agora_log(agora_context_t* ctx, const char* message){

@@ -106,8 +106,6 @@ void SyncBuffer::addAudio(const uint8_t* buffer,
 
 void SyncBuffer::videoThread(){
 
-   uint8_t currentFramePerSecond=0;
-
    long lastTimestamp=0;
    TimePoint  lastSendTime=Now();
 
@@ -214,8 +212,8 @@ void SyncBuffer::setAudioOutFn(const audioOutFn_t& fn){
 }
 
 TimePoint SyncBuffer::getNextSamplingPoint(const WorkQueue_ptr& q, 
-                                             const long& currentTimestamp,
-                                             const long& lastTimestamp){
+                                             const unsigned long& currentTimestamp,
+                                             const  long& lastTimestamp){
 
     //calculate the next ts to wait
      auto currentTs=currentTimestamp;
