@@ -27,18 +27,6 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
   
   If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
-## creating and installing a binary release:
-
-To create a binary release:
-
-cd release
-./make-release
-
-To install the release on the target machine:
-
-cd release
-./install
-
 
 ## Pipeline Configuration Properties
 
@@ -56,6 +44,7 @@ cd release
  
 
 ## Run and test
+You must always run the following export before using any of these plugins     
 
    export GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0   
    
@@ -188,6 +177,19 @@ SDK Log ~/.agora/agorasdk.log
 
 Jetson: Linux kernel architecture is aarch64 / arm64 (64-bit) (?)
 PiL: gnueabihf (?)
+
+
+## creating and installing a binary release:
+
+To create a binary release:
+
+cd release
+./make-release
+
+To install the release on the target machine:
+
+cd release
+./install
 
 
 ## Cross compilation of Arm (Target) on x86 (Host)
