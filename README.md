@@ -179,7 +179,7 @@ Jetson: Linux kernel architecture is aarch64 / arm64 (64-bit) (?)
 PiL: gnueabihf (?)
 
 
-## creating and installing a binary release:
+## Creating and installing a binary release:
 
 To create a binary release:
 
