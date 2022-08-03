@@ -1,8 +1,8 @@
 A gstreamer wrapper for Agora Linux SDK (sink and src)
 ## Server Choice
-a t3.medium AWS instance with 30GB of disk is a good starting point.
-ubuntu 20.04 or 22.04
-intel or arm supported.
+A t3.medium AWS instance with 30GB of disk is a good starting point.
+Ubuntu 20.04 and 22.04 both work fine.     
+Intel or arm are supported.
 
 
 
@@ -16,14 +16,14 @@ intel or arm supported.
    sudo apt install -y build-essential git libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev unzip     
    sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev nasm libavfilter-dev libopus-dev   
    
-## Test gstreamer install (on PC as it needs display)
-gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! glimagesink    
+## Test gstreamer install
+gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! fakesink    
  
 ## Build and install agora gstreamer plugins
    After installing the libraries above on your Ubuntu system         
-   Clone this repo then      
+   Clone this repo using git clone       
    cd agora-gstreamer     
-  ./build_all.sh
+  ./build_3.8.2.sh    # change to latest version  (or ARM if required)
   
   If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
