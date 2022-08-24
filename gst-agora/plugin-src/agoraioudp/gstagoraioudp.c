@@ -713,13 +713,13 @@ gst_agoraioudp_class_init (GstagoraioudpClass * klass)
   /*in port*/
   g_object_class_install_property (gobject_class, IN_PORT,
       g_param_spec_int ("inport", "inport", "inport udp port for audio in",0, G_MAXUINT16,
-          5004, G_PARAM_READWRITE));
+          7373, G_PARAM_READWRITE));
     
 
   /*out port*/
   g_object_class_install_property (gobject_class, OUT_PORT,
       g_param_spec_int ("outport", "outport", "outport udp port for audio out", 0, G_MAXUINT16,
-          5004, G_PARAM_READWRITE));
+          7374, G_PARAM_READWRITE));
 
   /*host*/
   g_object_class_install_property (gobject_class, HOST,
@@ -885,8 +885,8 @@ gst_agoraioudp_init (Gstagoraioudp * agoraIO)
   memset(agoraIO->host, 0, MAX_STRING_LEN);
   strcpy(agoraIO->host,"127.0.0.1");
 
-  agoraIO->in_port=5004;
-  agoraIO->out_port=5004;
+  agoraIO->in_port=7373;
+  agoraIO->out_port=7374;
   
   agoraIO->verbose = FALSE;
   agoraIO->audio=FALSE;
