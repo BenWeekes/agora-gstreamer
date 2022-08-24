@@ -573,6 +573,8 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   free(data); 
   filter->ts+=30;
 
+  gst_buffer_unref (in_buffer);
+
   return GST_FLOW_OK;
 }
 
