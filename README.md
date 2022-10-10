@@ -23,7 +23,7 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
    After installing the libraries above on your Ubuntu system         
    Clone this repo using git clone       
    cd agora-gstreamer     
-  ./build_3.8.2.sh    # change to latest version  (or ARM if required)
+  ./build_all_3.8.2.sh   # change to latest version  (or ARM if required)
   
   If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
@@ -172,6 +172,7 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  export LD_LIBRARY_PATH     
  test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing     
  ./sample_send_h264_dual_stream --token xxxx --channelId xxxx --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264   
+ 20b7c51ff4c644ab80cf5a4e646b05377
 
 SDK Log ~/.agora/agorasdk.log
 
