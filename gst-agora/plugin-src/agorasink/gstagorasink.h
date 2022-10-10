@@ -70,6 +70,11 @@ typedef struct _GstagorasinkClass GstagorasinkClass;
 
 #define MAX_STRING_LEN  1024
 
+#define SPS_SIZE 32
+#define PPS_SIZE 8
+
+#define MAX_AVC_ANNEXB_BUFFER 5*1024*1024
+
 struct _Gstagorasink
 {
   GstElement element;
@@ -90,6 +95,8 @@ struct _Gstagorasink
   
   gboolean audio;
 
+  gboolean convert_avc_to_annexb;
+
   gboolean enforce_audio_duration;
 
   /*agora context for sending audio and video */
@@ -98,6 +105,11 @@ struct _Gstagorasink
   size_t                 ts;
 
   GstClockTime           last_audio_buffer_pts;
+
+  uint8_t  sps[SPS_SIZE];
+  uint8_t  pps[PPS_SIZE];
+
+  uint8_t* data_annexb;
 };
 
 struct _GstagorasinkClass 

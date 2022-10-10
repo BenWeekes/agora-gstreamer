@@ -64,6 +64,7 @@
 #include "gstagorasink.h"
 #include <stdio.h>
 
+
 GST_DEBUG_CATEGORY_STATIC (gst_agorasink_debug);
 #define GST_CAT_DEFAULT gst_agorasink_debug
 
@@ -84,6 +85,7 @@ enum
   PROP_VERBOSE,
   AUDIO,
   ENFORCE_AUDIO_DURAION,
+  CONVERT_AVC_TO_ANNEX_B,
   TRANSCODE
 };
 
@@ -143,6 +145,10 @@ gst_agorasink_class_init (GstagorasinkClass * klass)
 
   g_object_class_install_property (gobject_class, ENFORCE_AUDIO_DURAION,
       g_param_spec_boolean ("enforce-audio-duration", "enforce-audio-duration", "when true, audio duration is enforced by agorasink",
+          FALSE, G_PARAM_READWRITE));
+
+   g_object_class_install_property (gobject_class, CONVERT_AVC_TO_ANNEX_B,
+      g_param_spec_boolean ("avc-to-annexb", "avc-to-annexb", "when true, input h264 avc is converted to annexb format by agorasink",
           FALSE, G_PARAM_READWRITE));
 
 
@@ -215,6 +221,8 @@ gst_agorasink_init (Gstagorasink * filter)
   filter->in_port=5004;
 
   filter->enforce_audio_duration=FALSE;
+
+  filter->convert_avc_to_annexb=FALSE;
 
   filter->ts=0;
 }
@@ -309,6 +317,80 @@ int setup_audio_udp(Gstagorasink *agoraSink){
     return TRUE;
 }
 
+
+/*this seems not the best way to extract sps/pps info as the src plugin type might differ 
+than our use case.  May be we can pass this info to agorasink as input in the future, 
+but a dynamic extaction like here is very convenient to the user */
+gboolean read_sps_pps_info(Gstagorasink * filter)
+{
+  GstPad *pad = NULL;
+  GstCaps *caps = NULL;
+
+  GstElement * element = gst_bin_get_by_name (GST_BIN(GST_ELEMENT_PARENT(filter)), "rtph264depay0");
+  if(element==NULL)
+  {
+       g_printerr ("cannot find source plugin: rtph264depay0!\n");
+       return FALSE;
+  }
+
+  pad = gst_element_get_static_pad (element, "sink");
+  if (!pad) {
+    g_printerr ("Could not retrieve pad sink\n");
+    return FALSE;
+  }
+
+  caps = gst_pad_get_current_caps (pad);
+  if (!caps)
+    caps = gst_pad_query_caps (pad, NULL);
+
+
+  if(caps== NULL)
+  {
+     return FALSE;
+  }
+
+  int j=0, i=0;
+  for (i = 0; i < gst_caps_get_size (caps); i++) {
+
+    GstStructure *structure = gst_caps_get_structure (caps, i);
+
+    const char* spspps=gst_structure_get_string(structure, "sprop-parameter-sets");
+
+    memcpy(filter->sps, spspps, SPS_SIZE);
+    memcpy(filter->pps, spspps+SPS_SIZE+1, PPS_SIZE);
+
+    g_print("->%s\n", spspps);
+    
+    gsize ret=0;
+    g_base64_decode_inplace((gchar *)filter->sps, &ret);
+
+    g_print("sps data: ");
+    for (j=0;j<ret;j++)
+    {
+      g_print("%x ", filter->sps[j]);
+    }
+    g_print("\n");
+
+    g_base64_decode_inplace((gchar *)filter->pps, &ret);
+
+    g_print("pps data: ");
+    for (j=0;j<ret;j++)
+    {
+      g_print("%x ", filter->pps[j]);
+    }
+    g_print("\n");
+
+  }
+
+  //allocate memory
+  filter->data_annexb=(uint8_t*)malloc(MAX_AVC_ANNEXB_BUFFER);
+
+  gst_caps_unref (caps);
+  gst_object_unref (pad);
+
+  return TRUE;
+}
+
 int init_agora(Gstagorasink * filter){
 
    if (strlen(filter->app_id)==0){
@@ -364,6 +446,14 @@ int init_agora(Gstagorasink * filter){
    g_print("agora has been successfuly initialized\n");
 
    setup_audio_udp(filter);
+
+
+   //only if avc to annexb conversion is required
+   if(filter->convert_avc_to_annexb==TRUE &&
+      read_sps_pps_info(filter)==FALSE)
+   {
+      return -1;
+   }
   
    return 0;
 }
@@ -378,8 +468,8 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
 
   switch (prop_id) {
     case PROP_VERBOSE:
-      filter->verbose = g_value_get_boolean (value);
-      break;
+        filter->verbose = g_value_get_boolean (value);
+        break;
     case APP_ID:
         str=g_value_get_string (value);
         g_strlcpy(filter->app_id, str, MAX_STRING_LEN);
@@ -401,12 +491,15 @@ gst_agorasink_set_property (GObject * object, guint prop_id,
     case ENFORCE_AUDIO_DURAION:
         filter->enforce_audio_duration = g_value_get_boolean (value);
         break;
-    case TRANSCODE:
-         filter->transcode = g_value_get_boolean (value);
+    case CONVERT_AVC_TO_ANNEX_B:
+         filter->convert_avc_to_annexb = g_value_get_boolean (value);
          break;
+    case TRANSCODE:
+        filter->transcode = g_value_get_boolean (value);
+        break;
     default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+        break;
   }
 }
 
@@ -438,6 +531,9 @@ gst_agorasink_get_property (GObject * object, guint prop_id,
     case ENFORCE_AUDIO_DURAION:
         g_value_set_boolean (value, filter->enforce_audio_duration);
         break;
+    case CONVERT_AVC_TO_ANNEX_B:
+         g_value_set_boolean (value, filter->convert_avc_to_annexb);
+         break;
     case TRANSCODE:
         g_value_set_boolean (value, filter->transcode);
         break;
@@ -509,6 +605,147 @@ void print_packet(u_int8_t* data, int size){
     
 }
 
+
+bool is_access_unit_boundary_nal(int nal_unit_type) {
+
+  // Check if this packet marks access unit boundary by checking the
+  // packet type.
+  if (nal_unit_type == 6 ||  // Supplemental enhancement information
+      nal_unit_type == 7 ||  // Picture parameter set
+      nal_unit_type == 8 ||  // Sequence parameter set
+      nal_unit_type == 9 ||  // Access unit delimiter
+      (nal_unit_type >= 14 && nal_unit_type <= 18)) {  // Reserved types
+
+    return true;
+  }
+
+  return false;
+}
+
+uint16_t write_sps_pps(uint8_t* out_buffer, 
+                      uint8_t* sps,
+                      uint8_t* pps)
+{
+  uint16_t written_bytes=0;
+
+  const uint8_t sps_byte_count=24;
+  const uint8_t pps_byte_count=4;
+
+  uint8_t nal_start_byte[]={0,0,0,1};
+
+  // uint8_t sps[]={0x67,0x4d,0x00,0x1e,0x9d,0xa8,0x28,0x0f,0x69,0xb8,0x08,0x08,0x0a,0x00,0x00,0x03,0x00,0x02,0x00,0x00,0x03,0x00,0x65,0x08};
+  //uint8_t pps[]={0x68,0xee,0x3c,0x80};
+
+  //sps
+  memcpy(out_buffer+written_bytes, &nal_start_byte[0], sizeof(nal_start_byte));
+  written_bytes +=sizeof(nal_start_byte);
+
+  memcpy(out_buffer+written_bytes, &sps[0], sps_byte_count);
+  written_bytes +=sps_byte_count;
+
+  //pps
+  memcpy(out_buffer+written_bytes, &nal_start_byte[0], sizeof(nal_start_byte));
+  written_bytes +=sizeof(nal_start_byte);
+
+  memcpy(out_buffer+written_bytes, &pps[0], pps_byte_count);
+  written_bytes +=pps_byte_count;
+
+  return written_bytes;
+}
+
+int  get_nal_size(gpointer data)
+{
+  int byte0=((uint8_t*)(data))[0];
+  int byte1=((uint8_t*)(data))[1];
+  int byte2=((uint8_t*)(data))[2];
+  int byte3=((uint8_t*)(data))[3];
+
+  int nal_size = (byte0 << 24) + (byte1 << 16) + (byte2 << 8) + byte3;
+
+  return nal_size;
+}
+void dump_bytes(uint8_t* data)
+{
+  int i;
+  for(i=0;i<100;i++)
+  {
+    g_print("%x ", data[i]);
+  }
+  g_print("\n");
+}
+uint16_t convert_avc_to_annexb(gpointer input, 
+                               uint16_t input_size, 
+                               uint8_t* output,
+                               uint8_t* sps,
+                               uint8_t* pps)
+{
+    const uint8_t nal_type_AUD=9;
+    uint16_t nal_size=0;
+
+    //this is not true in general, but ok in our case
+    //alternatves are 1, 2 or 4 bytes
+    const uint8_t size_bytes_width=4;
+
+    uint16_t left_input_bytes=input_size;
+
+    uint8_t* input_scaner=((uint8_t*)(input));
+    uint8_t* output_scaner=((uint8_t*)(output));
+
+    uint8_t nal_start_byte_count=3;
+    uint8_t nal_start_byte[]={0,0,1,1};
+
+    uint8_t units_count=0;
+
+    //one avc nal can contain multiple units
+    while(left_input_bytes>0)
+    {
+        //dump_bytes(input_scaner);
+        nal_size=get_nal_size(input_scaner);
+
+        uint8_t  fmt=((uint8_t*)(input_scaner))[size_bytes_width];
+        int nal_unit_type = fmt & 0x1F;
+
+        input_scaner +=size_bytes_width;
+        left_input_bytes -=size_bytes_width;
+
+        //write sps/pps if required
+        if(units_count>1 || nal_unit_type !=nal_type_AUD)
+        {
+           uint16_t written_sps_pps_bytes=write_sps_pps(output_scaner, sps, pps);
+           output_scaner +=written_sps_pps_bytes;
+        }
+
+        //in case of unit boundary, we will need to add 0001 (four bytes instead of 3)
+        if(is_access_unit_boundary_nal(nal_unit_type)==true)
+        {
+          nal_start_byte[2]=0;
+          nal_start_byte_count=4;
+        }
+
+        //validate remaining input bytes
+        if(left_input_bytes<(nal_size))
+        {
+           g_print("Agorasink: no enough bytes remaining in the input packet\n");
+           return 0;
+        }
+
+        memcpy(output_scaner, nal_start_byte, nal_start_byte_count);
+        output_scaner +=nal_start_byte_count;
+
+        //write nalu data
+        memcpy(output_scaner, input_scaner, nal_size);
+
+        output_scaner +=nal_size;
+        input_scaner +=nal_size;
+        left_input_bytes -=nal_size;
+        
+        units_count++;
+    }
+
+    return (uint16_t)(output_scaner-output);
+}
+
+
 /* chain function
  * this function does the actual processing
  */
@@ -520,6 +757,8 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
 
   size_t data_size=0;
   int    is_key_frame=0;
+
+
 
   //TODO: we need a better position to initialize agora. 
   //gst_agorasink_init() is good, however, it is called before reading app and channels ids
@@ -545,10 +784,22 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
    GstClockTime in_buffer_pts= gst_clock_get_time (clock); //GST_BUFFER_CAST(in_buffer)->pts;
    in_buffer_pts /=1000000;
 
-   //g_print("clock=%ld, %ld\n", in_buffer_pts, GST_BUFFER_CAST(in_buffer)->pts);
 
   if(filter->audio==FALSE){
+
+    if(filter->convert_avc_to_annexb==TRUE)
+    {
+       //this function does the actual conversion
+      uint16_t current_data_annexb_size=
+         convert_avc_to_annexb(data, data_size, filter->data_annexb,filter->sps, filter->pps);
+
+      agoraio_send_video(filter->agora_ctx, filter->data_annexb, current_data_annexb_size,is_key_frame, in_buffer_pts);
+    }
+    else
+    {
+
       agoraio_send_video(filter->agora_ctx, data, data_size,is_key_frame, in_buffer_pts);
+    }
   }
   else{
       long duration=(long)(GST_BUFFER_DURATION (in_buffer)/1000000.0);
@@ -562,7 +813,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
           agoraio_send_audio(filter->agora_ctx, data, data_size, in_buffer_pts);
       }
   }
- 
+
     
   if (filter->verbose == true){
       g_print ("agorasink: received %" G_GSIZE_FORMAT" bytes!\n",data_size);
@@ -570,7 +821,8 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
       g_print("agorasink: is key frame: %d\n", is_key_frame);
   }
 
-  free(data); 
+  free(data);
+  //free(data_annexb); 
   filter->ts+=30;
 
   gst_buffer_unref (in_buffer);
