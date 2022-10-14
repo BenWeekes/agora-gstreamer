@@ -605,7 +605,15 @@ void print_packet(u_int8_t* data, int size){
     
 }
 
+void write_to_file(uint8_t* data, uint32_t len)
+{
 
+    FILE *fp=fopen("test.h264", "ab");
+
+    fwrite(data, 1, len, fp);
+
+    fclose(fp);
+}
 bool is_access_unit_boundary_nal(int nal_unit_type) {
 
   // Check if this packet marks access unit boundary by checking the
@@ -696,6 +704,8 @@ uint16_t convert_avc_to_annexb(gpointer input,
 
     uint8_t units_count=0;
 
+    gboolean is_aud_sent = FALSE;
+
     //one avc nal can contain multiple units
     while(left_input_bytes>0)
     {
@@ -705,8 +715,29 @@ uint16_t convert_avc_to_annexb(gpointer input,
         uint8_t  fmt=((uint8_t*)(input_scaner))[size_bytes_width];
         int nal_unit_type = fmt & 0x1F;
 
+        int ftype = (fmt & 0xf0) >> 4;
+
+        if(ftype==1)
+        {
+           g_print("***iframe detected *****\n");
+        }
+
         input_scaner +=size_bytes_width;
         left_input_bytes -=size_bytes_width;
+
+        //need to append AUD?
+        if(is_aud_sent==FALSE &&
+          (nal_unit_type==1 || nal_unit_type==5 || nal_unit_type==6))
+        {
+          static u_char   aud_nal[] = {0x00, 0x00, 0x00, 0x01, 0x09, 0xf0};
+          memcpy(output_scaner, aud_nal, sizeof(aud_nal));
+
+          output_scaner +=sizeof(aud_nal);
+
+          is_aud_sent=TRUE;
+
+          //g_print("AUD nal added, nal type: %d\n",nal_unit_type );
+        }
 
         //write sps/pps if required
         if(units_count>1 || nal_unit_type !=nal_type_AUD)
@@ -797,6 +828,7 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
     }
     else
     {
+      //write_to_file(data, data_size);
 
       agoraio_send_video(filter->agora_ctx, data, data_size,is_key_frame, in_buffer_pts);
     }
