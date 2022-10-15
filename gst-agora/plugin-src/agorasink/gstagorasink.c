@@ -224,6 +224,8 @@ gst_agorasink_init (Gstagorasink * filter)
 
   filter->convert_avc_to_annexb=FALSE;
 
+  filter->is_key_frame_seen=FALSE;
+
   filter->ts=0;
 }
 
@@ -675,12 +677,13 @@ int  get_nal_size(gpointer data)
 void dump_bytes(uint8_t* data)
 {
   int i;
-  for(i=0;i<100;i++)
+  for(i=0;i<10;i++)
   {
     g_print("%x ", data[i]);
   }
   g_print("\n");
 }
+
 uint16_t convert_avc_to_annexb(gpointer input, 
                                uint16_t input_size, 
                                uint8_t* output,
@@ -699,7 +702,11 @@ uint16_t convert_avc_to_annexb(gpointer input,
     uint8_t* input_scaner=((uint8_t*)(input));
     uint8_t* output_scaner=((uint8_t*)(output));
 
+    //dump_bytes(input_scaner);
+
     uint8_t nal_start_byte_count=3;
+
+    //we will change this later to be either 001 or 0001
     uint8_t nal_start_byte[]={0,0,1,1};
 
     uint8_t units_count=0;
@@ -713,14 +720,8 @@ uint16_t convert_avc_to_annexb(gpointer input,
         nal_size=get_nal_size(input_scaner);
 
         uint8_t  fmt=((uint8_t*)(input_scaner))[size_bytes_width];
+
         int nal_unit_type = fmt & 0x1F;
-
-        int ftype = (fmt & 0xf0) >> 4;
-
-        if(ftype==1)
-        {
-           g_print("***iframe detected *****\n");
-        }
 
         input_scaner +=size_bytes_width;
         left_input_bytes -=size_bytes_width;
@@ -786,9 +787,8 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   Gstagorasink *filter;
   filter = GST_AGORASINK (parent);
 
-  size_t data_size=0;
-  int    is_key_frame=0;
-
+  size_t      data_size=0;
+  gboolean    is_key_frame=0;
 
 
   //TODO: we need a better position to initialize agora. 
@@ -808,8 +808,15 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
   gst_buffer_extract(in_buffer,0, data, data_size);
 
   if(GST_BUFFER_FLAG_IS_SET(in_buffer, GST_BUFFER_FLAG_DELTA_UNIT) == FALSE){
-      is_key_frame=1;
+      is_key_frame=TRUE;
+      if(filter->is_key_frame_seen==FALSE)
+      {
+         filter->is_key_frame_seen=TRUE;
+
+         g_print("*********first key frame sent **********\n");
+      }
   }
+
 
    GstClock* clock = gst_element_get_clock (GST_ELEMENT_CAST (filter));
    GstClockTime in_buffer_pts= gst_clock_get_time (clock); //GST_BUFFER_CAST(in_buffer)->pts;
@@ -820,16 +827,19 @@ gst_agorasink_chain (GstPad * pad, GstObject * parent, GstBuffer * in_buffer)
 
     if(filter->convert_avc_to_annexb==TRUE)
     {
-       //this function does the actual conversion
-      uint16_t current_data_annexb_size=
-         convert_avc_to_annexb(data, data_size, filter->data_annexb,filter->sps, filter->pps);
+         if(filter->is_key_frame_seen)
+         {
+            //this function does the actual conversion
+            uint16_t current_data_annexb_size=
+             convert_avc_to_annexb(data, data_size, filter->data_annexb,filter->sps, filter->pps);
 
-      agoraio_send_video(filter->agora_ctx, filter->data_annexb, current_data_annexb_size,is_key_frame, in_buffer_pts);
+            agoraio_send_video(filter->agora_ctx, filter->data_annexb, current_data_annexb_size,is_key_frame, in_buffer_pts);
+             
+            //write_to_file(filter->data_annexb, current_data_annexb_size);
+         }
     }
     else
     {
-      //write_to_file(data, data_size);
-
       agoraio_send_video(filter->agora_ctx, data, data_size,is_key_frame, in_buffer_pts);
     }
   }

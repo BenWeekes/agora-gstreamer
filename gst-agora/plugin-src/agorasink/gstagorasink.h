@@ -110,6 +110,8 @@ struct _Gstagorasink
   uint8_t  pps[PPS_SIZE];
 
   uint8_t* data_annexb;
+
+  gboolean is_key_frame_seen;
 };
 
 struct _GstagorasinkClass 
