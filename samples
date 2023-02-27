@@ -120,3 +120,7 @@ debug slow in for agoraioudp
   153  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agoraioudp appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr verbose=true ! fakesink sync=false
   154  gst-launch-1.0 -e v4l2src ! image/jpeg,width=640,height=360,framerate=20/1,rate=20  ! jpegdec ! queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b05377 channel=rrr
 
+split output to recorder    
+gst-launch-1.0 v4l2src device=/dev/video0 ! clockoverlay text="front" time-format="%Y-%m-%d %H:%M:%S %z %Z" ! videorate ! video/x-raw,width=1280,height=720,framerate=15/1 ! nvvidconv ! nvv4l2h264enc maxperf-enable=1 control-rate=0 bitrate=900000 insert-sps-pps=1 ! tee name=t \
+	   t. ! queue ! h264parse ! agorasink appid=$token channel=$channel userid=1 \
+	   t. ! queue ! h264parse ! splitmuxsink location=front_%05d_$var.mp4 max-size-time=300000000000 muxer-factory=mp4mux #muxer-properties="properties,streamable=true"
