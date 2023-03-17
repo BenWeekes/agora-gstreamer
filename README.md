@@ -161,6 +161,8 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
 
  
  ## Developer Notes
+ https://docs.agora.io/cn/RTSA/downloads?platform=Linux
+ 
  gst_agorasink_chain(...) in gstagorasink.c  is the main logic and entrypoint    
  meson.build specifies the files to be built    
  agorac.cpp is related to RTMPG project which we use here as a .so library  
