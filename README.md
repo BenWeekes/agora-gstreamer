@@ -176,7 +176,8 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  LD_LIBRARY_PATH=/home/ben/agora_rtc_sdk/agora_sdk    
  export LD_LIBRARY_PATH     
  test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing     
- ./sample_send_h264_dual_stream --token xxxx --channelId xxxx --HighVideoFile ~/test_data/test_multi_slice.h264 --LowVideoFile ~/test_data/test_multi_slice.h264   
+./sample_send_h264_dual_stream --token xxxx --channelId iii --HighVideoFile ~/pro/agora_rtc_sdk/example/test_data/send_video.h264 --LowVideoFile ~/pro/agora_rtc_sdk/example/test_data/send_video.h264
+
  20b7c51ff4c644ab80cf5a4e646b05377
 
 SDK Log ~/.agora/agorasdk.log
