@@ -121,7 +121,7 @@ Frame* copy_frame(const u_int8_t* buffer, u_int64_t len){
      if(f==NULL) return NULL;
 
      f->len=len;
-     f->data=(u_int8_t*)malloc(sizeof(len));
+     f->data=(u_int8_t*)malloc(len);
      
      if(f->data==NULL) {
        free(f);
@@ -263,9 +263,23 @@ int setup_audio_udp(Gstagorasrc *agoraSrc){
     return TRUE;
 }
 
+Frame* get_next_frame(GQueue* q, int timeout)
+{
+  Frame* f=NULL;
+  int sleep_per_wait=5000; //in micro seconds
+
+  int current_wait_count=0;
+  while((f=g_queue_pop_head (q))==NULL &&
+         ((++current_wait_count)*sleep_per_wait)<timeout)
+  {
+     g_usleep(sleep_per_wait);
+  }
+
+  return f;
+}
 
 static GstFlowReturn
-gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
+gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
    
   //int is_key_frame=0;
   size_t data_size=0;
@@ -279,9 +293,10 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      return GST_FLOW_ERROR;
    }
 
-  Frame* f=g_queue_pop_head (agoraSrc->media_queue);
+  //we wait for about 5 seconds before reporting an error
+  Frame* f=get_next_frame(agoraSrc->media_queue, 5000000);
   if(f==NULL){
-      return GST_FLOW_OK;
+      return GST_FLOW_ERROR;
   }
   data_size=f->len;
 
@@ -306,7 +321,7 @@ gst_video_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
 }
 
 static gboolean
-gst_video_test_src_start (GstBaseSrc * basesrc)
+gst_media_test_src_start (GstBaseSrc * basesrc)
 {
   Gstagorasrc *src = GST_AGORASRC (basesrc);
 
@@ -334,10 +349,8 @@ gst_agorasrc_class_init (GstagorasrcClass * klass)
   gstbasesrc_class = (GstBaseSrcClass *) klass;
   gstpushsrc_class = (GstPushSrcClass *) klass;
 
-  gstpushsrc_class->fill = gst_video_test_src_fill;
-  gstbasesrc_class->start = gst_video_test_src_start;
-  //gstbasesrc_class->negotiate = gst_base_src_default_negotiate;
-  
+  gstpushsrc_class->fill = gst_media_test_src_fill;
+  gstbasesrc_class->start = gst_media_test_src_start;  
 
   gobject_class->set_property = gst_agorasrc_set_property;
   gobject_class->get_property = gst_agorasrc_get_property;
