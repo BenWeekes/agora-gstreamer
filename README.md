@@ -125,9 +125,11 @@ gst-launch-1.0  rtspsrc location=rtsp://admin:rrr@1.2.21.50:6005/Streaming/Chann
 <ins>Video out of Agora:</ins>    
    agorasrc can be used to read encoded h264 from an agora channel, here is an example pipleline:     
    
-   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx  ! decodebin ! glimagesink     
+   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx ! decodebin ! glimagesink     
 
-   gst-launch-1.0 agorasrc verbose=false  appid=xxx channel=xxx! decodebin ! autovideosink      
+   gst-launch-1.0 agorasrc verbose=false appid=xxx channel=xxx ! decodebin ! autovideosink      
+
+   gst-launch-1.0 agorasrc appid=xxx channel=xxx ! decodebin ! videoconvert ! jpegenc ! multifilesink location=%05d.jpg
 
    where appid and channel is same as agorasink. 
    
