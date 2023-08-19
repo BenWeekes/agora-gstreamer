@@ -89,14 +89,14 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
     }
   }
 
-  void setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer) {
+  void setVideoFrameObserver(agora::rtc::IVideoFrameObserver2* observer) {
     video_frame_observer_ = observer;
   }
 
   void unsetVideoFrameObserver() {
-    if (remote_video_track_ && video_frame_observer_) {
-      remote_video_track_->removeRenderer(video_frame_observer_);
-    }
+    // if (remote_video_track_ && video_frame_observer_) {
+    //   remote_video_track_->removeRenderer(video_frame_observer_);
+    // }
   }
 
  public:
@@ -218,7 +218,7 @@ void onVideoSubscribeStateChanged(const char* channel, agora::user_id_t uid,
   agora::rtc::IMediaPacketReceiver* media_packet_receiver_{nullptr};
   agora::rtc::IVideoEncodedImageReceiver* video_encoded_receiver_{nullptr};
   agora::media::IAudioFrameObserver* audio_frame_observer_{nullptr};
-  agora::agora_refptr<agora::rtc::IVideoSinkBase> video_frame_observer_{nullptr};
+  agora::rtc::IVideoFrameObserver2* video_frame_observer_{nullptr};
 
   std::mutex observer_lock_;
 

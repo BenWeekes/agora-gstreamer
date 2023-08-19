@@ -106,40 +106,56 @@ struct AgoraIoContext_t{
    std::shared_ptr<AgoraIo>  agoraIo;
 };
 
-class Work{
 
+class FramePayloadEncoded {
 public:
-
-   Work(const unsigned char* b, const unsigned long& l, bool is_key):
+   FramePayloadEncoded(const unsigned char* b, const unsigned long& l, bool is_key):
 	buffer(nullptr){
-  
        if(b==nullptr){
 	       return;
        }
-
        buffer=new unsigned char[l];
        memcpy(buffer, b, l);
-
-       len=l;
-    
+       len=l;    
        is_key_frame=is_key;
-       is_finished=0;
    }
 
-   ~Work(){
+   ~FramePayloadEncoded(){
      if(buffer==nullptr) return;
      delete [] buffer;
    }
-
    unsigned char*        buffer;
    unsigned long         len;
    bool                  is_key_frame;
-
-   bool                  is_finished;
-
-   uint64_t               timestamp;
-   
 };
+class FramePayloadDecoded{
+   public:
+};
+union FramePayload {
+   public:
+      FramePayloadEncoded* encoded;
+      FramePayloadDecoded* decoded;
+};
+enum FrameType{
+  encoded,decoded
+};
+class Work{
 
+public:
+   FrameType frame_type;
+   FramePayload payload;
+   Work(const unsigned char* b, const unsigned long& l, bool is_key){
+       is_finished=0;
+       frame_type = encoded;
+       payload.encoded = new FramePayloadEncoded(b, l, is_key);
+   }
 
+   ~Work(){
+      if(frame_type == encoded){
+         delete payload.encoded;
+      }
+   }
+   bool                  is_finished;
+   uint64_t               timestamp;
+};
 #endif

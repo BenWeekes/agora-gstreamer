@@ -25,7 +25,7 @@ void UserObserver::setVideoEncodedImageReceiver(agora::rtc::IVideoEncodedImageRe
     video_encoded_receiver = receiver;
 }
 
-void UserObserver::setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer)
+void UserObserver::setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoFrameObserver2> observer)
 {
     video_frame_observer = observer;
 }
@@ -51,7 +51,7 @@ void UserObserver::onUserVideoTrackSubscribed(agora::user_id_t userId, agora::rt
     if (remote_video_track && video_encoded_receiver)
         remote_video_track->registerVideoEncodedImageReceiver(video_encoded_receiver);
     if (remote_video_track && video_frame_observer)
-        remote_video_track->addRenderer(video_frame_observer);
+        remote_video_track->registerVideoFrameObserver(video_frame_observer);
 }
 
 void UserObserver::onUserVideoTrackStateChanged(agora::user_id_t userId, 

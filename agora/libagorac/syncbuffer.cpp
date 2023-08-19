@@ -58,7 +58,7 @@ void SyncBuffer::addVideo(const uint8_t* buffer,
 
             Work_ptr work=_videoBuffer->get();
             if(_videoOutFn!=nullptr){
-                _videoOutFn(work->buffer, work->len, (bool)(work->is_key_frame));  
+                _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));  
             }
         }
     }
@@ -91,7 +91,7 @@ void SyncBuffer::addAudio(const uint8_t* buffer,
 
             Work_ptr work=_audioBuffer->get();
             if(_audioOutFn!=nullptr){
-                _audioOutFn(work->buffer, work->len);
+                _audioOutFn(work->payload.encoded->buffer, work->payload.encoded->len);
             }
         }
     }
@@ -128,7 +128,7 @@ void SyncBuffer::videoThread(){
      TimePoint  nextSample=getNextSamplingPoint(_videoBuffer,work->timestamp,lastTimestamp);
 
      if(_videoOutFn!=nullptr){
-         _videoOutFn(work->buffer, work->len, (bool)(work->is_key_frame));         
+         _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));         
      }
 
      lastTimestamp=work->timestamp;
@@ -169,7 +169,7 @@ void SyncBuffer::audioThread(){
      }
 
      if(_audioOutFn!=nullptr){
-         _audioOutFn(work->buffer, work->len);
+         _audioOutFn(work->payload.encoded->buffer, work->payload.encoded->len);
      }
     
      //std::cout<<this<<"audio ts: "<<work->timestamp<<std::endl;

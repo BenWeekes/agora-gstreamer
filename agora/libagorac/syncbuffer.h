@@ -2,6 +2,7 @@
 #define _JITTER_BUFFER_H_
 
 #include "agoratype.h"
+#include "helpers/context.h"
 #include <functional>
 
 using videoOutFn_t=std::function<void (const uint8_t* buffer,

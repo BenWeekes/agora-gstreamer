@@ -70,7 +70,7 @@ void UserObserver::onUserVideoTrackSubscribed(
     remote_video_track_->registerMediaPacketReceiver(media_packet_receiver_);
   }
   if (remote_video_track_ && video_frame_observer_) {
-    remote_video_track_->addRenderer(video_frame_observer_);
+    local_user_->registerVideoFrameObserver(video_frame_observer_);
   }
 }
 

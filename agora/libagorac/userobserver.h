@@ -19,7 +19,7 @@ public:
 
     void setVideoEncodedImageReceiver(agora::rtc::IVideoEncodedImageReceiver* receiver);
 
-    void setVideoFrameObserver(agora::agora_refptr<agora::rtc::IVideoSinkBase> observer);
+    void setVideoFrameObserver(agora::rtc::IVideoFrameObserver2 observer);
     void unsetVideoFrameObserver();
 
     void setOnIframeRequestReceivedFn(const IFrameRequest_fn& fn);
@@ -105,7 +105,7 @@ public:
 private:
     agora::rtc::ILocalUser* local_user = nullptr;
     agora::rtc::IVideoEncodedImageReceiver* video_encoded_receiver = nullptr;
-    agora::agora_refptr<agora::rtc::IVideoSinkBase> video_frame_observer = nullptr;
+    agora::rtc::IVideoFrameObserver2 video_frame_observer = nullptr;
 
     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> remote_video_track;
 

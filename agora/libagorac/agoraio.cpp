@@ -570,12 +570,12 @@ size_t AgoraIo::getNextVideoFrame(unsigned char* data,
     _receivedVideoFrames->waitForWork();
     Work_ptr work=_receivedVideoFrames->get();
 
-    memcpy(data, work->buffer, work->len);
+    memcpy(data, work->payload.encoded->buffer, work->payload.encoded->len);
 
-    *is_key_frame=work->is_key_frame;
+    *is_key_frame=work->payload.encoded->is_key_frame;
     *ts=work->timestamp;
 
-    return work->len;
+    return work->payload.encoded->len;
 }
 
 size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
@@ -583,9 +583,9 @@ size_t AgoraIo::getNextAudioFrame(uint8_t* data, size_t max_buffer_size){
     _receivedAudioFrames->waitForWork();
     Work_ptr work=_receivedAudioFrames->get();
 
-    memcpy(data, work->buffer, work->len);
+    memcpy(data, work->payload.encoded->buffer, work->payload.encoded->len);
 
-    return work->len;
+    return work->payload.encoded->len;
 }
 
 void AgoraIo::subscribeAudioUser(const std::string& userId){
