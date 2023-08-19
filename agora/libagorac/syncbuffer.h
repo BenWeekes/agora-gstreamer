@@ -8,7 +8,7 @@
 using videoOutFn_t=std::function<void (const uint8_t* buffer,
                                        const size_t& bufferLength,
                                        const bool& isKeyFrame)>;
-
+using decodedVideoOutFn_t=std::function<void (std::shared_ptr<FramePayloadDecoded> videoFrame)>;
 using audioOutFn_t=std::function<void (const uint8_t* buffer,
                                        const int& isKeyFrame)>;
 
@@ -24,7 +24,7 @@ public:
                 const size_t& length,
                 const int& isKeyFrame,
                 const uint64_t& ts);
-
+  void addVideo(const agora::media::base::VideoFrame* videoFrame);
   //use this function to add a new audio packet to JB
   void addAudio(const uint8_t* buffer,
                 const size_t& length,
@@ -33,7 +33,7 @@ public:
   //set a video function that will be called by JB when 
   //there is a video frame available 
   void setVideoOutFn(const videoOutFn_t& fn);
-
+  void setDecodedVideoOutFn(const decodedVideoOutFn_t& fn);
   //set an audio function that will be called by JB when 
   //there is an audio packet available 
   void setAudioOutFn(const audioOutFn_t& fn);
@@ -68,6 +68,8 @@ private:
   bool                            _isRunning;
 
   videoOutFn_t                    _videoOutFn;
+  decodedVideoOutFn_t             _decodedVideoOutFn;
+
   audioOutFn_t                    _audioOutFn;
 
   uint16_t                        _maxBufferSize; //in ms

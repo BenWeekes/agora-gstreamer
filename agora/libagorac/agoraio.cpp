@@ -207,6 +207,7 @@ bool  AgoraIo::init(char* in_app_id,
    
     //register audio observer
     _pcmFrameObserver = std::make_shared<PcmFrameObserver>();
+    _yuvFrameObserver = std::make_shared<YuvFrameObserver>();
     if (_sendOnly==false && _connection->getLocalUser()->setPlaybackAudioFrameParameters(1, 48000) != 0) {
         logMessage("Agora: Failed to set audio frame parameters!");
         return false;
@@ -223,6 +224,7 @@ bool  AgoraIo::init(char* in_app_id,
    _connection->registerNetworkObserver(_connectionObserver.get());
 
     if(_sendOnly==false){
+        _connection->getLocalUser()->registerVideoFrameObserver(_yuvFrameObserver.get());
         _connection->getLocalUser()->registerAudioFrameObserver(_pcmFrameObserver.get());
     }
 
@@ -297,21 +299,28 @@ bool  AgoraIo::init(char* in_app_id,
     }
     
     if(_sendOnly==false){
-        h264FrameReceiver = std::make_shared<H264FrameReceiver>();
-        _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
+        if(false){
+            h264FrameReceiver = std::make_shared<H264FrameReceiver>();
+            _userObserver->setVideoEncodedImageReceiver(h264FrameReceiver.get());
 
-        //video
-        _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
-        h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
-                                                    const uint8_t* buffer,
-                                                    const size_t& length,
-                                                    const int& isKeyFrame,
-                                                    const uint64_t& ts){
+            //video
+            _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
+            h264FrameReceiver->setOnVideoFrameReceivedFn([this](const uint userId, 
+                                                        const uint8_t* buffer,
+                                                        const size_t& length,
+                                                        const int& isKeyFrame,
+                                                        const uint64_t& ts){
 
-            receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
+                receiveVideoFrame(userId, buffer, length, isKeyFrame, ts);
 
-        });
-
+            });
+        }else{
+            //video
+            _receivedVideoFrames=std::make_shared<WorkQueue <Work_ptr> >();
+            _yuvFrameObserver->setOnVideoFrameReceivedFn([this](const char* channelId, agora::user_id_t remoteUid, const agora::media::base::VideoFrame* videoFrame){
+                receiveDecodedVideoFrame(videoFrame);
+            });
+        }
         //audio
         _receivedAudioFrames=std::make_shared<WorkQueue <Work_ptr> >();
         _pcmFrameObserver->setOnAudioFrameReceivedFn([this](const uint userId, 
@@ -424,16 +433,18 @@ bool  AgoraIo::init(char* in_app_id,
 
     //setup the in sync buffer ( AG sdk -> source)
     _inSyncBuffer=std::make_shared<SyncBuffer>(_out_video_delay, _out_audio_delay, false);
-    _inSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
-                                         const size_t& bufferLength,
-                                         const bool& isKeyFrame){
-  
-        if(_videoOutFn!=nullptr){
-            _videoOutFn(buffer, bufferLength, _videoOutUserData);
-            _videoInFps++;
-        }
+    if(false){
+        _inSyncBuffer->setVideoOutFn([this](const uint8_t* buffer,
+                                            const size_t& bufferLength,
+                                            const bool& isKeyFrame){
+    
+            if(_videoOutFn!=nullptr){
+                _videoOutFn(buffer, bufferLength, _videoOutUserData);
+                _videoInFps++;
+            }
 
-    });
+        });
+    }
 
     _inSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
                                          const size_t& bufferLength){
@@ -474,6 +485,16 @@ void AgoraIo::receiveVideoFrame(const uint userId,
 
     if(_inSyncBuffer!=nullptr && _isRunning){
         _inSyncBuffer->addVideo(buffer, length, isKeyFrame, ts);
+    }
+}
+
+void AgoraIo::receiveDecodedVideoFrame(const agora::media::base::VideoFrame* videoFrame){
+
+    //do not read video if the pipeline is in pause state
+    if(_isPaused) return;
+
+    if(_inSyncBuffer!=nullptr && _isRunning){
+        _inSyncBuffer->addVideo(videoFrame);
     }
 }
 
@@ -549,13 +570,13 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 
 
 
-void AgoraIo::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
-   _pcmFrameObserver->setOnAudioFrameReceivedFn(fn);
-}
+// void AgoraIo::setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn){
+//    _pcmFrameObserver->setOnAudioFrameReceivedFn(fn);
+// }
 
-void AgoraIo::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
-  h264FrameReceiver->setOnVideoFrameReceivedFn(fn);
-}
+// void AgoraIo::setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn){
+//   h264FrameReceiver->setOnVideoFrameReceivedFn(fn);
+// }
 
 size_t AgoraIo::getNextVideoFrame(unsigned char* data,
                                   size_t max_buffer_size,

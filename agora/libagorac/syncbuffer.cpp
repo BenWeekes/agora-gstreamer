@@ -70,6 +70,37 @@ void SyncBuffer::addVideo(const uint8_t* buffer,
        }
     }
 }
+void SyncBuffer::addVideo(const agora::media::base::VideoFrame* videoFrame){
+    if(_videoBuffer->size()>MAX_BUFFER_SIZE){
+        std::cout<<"JB#"<<_objId<<": warning: sync buffer (video) exceeded max buffer: "<<_videoBuffer->size()<<std::endl;
+    }
+
+    //if we need to sync or delay video, we add the frame to the queue
+    if(_syncAudioVideo==true || _videoDelayOffset>0){
+
+        auto frame=std::make_shared<Work>(videoFrame);
+        frame->timestamp=videoFrame->renderTimeMs;         
+        _videoBuffer->add(frame);
+
+        //in this case, we do not have threads to dispatch audio
+        if(_syncAudioVideo==false && _videoBuffer->size()*30>=_videoDelayOffset){
+
+            Work_ptr work=_videoBuffer->get();
+            if(_decodedVideoOutFn!=nullptr){
+                std::shared_ptr<FramePayloadDecoded> ptr(work->payload.decoded);
+                work->payload.decoded = nullptr;
+                _decodedVideoOutFn(ptr);  
+            }
+        }
+    }
+    //if we do not need to sync and no delay, we will pass this frame directly
+    else if(_syncAudioVideo ==false && _videoDelayOffset==0){       
+       if(_decodedVideoOutFn!=nullptr){
+            std::shared_ptr<FramePayloadDecoded> ptr(FramePayloadDecoded::shallow(videoFrame));
+            _decodedVideoOutFn(ptr);  
+       }
+    }
+}
 
 void SyncBuffer::addAudio(const uint8_t* buffer,
                             const size_t& length,
@@ -206,6 +237,9 @@ void SyncBuffer::stop(){
 
 void SyncBuffer::setVideoOutFn(const videoOutFn_t& fn){
     _videoOutFn=fn;
+}
+void SyncBuffer::setDecodedVideoOutFn(const decodedVideoOutFn_t& fn){
+    _decodedVideoOutFn=fn;
 }
 void SyncBuffer::setAudioOutFn(const audioOutFn_t& fn){
     _audioOutFn=fn;

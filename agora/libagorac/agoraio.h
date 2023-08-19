@@ -14,6 +14,7 @@
 #include "AgoraBase.h"
 
 #include "observer/pcmframeobserver.h"
+#include "observer/yuvframeobserver.h"
 #include "observer/h264frameobserver.h"
 #include "observer/userobserver.h"
 
@@ -56,8 +57,8 @@ class AgoraIo{
                         long timestamp,
                         const long& duration=0);
 
-    void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
-    void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
+   //  void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
+   //  void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
     size_t getNextVideoFrame(uint8_t* data, 
                              size_t max_buffer_size,
@@ -117,7 +118,7 @@ protected:
                            const size_t& length,
                            const int& isKeyFrame,
                            const uint64_t& ts);
-
+   void receiveDecodedVideoFrame(const agora::media::base::VideoFrame* videoFrame);
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,
                            const size_t& length,
@@ -173,7 +174,7 @@ protected:
     bool                                           _connected = false;
 
     std::shared_ptr<H264FrameReceiver>   h264FrameReceiver;
-
+    YuvFrameObserver_ptr                 _yuvFrameObserver;
     PcmFrameObserver_ptr                 _pcmFrameObserver;
     ConnectionObserver_ptr               _connectionObserver;
     UserObserver_ptr                     _userObserver;
