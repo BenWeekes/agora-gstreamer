@@ -96,7 +96,13 @@ enum
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    GST_STATIC_CAPS ("ANY")
+    // GST_STATIC_CAPS ("ANY")
+    GST_STATIC_CAPS (
+        "video/x-raw,"
+        "format=(string)I420,"
+        "width=(int)[1,MAX],"
+        "height=(int)[1,MAX]"
+    )
     );
 
 
@@ -246,51 +252,12 @@ int init_agora(Gstagorasrc * src){
 
    g_print("agora has been successfuly initialized\n");
   
+   src->out_pipeline = gst_pipeline_new ("pipeline");
+   if(!src->out_pipeline){
+       g_print("failed to create pipeline\n");
+   }
 
    return 0;
-}
-
-int setup_audio_udp(Gstagorasrc *agoraSrc){
-
-   agoraSrc->appAudioSrc= gst_element_factory_make ("appsrc", "source");
-   if(!agoraSrc->appAudioSrc){
-       g_print("failed to create audio app src\n");
-   }
-   else{
-       g_print("created audio app src successfully\n");
-   }
-   agoraSrc->udpsink = gst_element_factory_make("udpsink", "udpsink");
-   if(!agoraSrc->udpsink){
-       g_print("failed to create audio udpsink\n");
-   }
-   else{
-       g_print("created udpsink successfully\n");
-   }
-
-   agoraSrc->out_pipeline = gst_pipeline_new ("pipeline");
-   if(!agoraSrc->out_pipeline){
-       g_print("failed to create audio pipeline\n");
-   }
-
-   //out plugin
-   gst_bin_add_many (GST_BIN (agoraSrc->out_pipeline), agoraSrc->appAudioSrc, agoraSrc->udpsink, NULL);
-   gst_element_link_many (agoraSrc->appAudioSrc, agoraSrc->udpsink, NULL);
-
-    //setup appsrc 
-    g_object_set (G_OBJECT (agoraSrc->appAudioSrc),
-            "stream-type", 0,
-            "is-live", TRUE,
-            "format", GST_FORMAT_TIME, NULL);
-
-     g_object_set (G_OBJECT (agoraSrc->udpsink),
-            "host", agoraSrc->host,
-            "port", agoraSrc->out_port,
-              NULL);
-
-    //set the pipeline in playing mode
-    gst_element_set_state (agoraSrc->out_pipeline, GST_STATE_PLAYING);
-
-    return TRUE;
 }
 
 Frame* get_next_frame(GQueue* q, int timeout)
@@ -330,14 +297,24 @@ gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
   static int width,height;          
   if(f->decoded){
     if(width != f->width || height != f->height){
+        GstState current_state, pending_state;
+        gst_element_get_state(agoraSrc->out_pipeline, &current_state, &pending_state, GST_CLOCK_TIME_NONE);
+        gst_element_set_state(agoraSrc->out_pipeline, GST_STATE_PAUSED);
+
         GstCaps* caps = gst_caps_new_simple("video/x-raw",
                                         "format", G_TYPE_STRING, "I420",
                                         "width", G_TYPE_INT, f->width,
                                         "height", G_TYPE_INT, f->height,
                                         "framerate", GST_TYPE_FRACTION, 30, 1,
                                         NULL);
-        g_object_set(GST_ELEMENT(psrc), "caps", caps, NULL);
+        // GstPad *srcpad = gst_element_get_static_pad(GST_ELEMENT(psrc), "src");
+        // if(srcpad){
+        //     gst_pad_set_caps(srcpad, caps);
+        //     gst_object_unref(srcpad);
+        // }
+        gst_pad_set_caps(agoraSrc->srcpad, caps);
         gst_caps_unref(caps);
+        gst_element_set_state(agoraSrc->out_pipeline, current_state);
     }
     width = f->width;
     height = f->height;
@@ -355,6 +332,12 @@ gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
 
   gst_buffer_fill(buffer, 0, f->data, data_size);
   gst_buffer_set_size(buffer, data_size);
+
+  static GstClockTime timestamp = 0;
+  GstClockTime duration = GST_SECOND / 30; 
+  buffer->pts = timestamp;
+  buffer->dts = GST_CLOCK_TIME_NONE;
+  timestamp += duration;
 
   destory_frame(&f);
 
@@ -471,6 +454,10 @@ gst_agorasrc_init (Gstagorasrc * agoraSrc)
   memset(agoraSrc->host, 0, MAX_STRING_LEN);
   strcpy(agoraSrc->host,"127.0.0.1");
   agoraSrc->out_port=5004;
+
+  agoraSrc->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
+  GST_PAD_SET_PROXY_CAPS (agoraSrc->srcpad);
+  gst_element_add_pad (GST_ELEMENT (agoraSrc), agoraSrc->srcpad);
 }
 static void
 gst_agorasrc_set_property (GObject * object, guint prop_id,
