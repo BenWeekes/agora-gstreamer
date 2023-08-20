@@ -61,6 +61,7 @@ void UserObserver::onUserVideoTrackSubscribed(
     agora::agora_refptr<agora::rtc::IRemoteVideoTrack> videoTrack) {
  /* AG_LOG(INFO, "onUserVideoTrackSubscribed: userId %s, codecType %d, encodedFrameOnly %d", userId,
          trackInfo.codecType, trackInfo.encodedFrameOnly);*/
+
   std::lock_guard<std::mutex> _(observer_lock_);
   remote_video_track_ = videoTrack;
   if (remote_video_track_ && video_encoded_receiver_) {

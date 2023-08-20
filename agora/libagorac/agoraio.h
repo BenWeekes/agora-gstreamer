@@ -81,6 +81,7 @@ class AgoraIo{
    void setEventFunction(event_fn fn, void* userData);
 
    void setVideoOutFn(agora_media_out_fn videoOutFn, void* userData);
+   void setDecodedVideoOutFn(agora_decoded_media_out_fn videoOutFn, void* userData);
    void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
 
    void setSendOnly(const bool& flag);
@@ -212,6 +213,7 @@ protected:
     int                                              _out_video_delay;
 
     agora_media_out_fn                                _videoOutFn;
+    agora_decoded_media_out_fn                        _decodedVideoOutFn;
     void*                                             _videoOutUserData;
 
     agora_media_out_fn                                _audioOutFn;

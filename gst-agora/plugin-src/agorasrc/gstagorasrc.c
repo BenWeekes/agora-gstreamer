@@ -112,7 +112,9 @@ typedef struct{
 
    u_int8_t* data;
    size_t    len;
-
+   bool decoded;
+   int width;
+   int height;
 }Frame;
 
 Frame* copy_frame(const u_int8_t* buffer, u_int64_t len){
@@ -131,6 +133,25 @@ Frame* copy_frame(const u_int8_t* buffer, u_int64_t len){
      memcpy(f->data, buffer, len);
      return f;
 }
+Frame* copy_decoded_frame(const u_int8_t* buffer, u_int64_t len,int width,int height){
+
+     Frame* f=(Frame*)malloc(sizeof(Frame));
+     if(f==NULL) return NULL;
+
+     f->len=len;
+     f->data=(u_int8_t*)malloc(len);
+     
+     if(f->data==NULL) {
+       free(f);
+       return NULL;
+     } 
+
+     memcpy(f->data, buffer, len);
+     f->width = width;
+     f->height = height;
+     f->decoded = true;
+     return f;
+}
 
 void destory_frame(Frame** f){
 
@@ -146,6 +167,14 @@ static void handle_video_out_fn(const u_int8_t* buffer, u_int64_t len, void* use
     if(!agoraSrc->audio){
 
         Frame* f=copy_frame(buffer, len);
+        g_queue_push_tail(agoraSrc->media_queue, f);
+    }
+}
+
+static void handle_decoded_video_out_fn(const u_int8_t* buffer, u_int64_t len,int width,int height, void* user_data ){
+    Gstagorasrc* agoraSrc=(Gstagorasrc*)(user_data);
+    if(!agoraSrc->audio){
+        Frame* f=copy_decoded_frame(buffer, len,width,height);
         g_queue_push_tail(agoraSrc->media_queue, f);
     }
 }
@@ -209,6 +238,7 @@ int init_agora(Gstagorasrc * src){
 
    //this function will be called whenever there is a video frame ready 
    agoraio_set_video_out_handler(src->agora_ctx, handle_video_out_fn, (void*)(src));
+   agoraio_set_decoded_video_out_handler(src->agora_ctx, handle_decoded_video_out_fn, (void*)(src));
    agoraio_set_audio_out_handler(src->agora_ctx, handle_audio_out_fn, (void*)(src));
 
    //create a media queue
@@ -292,12 +322,27 @@ gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
      g_print("cannot initialize agora\n");
      return GST_FLOW_ERROR;
    }
-
   //we wait for about 5 seconds before reporting an error
   Frame* f=get_next_frame(agoraSrc->media_queue, 5000000);
   if(f==NULL){
       return GST_FLOW_ERROR;
   }
+  static int width,height;          
+  if(f->decoded){
+    if(width != f->width || height != f->height){
+        GstCaps* caps = gst_caps_new_simple("video/x-raw",
+                                        "format", G_TYPE_STRING, "I420",
+                                        "width", G_TYPE_INT, f->width,
+                                        "height", G_TYPE_INT, f->height,
+                                        "framerate", GST_TYPE_FRACTION, 30, 1,
+                                        NULL);
+        g_object_set(GST_ELEMENT(psrc), "caps", caps, NULL);
+        gst_caps_unref(caps);
+    }
+    width = f->width;
+    height = f->height;
+  }
+
   data_size=f->len;
 
   in_buffer_size=gst_buffer_get_size (buffer);

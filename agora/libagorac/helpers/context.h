@@ -127,7 +127,6 @@ public:
    bool                  is_key_frame;
 };
 class FramePayloadDecoded{
-   agora::media::base::VideoFrame frame;
    std::vector<uint8_t> buffer_;
    bool cached = false;
    void cache(){
@@ -142,7 +141,8 @@ class FramePayloadDecoded{
         cached = true;
       }
    }
-   public:   
+   public:
+   agora::media::base::VideoFrame frame;
    const std::vector<uint8_t>& buffer() {
         if(!cached){
           cache();

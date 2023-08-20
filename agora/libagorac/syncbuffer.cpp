@@ -89,7 +89,7 @@ void SyncBuffer::addVideo(const agora::media::base::VideoFrame* videoFrame){
             if(_decodedVideoOutFn!=nullptr){
                 std::shared_ptr<FramePayloadDecoded> ptr(work->payload.decoded);
                 work->payload.decoded = nullptr;
-                _decodedVideoOutFn(ptr);  
+                _decodedVideoOutFn(ptr->buffer().data(),ptr->buffer().size(),ptr->frame.width,ptr->frame.height);  
             }
         }
     }
@@ -97,7 +97,7 @@ void SyncBuffer::addVideo(const agora::media::base::VideoFrame* videoFrame){
     else if(_syncAudioVideo ==false && _videoDelayOffset==0){       
        if(_decodedVideoOutFn!=nullptr){
             std::shared_ptr<FramePayloadDecoded> ptr(FramePayloadDecoded::shallow(videoFrame));
-            _decodedVideoOutFn(ptr);  
+            _decodedVideoOutFn(ptr->buffer().data(),ptr->buffer().size(),ptr->frame.width,ptr->frame.height);  
        }
     }
 }
@@ -139,7 +139,6 @@ void SyncBuffer::videoThread(){
 
    long lastTimestamp=0;
    TimePoint  lastSendTime=Now();
-
    while(_isRunning==true){
 
      checkAndFillInVideoJb(lastSendTime);
@@ -157,9 +156,14 @@ void SyncBuffer::videoThread(){
      }
 
      TimePoint  nextSample=getNextSamplingPoint(_videoBuffer,work->timestamp,lastTimestamp);
-
-     if(_videoOutFn!=nullptr){
-         _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));         
+     if(false){
+        if(_videoOutFn!=nullptr){
+            _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));         
+        }
+     }else{
+        if(_decodedVideoOutFn!=nullptr){
+            _decodedVideoOutFn(work->payload.decoded->buffer().data(), work->payload.decoded->buffer().size(),work->payload.decoded->frame.width,work->payload.decoded->frame.height);         
+        }
      }
 
      lastTimestamp=work->timestamp;

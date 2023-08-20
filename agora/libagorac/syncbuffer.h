@@ -8,7 +8,9 @@
 using videoOutFn_t=std::function<void (const uint8_t* buffer,
                                        const size_t& bufferLength,
                                        const bool& isKeyFrame)>;
-using decodedVideoOutFn_t=std::function<void (std::shared_ptr<FramePayloadDecoded> videoFrame)>;
+using decodedVideoOutFn_t=std::function<void (const uint8_t* buffer,
+                                       const size_t& bufferLength,
+                                       const int& width,const int& height)>;
 using audioOutFn_t=std::function<void (const uint8_t* buffer,
                                        const int& isKeyFrame)>;
 

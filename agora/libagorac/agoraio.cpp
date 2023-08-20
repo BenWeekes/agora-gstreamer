@@ -444,6 +444,14 @@ bool  AgoraIo::init(char* in_app_id,
             }
 
         });
+    }else{
+        _inSyncBuffer->setDecodedVideoOutFn([this](const uint8_t* buffer,
+                                            const size_t& bufferLength,int width,int height){    
+            if(_decodedVideoOutFn!=nullptr){
+                _decodedVideoOutFn(buffer, bufferLength,width,height, _videoOutUserData);
+                _videoInFps++;
+            }
+        });
     }
 
     _inSyncBuffer->setAudioOutFn([this](const uint8_t* buffer,
@@ -557,7 +565,9 @@ void AgoraIo::handleUserStateChange(const std::string& userId,
 #else
         agora::rtc::ILocalUser::VideoSubscriptionOptions subscriptionOptions;
 #endif
-        subscriptionOptions.encodedFrameOnly = true;
+        if(false){
+            subscriptionOptions.encodedFrameOnly = true;
+        }
         subscriptionOptions.type = agora::rtc::VIDEO_STREAM_HIGH;
         _connection->getLocalUser()->subscribeVideo(userId.c_str(), subscriptionOptions);
 
@@ -986,6 +996,11 @@ void AgoraIo::addEvent(const AgoraEventType& eventType,
 
  void AgoraIo::setVideoOutFn(agora_media_out_fn videoOutFn, void* userData){
      _videoOutFn=videoOutFn;
+     _videoOutUserData=userData;
+ }
+
+ void AgoraIo::setDecodedVideoOutFn(agora_decoded_media_out_fn videoOutFn, void* userData){
+     _decodedVideoOutFn=videoOutFn;
      _videoOutUserData=userData;
  }
 

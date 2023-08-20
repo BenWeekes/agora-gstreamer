@@ -97,6 +97,9 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
     // if (remote_video_track_ && video_frame_observer_) {
     //   remote_video_track_->removeRenderer(video_frame_observer_);
     // }
+    if (remote_video_track_ && video_frame_observer_) {
+      local_user_->unregisterVideoFrameObserver(video_frame_observer_);
+    }
   }
 
  public:
