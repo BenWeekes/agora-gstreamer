@@ -96,13 +96,13 @@ enum
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
-    // GST_STATIC_CAPS ("ANY")
-    GST_STATIC_CAPS (
-        "video/x-raw,"
-        "format=(string)I420,"
-        "width=(int)[1,MAX],"
-        "height=(int)[1,MAX]"
-    )
+    GST_STATIC_CAPS ("ANY")
+    // GST_STATIC_CAPS (
+    //     "video/x-raw,"
+    //     "format=(string)I420,"
+    //     "width=(int)[1,MAX],"
+    //     "height=(int)[1,MAX]"
+    // )
     );
 
 
@@ -274,7 +274,7 @@ Frame* get_next_frame(GQueue* q, int timeout)
 
   return f;
 }
-
+const int framerate = 30;
 static GstFlowReturn
 gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
    
@@ -305,7 +305,7 @@ gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
                                         "format", G_TYPE_STRING, "I420",
                                         "width", G_TYPE_INT, f->width,
                                         "height", G_TYPE_INT, f->height,
-                                        "framerate", GST_TYPE_FRACTION, 30, 1,
+                                        "framerate", GST_TYPE_FRACTION, framerate, 1,
                                         NULL);
         // GstPad *srcpad = gst_element_get_static_pad(GST_ELEMENT(psrc), "src");
         // if(srcpad){
@@ -334,7 +334,7 @@ gst_media_test_src_fill (GstPushSrc * psrc, GstBuffer * buffer){
   gst_buffer_set_size(buffer, data_size);
 
   static GstClockTime timestamp = 0;
-  GstClockTime duration = GST_SECOND / 30; 
+  GstClockTime duration = GST_SECOND / framerate; 
   buffer->pts = timestamp;
   buffer->dts = GST_CLOCK_TIME_NONE;
   timestamp += duration;
