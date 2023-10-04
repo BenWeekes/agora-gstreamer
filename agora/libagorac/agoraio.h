@@ -14,6 +14,7 @@
 #include "AgoraBase.h"
 
 #include "observer/pcmframeobserver.h"
+#include "observer/yuvframeobserver.h"
 #include "observer/h264frameobserver.h"
 #include "observer/userobserver.h"
 
@@ -56,8 +57,8 @@ class AgoraIo{
                         long timestamp,
                         const long& duration=0);
 
-    void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
-    void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
+   //  void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
+   //  void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
     size_t getNextVideoFrame(uint8_t* data, 
                              size_t max_buffer_size,
@@ -80,6 +81,7 @@ class AgoraIo{
    void setEventFunction(event_fn fn, void* userData);
 
    void setVideoOutFn(agora_media_out_fn videoOutFn, void* userData);
+   void setDecodedVideoOutFn(agora_decoded_media_out_fn videoOutFn, void* userData);
    void setAudioOutFn(agora_media_out_fn videoOutFn, void* userData);
 
    void setSendOnly(const bool& flag);
@@ -117,7 +119,7 @@ protected:
                            const size_t& length,
                            const int& isKeyFrame,
                            const uint64_t& ts);
-
+   void receiveDecodedVideoFrame(const agora::media::base::VideoFrame* videoFrame);
    void receiveAudioFrame(const uint userId, 
                            const uint8_t* buffer,
                            const size_t& length,
@@ -173,7 +175,7 @@ protected:
     bool                                           _connected = false;
 
     std::shared_ptr<H264FrameReceiver>   h264FrameReceiver;
-
+    YuvFrameObserver_ptr                 _yuvFrameObserver;
     PcmFrameObserver_ptr                 _pcmFrameObserver;
     ConnectionObserver_ptr               _connectionObserver;
     UserObserver_ptr                     _userObserver;
@@ -211,6 +213,7 @@ protected:
     int                                              _out_video_delay;
 
     agora_media_out_fn                                _videoOutFn;
+    agora_decoded_media_out_fn                        _decodedVideoOutFn;
     void*                                             _videoOutUserData;
 
     agora_media_out_fn                                _audioOutFn;

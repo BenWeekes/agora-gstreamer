@@ -72,8 +72,6 @@ private:
 };
 
 using PcmFrameObserver_ptr=std::shared_ptr<PcmFrameObserver>;
-
-
 #endif
 
 

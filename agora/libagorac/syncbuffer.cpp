@@ -58,7 +58,7 @@ void SyncBuffer::addVideo(const uint8_t* buffer,
 
             Work_ptr work=_videoBuffer->get();
             if(_videoOutFn!=nullptr){
-                _videoOutFn(work->buffer, work->len, (bool)(work->is_key_frame));  
+                _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));  
             }
         }
     }
@@ -67,6 +67,37 @@ void SyncBuffer::addVideo(const uint8_t* buffer,
        
        if(_videoOutFn!=nullptr){
             _videoOutFn(buffer, length, isKeyFrame);         
+       }
+    }
+}
+void SyncBuffer::addVideo(const agora::media::base::VideoFrame* videoFrame){
+    if(_videoBuffer->size()>MAX_BUFFER_SIZE){
+        std::cout<<"JB#"<<_objId<<": warning: sync buffer (video) exceeded max buffer: "<<_videoBuffer->size()<<std::endl;
+    }
+
+    //if we need to sync or delay video, we add the frame to the queue
+    if(_syncAudioVideo==true || _videoDelayOffset>0){
+
+        auto frame=std::make_shared<Work>(videoFrame);
+        frame->timestamp=videoFrame->renderTimeMs;         
+        _videoBuffer->add(frame);
+
+        //in this case, we do not have threads to dispatch audio
+        if(_syncAudioVideo==false && _videoBuffer->size()*30>=_videoDelayOffset){
+
+            Work_ptr work=_videoBuffer->get();
+            if(_decodedVideoOutFn!=nullptr){
+                std::shared_ptr<FramePayloadDecoded> ptr(work->payload.decoded);
+                work->payload.decoded = nullptr;
+                _decodedVideoOutFn(ptr->buffer().data(),ptr->buffer().size(),ptr->frame.width,ptr->frame.height);  
+            }
+        }
+    }
+    //if we do not need to sync and no delay, we will pass this frame directly
+    else if(_syncAudioVideo ==false && _videoDelayOffset==0){       
+       if(_decodedVideoOutFn!=nullptr){
+            std::shared_ptr<FramePayloadDecoded> ptr(FramePayloadDecoded::shallow(videoFrame));
+            _decodedVideoOutFn(ptr->buffer().data(),ptr->buffer().size(),ptr->frame.width,ptr->frame.height);  
        }
     }
 }
@@ -91,7 +122,7 @@ void SyncBuffer::addAudio(const uint8_t* buffer,
 
             Work_ptr work=_audioBuffer->get();
             if(_audioOutFn!=nullptr){
-                _audioOutFn(work->buffer, work->len);
+                _audioOutFn(work->payload.encoded->buffer, work->payload.encoded->len);
             }
         }
     }
@@ -108,7 +139,6 @@ void SyncBuffer::videoThread(){
 
    long lastTimestamp=0;
    TimePoint  lastSendTime=Now();
-
    while(_isRunning==true){
 
      checkAndFillInVideoJb(lastSendTime);
@@ -126,9 +156,14 @@ void SyncBuffer::videoThread(){
      }
 
      TimePoint  nextSample=getNextSamplingPoint(_videoBuffer,work->timestamp,lastTimestamp);
-
-     if(_videoOutFn!=nullptr){
-         _videoOutFn(work->buffer, work->len, (bool)(work->is_key_frame));         
+     if(false){
+        if(_videoOutFn!=nullptr){
+            _videoOutFn(work->payload.encoded->buffer, work->payload.encoded->len, (bool)(work->payload.encoded->is_key_frame));         
+        }
+     }else{
+        if(_decodedVideoOutFn!=nullptr){
+            _decodedVideoOutFn(work->payload.decoded->buffer().data(), work->payload.decoded->buffer().size(),work->payload.decoded->frame.width,work->payload.decoded->frame.height);         
+        }
      }
 
      lastTimestamp=work->timestamp;
@@ -169,7 +204,7 @@ void SyncBuffer::audioThread(){
      }
 
      if(_audioOutFn!=nullptr){
-         _audioOutFn(work->buffer, work->len);
+         _audioOutFn(work->payload.encoded->buffer, work->payload.encoded->len);
      }
     
      //std::cout<<this<<"audio ts: "<<work->timestamp<<std::endl;
@@ -206,6 +241,9 @@ void SyncBuffer::stop(){
 
 void SyncBuffer::setVideoOutFn(const videoOutFn_t& fn){
     _videoOutFn=fn;
+}
+void SyncBuffer::setDecodedVideoOutFn(const decodedVideoOutFn_t& fn){
+    _decodedVideoOutFn=fn;
 }
 void SyncBuffer::setAudioOutFn(const audioOutFn_t& fn){
     _audioOutFn=fn;
