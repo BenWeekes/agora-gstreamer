@@ -119,6 +119,12 @@ gst-launch-1.0 rtspsrc location=rtsp://admin:eee@1.2.3.4:2036/Streaming/Channels
 
 gst-launch-1.0  rtspsrc location=rtsp://admin:rrr@1.2.21.50:6005/Streaming/Channels/102 latency=0 buffer-mode=auto ! rtph264depay ! h264parse ! video/x-h264, stream-format=avc, alignment=au ! agorasink appid=20b7c51ff4c644ab80cf5a4e646b0537 channel=test2 avc-to-annexb=true       
 
+<ins>MP4 audio and video</ins>       
+gst-launch-1.0 urisourcebin uri=https://chatcatchat.s3.amazonaws.com/fwtest/badsync.mp4 name=src \
+  src. ! decodebin name=decoder \
+  decoder. ! queue name=video_queue ! videoconvert ! x264enc key-int-max=60 tune=zerolatency ! queue ! agorasink appid=xxx channel=xxx inport=7373 \
+  decoder. ! queue name=audio_queue ! audioresample ! audioconvert ! opusenc bitrate=128000 ! udpsink host=127.0.0.1 port=7373
+
 
  ## agorasrc
 
