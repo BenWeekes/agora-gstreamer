@@ -102,44 +102,99 @@ struct agora_receive_context_t{
 
 class AgoraIo;
 struct AgoraIoContext_t{
-
    std::shared_ptr<AgoraIo>  agoraIo;
 };
 
-class Work{
-
+class FramePayloadEncoded {
 public:
-
-   Work(const unsigned char* b, const unsigned long& l, bool is_key):
+   FramePayloadEncoded(const unsigned char* b, const unsigned long& l, bool is_key):
 	buffer(nullptr){
-  
        if(b==nullptr){
 	       return;
        }
-
        buffer=new unsigned char[l];
        memcpy(buffer, b, l);
-
-       len=l;
-    
+       len=l;    
        is_key_frame=is_key;
-       is_finished=0;
    }
 
-   ~Work(){
+   ~FramePayloadEncoded(){
      if(buffer==nullptr) return;
      delete [] buffer;
    }
-
    unsigned char*        buffer;
    unsigned long         len;
    bool                  is_key_frame;
-
-   bool                  is_finished;
-
-   uint64_t               timestamp;
-   
 };
+class FramePayloadDecoded{
+   std::vector<uint8_t> buffer_;
+   bool cached = false;
+   void cache(){
+      if(!cached){
+        int ySize = frame.yStride * frame.height;
+        int uSize = frame.uStride * frame.height / 2;
+        int vSize = frame.vStride * frame.height / 2;        
+        buffer_.resize(ySize + uSize + vSize);
+        std::memcpy(buffer_.data(), frame.yBuffer, ySize);
+        std::memcpy(buffer_.data() + ySize, frame.uBuffer, uSize);
+        std::memcpy(buffer_.data() + ySize + uSize, frame.vBuffer, vSize);
+        cached = true;
+      }
+   }
+   public:
+   agora::media::base::VideoFrame frame;
+   const std::vector<uint8_t>& buffer() {
+        if(!cached){
+          cache();
+        }
+        return buffer_;
+    }
+   static FramePayloadDecoded* shallow(const agora::media::base::VideoFrame* videoFrame) {
+        auto payload =  new FramePayloadDecoded();
+        payload->frame = *videoFrame;
+        return payload;
+   }
+   static FramePayloadDecoded* deep(const agora::media::base::VideoFrame* videoFrame) {
+        auto payload =  new FramePayloadDecoded();
+        payload->frame = *videoFrame;
+        payload->cache();
+        return payload;
+   }
+};
+union FramePayload {
+   public:
+      FramePayloadEncoded* encoded;
+      FramePayloadDecoded* decoded;
+};
+enum FrameType{
+  encoded,decoded
+};
+class Work{
 
-
+public:
+   FrameType frame_type;
+   FramePayload payload;
+   Work(const unsigned char* b, const unsigned long& l, bool is_key){
+       is_finished=0;
+       frame_type = encoded;
+       payload.encoded = new FramePayloadEncoded(b, l, is_key);
+   }
+   Work(const agora::media::base::VideoFrame* videoFrame){
+       is_finished=0;
+       frame_type = decoded;
+       payload.decoded = FramePayloadDecoded::shallow(videoFrame);
+   }
+   ~Work(){
+      if(frame_type == encoded && payload.encoded != nullptr){
+         delete payload.encoded;
+         payload.encoded = nullptr;
+      }
+      if(frame_type == decoded && payload.decoded != nullptr){
+         delete payload.decoded;
+         payload.decoded = nullptr;
+      }
+   }
+   bool                  is_finished;
+   uint64_t               timestamp;
+};
 #endif
