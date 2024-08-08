@@ -20,8 +20,9 @@ Intel or arm are supported.
 gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I420,width=320,height=180,framerate=60/1 ! queue ! fakesink    
  
 ## Build and install agora gstreamer plugins
-   After installing the libraries above on your Ubuntu system         
+   After installing the libraries above on your Ubuntu system you can build the latest Intel version (or ARM if required)           
    Clone this repo using git clone       
+   
    cd agora-gstreamer/build     
   ./build_all_4.2.30.sh   # build latest version  (or ARM if required)
   
