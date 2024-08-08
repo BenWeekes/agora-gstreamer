@@ -24,7 +24,7 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
    Clone this repo using git clone       
    
    cd agora-gstreamer/build     
-  ./build_all_4.2.30.sh   # build latest version  (or ARM if required)
+  ./build_all_4.2.30.sh    
   
   If no errors are printed the new agora gs plugins will be installed on the system ready for use
 
