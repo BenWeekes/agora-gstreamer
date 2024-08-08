@@ -64,7 +64,7 @@ void UserObserver::onUserVideoTrackSubscribed(
   std::lock_guard<std::mutex> _(observer_lock_);
   remote_video_track_ = videoTrack;
   if (remote_video_track_ && video_encoded_receiver_) {
-    remote_video_track_->registerVideoEncodedImageReceiver(video_encoded_receiver_);
+    remote_video_track_->registerVideoEncodedFrameObserver(video_encoded_receiver_);
   }
   if (remote_video_track_ && media_packet_receiver_) {
     remote_video_track_->registerMediaPacketReceiver(media_packet_receiver_);

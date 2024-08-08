@@ -7,8 +7,8 @@ H264FrameReceiver::H264FrameReceiver()
 {
 }
 
-bool H264FrameReceiver::OnEncodedVideoImageReceived(const uint8_t* imageBuffer, size_t length, 
-    const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo)
+bool H264FrameReceiver::onEncodedVideoFrameReceived(agora::rtc::uid_t uid, const uint8_t* imageBuffer, size_t length,
+                                   const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo) 
 {
     if (!_onVideoFrameReceived)
         return false;

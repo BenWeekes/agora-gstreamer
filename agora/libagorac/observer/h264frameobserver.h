@@ -10,18 +10,19 @@ using OnNewFrame_fn=std::function<void(const unsigned int userId,
                                         const int isKeyFrame,
                                         const uint64_t& ts)>;
 
-class H264FrameReceiver : public agora::rtc::IVideoEncodedImageReceiver
+class H264FrameReceiver : public agora::media::IVideoEncodedFrameObserver
 {
 public:
     H264FrameReceiver();
 
-    bool OnEncodedVideoImageReceived(const uint8_t* imageBuffer, size_t length, 
-        const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo) override;
+    bool onEncodedVideoFrameReceived(agora::rtc::uid_t uid, const uint8_t* imageBuffer, size_t length,
+                                   const agora::rtc::EncodedVideoFrameInfo& videoEncodedFrameInfo)  override;
 
     void setOnVideoFrameReceivedFn(const OnNewFrame_fn& fn);
 
 private:
     OnNewFrame_fn                   _onVideoFrameReceived;
 };
+
 
 #endif

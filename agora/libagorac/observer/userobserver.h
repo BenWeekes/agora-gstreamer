@@ -75,7 +75,7 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
       remote_video_track_->registerMediaPacketReceiver(media_packet_receiver_);
   }
 
-  void setVideoEncodedImageReceiver(agora::rtc::IVideoEncodedImageReceiver* receiver) {
+  void setVideoEncodedImageReceiver(agora::media::IVideoEncodedFrameObserver* receiver) {
     video_encoded_receiver_ = receiver;
   }
 
@@ -117,10 +117,6 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
                                     agora::rtc::REMOTE_AUDIO_STATE_REASON reason,
                                     int elapsed) override;
 
-  void onLocalAudioTrackStateChanged(agora::agora_refptr<agora::rtc::ILocalAudioTrack> audioTrack,
-                                     agora::rtc::LOCAL_AUDIO_STREAM_STATE state,
-                                     agora::rtc::LOCAL_AUDIO_STREAM_ERROR errorCode) override {}
-
   void onVideoTrackPublishSuccess(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack) override {}
 
   void onVideoTrackPublicationFailure(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
@@ -145,6 +141,14 @@ class UserObserver : public agora::rtc::ILocalUserObserver {
 
   void onLocalVideoTrackStatistics(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack,
                                    const agora::rtc::LocalVideoTrackStats& stats) override;
+
+  void onAudioTrackPublishStart(agora::agora_refptr<agora::rtc::ILocalAudioTrack> audioTrack) override{}
+
+  void onAudioTrackUnpublished(agora::agora_refptr<agora::rtc::ILocalAudioTrack> audioTrack) override{}
+
+  void onVideoTrackPublishStart(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack) override{}
+
+  void onVideoTrackUnpublished(agora::agora_refptr<agora::rtc::ILocalVideoTrack> videoTrack) override{}
 
 #if SDK_BUILD_NUM>=190534
   void onAudioVolumeIndication(const agora::rtc::AudioVolumeInformation* speakers,
@@ -216,7 +220,7 @@ void onVideoSubscribeStateChanged(const char* channel, agora::user_id_t uid,
   agora::agora_refptr<agora::rtc::IRemoteVideoTrack> remote_video_track_;
 
   agora::rtc::IMediaPacketReceiver* media_packet_receiver_{nullptr};
-  agora::rtc::IVideoEncodedImageReceiver* video_encoded_receiver_{nullptr};
+  agora::media::IVideoEncodedFrameObserver* video_encoded_receiver_{nullptr};
   agora::media::IAudioFrameObserver* audio_frame_observer_{nullptr};
   agora::agora_refptr<agora::rtc::IVideoSinkBase> video_frame_observer_{nullptr};
 

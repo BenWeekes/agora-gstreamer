@@ -59,6 +59,26 @@ class PcmFrameObserver : public agora::media::IAudioFrameObserver {
   void setOnAudioFrameReceivedFn(const OnNewAudioFrame_fn& fn);
   void setUserJoined(const bool& flag);
 
+  int getObservedAudioFramePosition() override{return 0;}
+
+  AudioParams getPlaybackAudioParams() override{
+     AudioParams p; 
+     return p;
+   }
+  AudioParams getRecordAudioParams() override{
+    AudioParams p; 
+    return p;
+  }
+  AudioParams getMixedAudioParams() override{
+    AudioParams p; 
+    return p;
+  }
+  AudioParams getEarMonitoringAudioParams() override{
+    AudioParams p; 
+    return p;
+  }
+
+
 protected:
 
 private:
