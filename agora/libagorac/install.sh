@@ -8,7 +8,7 @@ make
 echo "MAKE INSTALL"
 sudo make install
 sudo cp $INPUT_DIR/agora_sdk/libagora_rtc_sdk.so /usr/local/lib
-sudo cp $INPUT_DIR/agora_sdk/libagora-ffmpeg.so /usr/local/lib
+sudo cp $INPUT_DIR/agora_sdk/libagora-ffmpeg.so /usr/local/lib  2>/dev/null
 sudo cp $INPUT_DIR/agora_sdk/libagora-core.so /usr/local/lib
 sudo cp $INPUT_DIR/agora_sdk/libagora-fdkaac.so /usr/local/lib
 sudo cp agorac.h /usr/local/include
