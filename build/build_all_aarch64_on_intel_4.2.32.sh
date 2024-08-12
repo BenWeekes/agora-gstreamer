@@ -7,7 +7,7 @@
 #    so at the host you should have the dir  /usr/include/aarch64-linux-gnu  
 #(4) make sure you have copied lib/aarch64-linux-gnu  from target (/usr/local/lib) to host (/usr/lib/)
 #    so at the host you should have the dir  /usr/lib/aarch64-linux-gnu 
-#(5) step #3 and #3 should be done after installing all required libs and gestreamer on target (step 3)
+#(5) step #3 and #4 should be done after installing all required libs and gestreamer on target (step 3)
 
 #this is where we collect the binaries
 INSTALL_DIR='/home/ubuntu/arm-dist'
@@ -33,5 +33,5 @@ cd $cwd
 cp $INSTALL_DIR/include/*.* /usr/include/aarch64-linux-gnu
 
 #build and install the plugins
-cd gst-agora && rm -rf build||true && mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=arm64.cmake .. && make && sudo make install
+cd ../gst-agora && rm -rf build||true && mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=arm64.cmake .. && make && sudo make install
 

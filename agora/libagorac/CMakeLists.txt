@@ -55,11 +55,11 @@ add_custom_command(
                 ${AGORA_SDK_DIR}/agora_sdk/libagora_rtc_sdk.so
                 ${INSTALL_PATH}/lib)
 
-add_custom_command(
-        TARGET agorac POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${AGORA_SDK_DIR}/agora_sdk/libagora-ffmpeg.so
-                ${INSTALL_PATH}/lib)
+	#add_custom_command(
+	# TARGET agorac POST_BUILD
+	# COMMAND ${CMAKE_COMMAND} -E copy
+	#        ${AGORA_SDK_DIR}/agora_sdk/libagora-ffmpeg.so
+	#        ${INSTALL_PATH}/lib)
 
 #install agoralib headers
 add_custom_command(

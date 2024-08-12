@@ -31,7 +31,8 @@ bool AgoraDecoder::init(){
     return false;
   }
 
-  av_init_packet(&m_inputPacket);
+  //av_init_packet(&m_inputPacket);
+  memset(&m_inputPacket, 0, sizeof(m_inputPacket));
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 0, 0)
   m_avContext = avcodec_alloc_context2(m_avCodec->type);
