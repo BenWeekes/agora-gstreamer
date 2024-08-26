@@ -677,9 +677,14 @@ bool AgoraIo::doSendHighVideo(const uint8_t* buffer,  uint64_t len,int is_key_fr
   agora::rtc::EncodedVideoFrameInfo videoEncodedFrameInfo;
   videoEncodedFrameInfo.rotation = agora::rtc::VIDEO_ORIENTATION_0;
   videoEncodedFrameInfo.codecType = agora::rtc::VIDEO_CODEC_H264;
-  videoEncodedFrameInfo.framesPerSecond = 30;
+  //videoEncodedFrameInfo.framesPerSecond = 30;
   videoEncodedFrameInfo.frameType = frameType;
   videoEncodedFrameInfo.streamType = agora::rtc::VIDEO_STREAM_HIGH;
+ 
+  //for a better a/v sync 
+  videoEncodedFrameInfo.captureTimeMs = getAgoraCurrentMonotonicTimeInMs();
+  videoEncodedFrameInfo.decodeTimeMs = 0;
+  videoEncodedFrameInfo.framesPerSecond = 0;
 
   if(_transcodeVideo && (_requireTranscode || (_requireKeyframe && !is_key_frame))){
         //transcoding 
@@ -787,6 +792,9 @@ bool AgoraIo::doSendAudio(const uint8_t* buffer,  uint64_t len){
   audioFrameInfo.numberOfChannels =1; //TODO
   audioFrameInfo.sampleRateHz = 48000; //TODO
   audioFrameInfo.codec = agora::rtc::AUDIO_CODEC_OPUS;
+  
+  //for a better a/v sync
+  audioFrameInfo.captureTimeMs = getAgoraCurrentMonotonicTimeInMs();
 
   _audioSender->sendEncodedAudioFrame(buffer,len, audioFrameInfo);
 
