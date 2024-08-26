@@ -36,7 +36,7 @@ set(LIBS
         ${GSTREAMER_APP_LDFLAGS}
         ${GSTREAMER_SDP_LDFLAGS}
         ${GSTREAMER_BASE_LDFLAGS}
-        ${INSTALL_PATH}/lib/libagorac.so
+        ${INSTALL_PATH}/lib/libgstagorac.so
         ${INSTALL_PATH}/lib/libagora_rtc_sdk.so
 	#        ${INSTALL_PATH}/lib/libagora-ffmpeg.so
         x264

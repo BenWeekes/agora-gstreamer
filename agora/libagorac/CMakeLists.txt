@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(agorac)
+project(gstagorac)
 
 # require a C++11 compiler and use it for all targets
 set(CMAKE_CXX_STANDARD 11)
@@ -43,33 +43,33 @@ set(LIB_SOURCE ${HELPER_FILES}
                ${AGORA_IO_FILES}
                agorac.cpp)
 
-add_library(agorac SHARED ${LIB_SOURCE})
+add_library(gstagorac SHARED ${LIB_SOURCE})
 
 
-install(TARGETS agorac DESTINATION ${INSTALL_PATH}/lib)
+install(TARGETS gstagorac DESTINATION ${INSTALL_PATH}/lib)
 
 #install agora sdk
 add_custom_command(
-        TARGET agorac POST_BUILD
+        TARGET gstagorac POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${AGORA_SDK_DIR}/agora_sdk/libagora_rtc_sdk.so
                 ${INSTALL_PATH}/lib)
 
 	#add_custom_command(
-	# TARGET agorac POST_BUILD
+	# TARGET gstagorac POST_BUILD
 	# COMMAND ${CMAKE_COMMAND} -E copy
 	#        ${AGORA_SDK_DIR}/agora_sdk/libagora-ffmpeg.so
 	#        ${INSTALL_PATH}/lib)
 
 #install agoralib headers
 add_custom_command(
-        TARGET agorac POST_BUILD
+        TARGET gstagorac POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/agorac.h 
                 ${INSTALL_PATH}/include)
 
 add_custom_command(
-        TARGET agorac POST_BUILD
+        TARGET gstagorac POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_SOURCE_DIR}/agoraconfig.h 
                 ${INSTALL_PATH}/include)
