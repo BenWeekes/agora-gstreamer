@@ -187,7 +187,7 @@ gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! video/x-raw,format=I4
  test data https://drive.google.com/file/d/1m1PzTCiV1AKy_mVYZA5la9WQtZu-acKI/view?usp=sharing     
 ./sample_send_h264_dual_stream --token xxxx --channelId iii --HighVideoFile ~/pro/agora_rtc_sdk/example/test_data/send_video.h264 --LowVideoFile ~/pro/agora_rtc_sdk/example/test_data/send_video.h264
 
- 20b7c51ff4c644ab80cf5a4e646b05377
+ APPID
 
 SDK Log ~/.agora/agorasdk.log
 
