@@ -171,6 +171,13 @@ void agoraio_set_video_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn,
    ctx->agoraIo->setVideoOutFn(fn, userData);
 }
 
+void agoraio_set_decoded_video_out_handler(AgoraIoContext_t* ctx, agora_decoded_media_out_fn fn, void* userData){
+   
+   if(ctx==nullptr)  return;
+
+   ctx->agoraIo->setDecodedVideoOutFn(fn, userData);
+}
+
 void agoraio_set_audio_out_handler(AgoraIoContext_t* ctx, agora_media_out_fn fn, void* userData){
 
    if(ctx==nullptr)  return;

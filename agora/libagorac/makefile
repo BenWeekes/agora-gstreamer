@@ -18,6 +18,7 @@ HELPER_FILES=helpers/agoradecoder.cpp \
 
 AGORA_OBSERCER = observer/pcmframeobserver.cpp \
 				observer/h264frameobserver.cpp \
+				observer/yuvframeobserver.cpp \
 				observer/connectionobserver.cpp \
 				observer/userobserver.cpp
 

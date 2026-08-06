@@ -69,4 +69,7 @@ typedef void (*event_fn)(void* userData,
 typedef  void (*agora_media_out_fn)(const uint8_t* buffer,
                                     uint64_t len,
 										      void* user_data);
+typedef  void (*agora_decoded_media_out_fn)(const uint8_t* buffer,
+                                    uint64_t len,int width,int height,
+										      void* user_data);                                    
 #endif 
